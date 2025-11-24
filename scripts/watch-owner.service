@@ -1,0 +1,15 @@
+[Unit]
+Description=RealMint watch-owner service (runs docker container)
+After=docker.service
+
+[Service]
+Type=simple
+Restart=always
+Environment=RPC_URL=https://bsc-testnet.rpc
+Environment=CONTRACT_ADDR=0xYourContract
+Environment=WEBHOOK_URL=
+ExecStart=/usr/bin/docker run --rm --name realmint-watch-owner -e RPC_URL=$${RPC_URL} -e CONTRACT_ADDR=$${CONTRACT_ADDR} -e WEBHOOK_URL=$${WEBHOOK_URL} ghcr.io/yourorg/realmint-watch-owner:latest
+ExecStop=/usr/bin/docker stop realmint-watch-owner
+
+[Install]
+WantedBy=multi-user.target

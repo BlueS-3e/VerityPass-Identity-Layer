@@ -1,0 +1,24 @@
+{
+  "domain": {
+    "name": "AttestationRegistry",
+    "version": "1",
+    "chainId": "", 
+    "verifyingContract": ""
+  },
+  "types": {
+    "EIP712Domain": [
+      { "name": "name", "type": "string" },
+      { "name": "version", "type": "string" },
+      { "name": "chainId", "type": "uint256" },
+      { "name": "verifyingContract", "type": "address" }
+    ],
+    "Attestation": [
+      { "name": "subject", "type": "address" },
+      { "name": "schemaHash", "type": "bytes32" },
+      { "name": "dataCIDHash", "type": "bytes32" },
+      { "name": "expiresAt", "type": "uint256" }
+    ]
+  },
+  "primaryType": "Attestation",
+  "notes": "Fill domain.chainId and domain.verifyingContract at runtime. Compute dataCIDHash as ethers.keccak256(ethers.toUtf8Bytes(dataCID))."
+}

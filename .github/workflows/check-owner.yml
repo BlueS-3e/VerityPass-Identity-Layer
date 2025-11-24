@@ -1,0 +1,28 @@
+name: Check contract owner
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  check-owner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install minimal dependencies
+        run: |
+          npm install --no-package-lock --no-audit --no-fund ethers@^5
+
+      - name: Run owner check
+        env:
+          RPC_URL: ${{ secrets.CHECK_OWNER_RPC_URL }}
+          CONTRACT_ADDR: ${{ secrets.CHECK_OWNER_CONTRACT_ADDR }}
+          EXPECTED_OWNER: ${{ secrets.CHECK_OWNER_EXPECTED_OWNER }}
+        run: |
+          node scripts/check-owner.js

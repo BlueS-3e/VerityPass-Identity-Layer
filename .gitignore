@@ -1,0 +1,56 @@
+# Python
+venv/
+**/venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Node
+node_modules/
+webapp/node_modules/
+frontend/node_modules/
+contracts/node_modules/
+
+# Build artifacts & caches
+.DS_Store
+/contracts/artifacts/
+/contracts/cache/
+/webapp/build/
+/frontend/build/
+
+# Hardhat local cache
+/node_modules/
+
+# Build / artifacts
+build/
+dist/
+*.log
+*.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Hardhat / Truffle / solidity caches
+artifacts/
+cache/
+*.dbg.json
+
+# npm lock / pnpm
+package-lock.json
+pnpm-lock.yaml
+
+# Misc
+uploads/
+api/uploads/
+
+# Keep ABI artifacts that are required in webapp build if needed
+# (uncomment the following if you want to keep webapp/build/contracts)
+# !webapp/build/contracts/

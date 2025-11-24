@@ -1,0 +1,24 @@
+{
+  "domain": {
+    "name": "AttestationRegistry",
+    "version": "1",
+    "chainId": "<chainId>",
+    "verifyingContract": "<verifyingContract>"
+  },
+  "types": {
+    "EIP712Domain": [
+      { "name": "name", "type": "string" },
+      { "name": "version", "type": "string" },
+      { "name": "chainId", "type": "uint256" },
+      { "name": "verifyingContract", "type": "address" }
+    ],
+    "Attestation": [
+      { "name": "subject", "type": "address" },
+      { "name": "schemaHash", "type": "bytes32" },
+      { "name": "dataCIDHash", "type": "bytes32" },
+      { "name": "expiresAt", "type": "uint256" }
+    ]
+  },
+  "primaryType": "Attestation",
+  "notes": "dataCID is hashed on-chain as keccak256(bytes(dataCID)) and provided as the bytes32 field `dataCIDHash` when constructing the typed-data payload for signing. The contract uses domain name 'AttestationRegistry' and version '1'. Ensure the chainId and verifyingContract are filled with runtime values in the frontend before signing."
+}

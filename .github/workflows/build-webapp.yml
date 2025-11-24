@@ -1,0 +1,36 @@
+name: Build Webapp (build and artifact)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build-webapp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and build webapp
+        working-directory: ./webapp
+        run: |
+          npm ci
+          npm run build
+
+      - name: Check built frontend for inline scripts/styles (CSP safe)
+        run: |
+          python3 ./scripts/check_csp.py webapp/dist
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-dist
+          path: webapp/dist

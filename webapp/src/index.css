@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes gradient-x {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 4s ease-in-out infinite;
+}
+
+/* slow spin for decorative SVG */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow { animation: spin-slow 60s linear infinite; }
+
+.delay-200 { animation-delay: 0.2s; }
+.delay-500 { animation-delay: 0.5s; }
+/* additional delays used by components */
+.delay-1200 { animation-delay: 1.2s; }
+
+/* Floating and pan keyframes used by Attestation background blobs */
+@keyframes floaty { 0% { transform: translateY(0px); } 50% { transform: translateY(-12px); } 100% { transform: translateY(0px); } }
+.floaty { animation: floaty 6s ease-in-out infinite; }
+@keyframes pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.bg-pan { background-size: 200% 200%; animation: pan 12s linear infinite; }
+
+/* Mobile / iOS safe area and touch target helpers */
+:root {
+  /* help with iOS safe area padding when site is run as web app */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Wave animation: translate horizontally for mobile-friendly movement */
+@keyframes wave-move-1 {
+  0% { transform: translateX(0%); }
+  50% { transform: translateX(-25%); }
+  100% { transform: translateX(0%); }
+}
+@keyframes wave-move-2 {
+  0% { transform: translateX(0%); }
+  50% { transform: translateX(-35%); }
+  100% { transform: translateX(0%); }
+}
+.wave { will-change: transform; transform-origin: center; }
+.wave--one { animation: wave-move-1 10s ease-in-out infinite; }
+.wave--two { animation: wave-move-2 14s ease-in-out infinite; }
+
+/* collapsed hero state when user scrolls on mobile */
+.hero--collapsed .wave-container { height: 8vh !important; transition: height 260ms ease; }
+.hero--collapsed .wave { opacity: 0.6; transform-origin: bottom center; }
+.hero--collapsed .hero-vignette { opacity: 0.35; transition: opacity 260ms ease; }
+.hero--collapsed .floating-dot { opacity: 0.03; transition: opacity 260ms ease, transform 260ms ease; }
+
+/* Smooth transitions for wave container height */
+.wave-container { transition: height 300ms ease; }
+
+/* CTA stacking and headline adjustments when hero is collapsed or on small screens */
+.cta-stack { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+@media (max-width: 640px) {
+  .cta-stack { flex-direction: column; }
+  .hero-headline { font-size: 2.25rem /* 36px */; }
+  .hero-sub { font-size: 0.95rem; }
+}
+
+/* When hero collapsed (global attribute set by HeroGraphic) make CTAs stack and shrink headline */
+[data-hero-collapsed="true"] .cta-stack { flex-direction: column; }
+[data-hero-collapsed="true"] .hero-headline { font-size: 2rem; }
+[data-hero-collapsed="true"] .hero-sub { font-size: 0.9rem; }
+
+/* Slight spacing tweak for stacked CTAs */
+.cta-stack a, .cta-stack button { min-width: 160px; }
+
+/* Hero vignette and cloud subtle styles */
+.hero-vignette {
+  pointer-events: none;
+  background-image: radial-gradient(closest-side at 50% 35%, rgba(255,255,255,0.03), rgba(0,0,0,0.16));
+  mix-blend-mode: overlay;
+}
+.hero-cloud { filter: blur(10px) saturate(110%); transform: translateZ(0); }
+
+/* reduce motion / lower intensity on small screens for battery and readability */
+@media (max-width: 640px) {
+  .hero-cloud { display: none; }
+  .wave--one { animation-duration: 12s; }
+  .wave--two { animation-duration: 18s; }
+  .hero-vignette { background-image: radial-gradient(closest-side at 50% 35%, rgba(255,255,255,0.02), rgba(0,0,0,0.12)); }
+}
+
+/* Subtle floating dots decorative elements (no inline styles; CSP-friendly) */
+.floating-dots { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.floating-dot {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.9);
+  opacity: 0.06;
+  filter: blur(0.6px);
+  width: 8px;
+  height: 8px;
+  transform: translate3d(0,0,0);
+  will-change: transform, opacity;
+  animation: float-dot 8s ease-in-out infinite;
+}
+
+@keyframes float-dot {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.06; }
+  50% { transform: translateY(-10px) translateX(6px) scale(1.05); opacity: 0.10; }
+  100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.06; }
+}
+
+/* Slight variation per-dot to avoid uniform motion */
+.dot-1 { left: 8%; top: 18%; animation-delay: 0s; width:10px; height:10px; }
+.dot-2 { left: 22%; top: 28%; animation-delay: 1.4s; opacity:0.05; }
+.dot-3 { left: 40%; top: 12%; animation-delay: 2.2s; transform-origin:center; }
+.dot-4 { left: 60%; top: 22%; animation-delay: 0.6s; opacity:0.07; }
+.dot-5 { left: 75%; top: 14%; animation-delay: 3s; }
+.dot-6 { left: 86%; top: 30%; animation-delay: 1s; opacity:0.04; width:6px; height:6px; }
+.dot-7 { left: 50%; top: 6%; animation-delay: 2.6s; opacity:0.05; width:7px; height:7px; }
+.dot-8 { left: 12%; top: 6%; animation-delay: 4s; opacity:0.045; width:6px; height:6px; }
+
+/* Reduce intensity on mobile devices */
+@media (max-width: 640px) {
+  .floating-dot { opacity: 0.05; filter: blur(0.8px); animation-duration: 10s; }
+  .dot-1, .dot-4, .dot-5 { display: none; } /* fewer dots on small screens */
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .floating-dot { animation: none !important; opacity: 0.07; }
+}
+
+/* Appealing input styles for better UX on mobile and desktop */
+.input-appealing {
+  transition: box-shadow .18s ease, transform .12s ease;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.02), 0 6px 18px rgba(2,6,23,0.4);
+  border-radius: .75rem;
+}
+.input-appealing:focus {
+  outline: none;
+  box-shadow: 0 6px 20px rgba(59,130,246,0.12), 0 0 0 4px rgba(59,130,246,0.08);
+  transform: translateY(-1px);
+}
+
+/* Make forms feel lighter on small screens */
+@media (max-width: 640px) {
+  .wave { opacity: 0.9; }
+  .input-appealing { box-shadow: none; }
+}
+
+body {
+  padding-top: calc(var(--safe-top));
+  padding-bottom: calc(var(--safe-bottom));
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+/* Larger touch targets on small screens */
+@media (max-width: 640px) {
+  button, input[type="button"], input[type="submit"], .btn { padding: 14px 16px; font-size: 16px; }
+}
+
+/* Improve tap targets and iOS feel for primary CTA buttons */
+.btn-primary {
+  background: linear-gradient(90deg,#06b6d4,#3b82f6);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(3,7,18,0.3);
+  transition: transform .12s ease, box-shadow .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:active { transform: translateY(1px) scale(0.998); box-shadow: 0 6px 20px rgba(3,7,18,0.22); }
+
+/* Slightly higher contrast for small text on mobile */
+@media (max-width: 420px) {
+  body { color-scheme: light dark; }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-slow { animation: none !important; }
+  .animate-gradient-x { animation: none !important; }
+}
+

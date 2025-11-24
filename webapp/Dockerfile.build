@@ -1,0 +1,34 @@
+# Build-stage Dockerfile for building the webapp in a clean Node environment
+# Usage (local):
+# docker build -f webapp/Dockerfile.build -t realmint-web-build webapp
+# docker create --name tmp realmint-web-build
+# docker cp tmp:/app/dist ./webapp/dist
+# docker rm tmp
+
+FROM node:20-bullseye AS deps
+WORKDIR /app
+
+# Copy manifests first to leverage Docker cache
+COPY package.json package-lock.json* ./
+
+# ensure npm will skip optional dependencies (avoid fsevents platform errors)
+ENV npm_config_optional=false
+
+# Install dependencies (skip optional/native packages)
+ENV npm_config_optional=false
+ENV npm_config_fund=false
+# Try a more robust install invocation with fewer network/audit steps
+RUN npm install --no-optional --legacy-peer-deps --no-audit --no-update-notifier
+
+FROM node:20-bullseye AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Run production build
+RUN npm run build
+
+# Export built artifacts
+FROM scratch AS export
+COPY --from=build /app/dist /dist
+

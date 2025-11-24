@@ -1,0 +1,16 @@
+flask
+flask-cors
+flask_sqlalchemy
+web3
+eth-account
+requests
+python-dotenv
+pytest
+prometheus-client
+sentry-sdk
+Flask-Limiter
+redis
+Flask-Session
+plaid-python
+cryptography
+authlib

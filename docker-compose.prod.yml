@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    image: realmint-api:latest
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      # set secrets via your environment or orchestrator
+      - REDIS_URL=redis://redis:6379/0
+    expose:
+      - 5000
+
+  web:
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    image: realmint-web:latest
+    restart: unless-stopped
+    depends_on:
+      - api
+      - redis
+    ports:
+      - "80:80"
+
+  redis:
+    image: redis:6-alpine
+    restart: unless-stopped
+
+volumes: {}

@@ -1,0 +1,6 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY scripts/watch-owner.js ./watch-owner.js
+RUN npm init -y \
+ && npm install --no-audit --no-fund ethers@^5
+CMD ["node", "watch-owner.js"]
