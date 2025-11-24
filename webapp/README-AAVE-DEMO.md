@@ -39,6 +39,8 @@ VITE_AAVE_PRICE_ORACLE=0xYOUR_PRICE_ORACLE_ADDRESS
 
 When the backend is running, these values will appear in the JSON returned by `/api/frontend-config` and the demo UI will show them in the "Demo Information" panel. Changing those server env vars and reloading the page is sufficient — no frontend rebuild is necessary.
 
+The demo also exposes a **Refresh Config** button in the Demo Information panel which re-reads `/api/frontend-config` and updates the displayed values (and a small "Last fetched" timestamp) without requiring a full page reload.
+
 4. Start the frontend dev server and open the demo page:
 
 ```bash

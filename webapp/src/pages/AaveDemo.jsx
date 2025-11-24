@@ -12,6 +12,8 @@ export default function AaveDemo() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  // runtime config fetched from backend for display (keeps demo configurable without rebuild)
+  const [runtimeCfg, setRuntimeCfg] = useState(null);
 
   // Check if user has previously interacted with the demo
   useEffect(() => {
@@ -23,6 +25,27 @@ export default function AaveDemo() {
       setTimeout(() => setIsOpen(true), 10);
     }
   }, []);
+
+  // Non-blocking fetch of runtime frontend config so operators can change values
+  // (e.g. aave pool) without rebuilding the frontend. Displayed in the demo UI.
+  useEffect(() => {
+    let mounted = true;
+    apiClient.apiGet('/api/frontend-config').then(c => { if (mounted) setRuntimeCfg(c); if (mounted) setLastFetched(Date.now()); }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
+
+  const [lastFetched, setLastFetched] = useState(null);
+
+  const refreshRuntimeCfg = async () => {
+    try {
+      const c = await apiClient.apiGet('/api/frontend-config').catch(() => null);
+      setRuntimeCfg(c);
+      setLastFetched(Date.now());
+    } catch (e) {
+      // ignore: keep previous config
+      console.warn('Failed to refresh runtime config', e);
+    }
+  };
 
   async function connect() {
     setConnecting(true);
@@ -125,13 +148,6 @@ export default function AaveDemo() {
 
   // Main demo popup
   if (isOpen) {
-    // fetch runtime config for display (non-blocking)
-    const [runtimeCfg, setRuntimeCfg] = React.useState(null);
-    React.useEffect(() => {
-      let mounted = true;
-      apiClient.apiGet('/api/frontend-config').then(c => { if (mounted) setRuntimeCfg(c); }).catch(() => {});
-      return () => { mounted = false; };
-    }, []);
     return (
       <div className="demo-overlay">
         <div className="demo-container">
@@ -197,16 +213,20 @@ export default function AaveDemo() {
                 <li>Set <code>VITE_AAVE_PRICE_ORACLE</code> for safety checks</li>
                 <li>For local testing, run a fork and use test tokens</li>
               </ul>
-              {runtimeCfg && (
-                <div className="mt-3 text-sm text-gray-300">
+              <div className="mt-3 text-sm text-gray-300">
+                <div className="flex items-center justify-between">
                   <div className="font-medium">Runtime config (from /api/frontend-config)</div>
-                  <div className="mt-1">
-                    <div>Aave pool: <code className="text-xs">{runtimeCfg.aave_pool_address || '(unset)'}</code></div>
-                    <div>Aave price oracle: <code className="text-xs">{runtimeCfg.aave_price_oracle || '(unset)'}</code></div>
-                    <div>API base: <code className="text-xs">{runtimeCfg.api_base || '(unset)'}</code></div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={refreshRuntimeCfg} className="demo-btn demo-btn-secondary demo-btn-sm">Refresh Config</button>
                   </div>
                 </div>
-              )}
+                <div className="mt-1">
+                  <div>Aave pool: <code className="text-xs">{(runtimeCfg && runtimeCfg.aave_pool_address) || '(unset)'}</code></div>
+                  <div>Aave price oracle: <code className="text-xs">{(runtimeCfg && runtimeCfg.aave_price_oracle) || '(unset)'}</code></div>
+                  <div>API base: <code className="text-xs">{(runtimeCfg && runtimeCfg.api_base) || '(unset)'}</code></div>
+                  <div className="mt-2 text-xs text-gray-400">Last fetched: {lastFetched ? new Date(lastFetched).toLocaleString() : '(never)'}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
