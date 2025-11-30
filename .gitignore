@@ -45,6 +45,10 @@ cache/
 
 # npm lock / pnpm
 package-lock.json
+# keep lockfiles for packages we commit in CI
+!webapp/package-lock.json
+!webapp-admin/package-lock.json
+!contracts/package-lock.json
 pnpm-lock.yaml
 
 # Misc
