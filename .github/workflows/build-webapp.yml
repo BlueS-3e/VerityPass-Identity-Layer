@@ -27,11 +27,17 @@ jobs:
           # Copy artifacts into webapp build area so frontend imports resolve
           chmod +x ./../scripts/sync-artifacts.sh || true
           ./../scripts/sync-artifacts.sh
+          # Debug: show copied artifacts for CI logs
+          echo "Contents of webapp/build/contracts:" || true
+          ls -la ../webapp/build/contracts || true
 
       - name: Install and build webapp
         working-directory: ./webapp
         run: |
           npm ci --no-audit --no-fund
+          # Debug: confirm contract artifacts are present before build
+          echo "Listing webapp/build/contracts before build:" || true
+          ls -la build/contracts || true
           npm run build
 
       - name: Check built frontend for inline scripts/styles (CSP safe)

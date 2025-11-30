@@ -54,6 +54,9 @@ jobs:
             cp -a contracts/artifacts/contracts/*/*.json webapp/build/contracts/ 2>/dev/null || true
             cp -a contracts/build/contracts/*.json webapp/build/contracts/ 2>/dev/null || true
             cp -a build/contracts/*.json webapp/build/contracts/ 2>/dev/null || true
+            # Debug: list copied artifacts for CI logs
+            echo "Contents of webapp/build/contracts after sync:" || true
+            ls -la webapp/build/contracts || true
           fi
       - name: Install & build
         working-directory: ./${{ matrix.app }}
@@ -65,6 +68,9 @@ jobs:
           # Try a reproducible install with `npm ci`. If there's no lockfile or `npm ci` fails
           # (for example in branches without a committed lockfile), fall back to `npm install`.
           npm ci --no-audit --no-fund
+          # Debug: show build/contracts before building (helps diagnose missing ABI issues)
+          echo "Listing build/contracts before build (if present):" || true
+          ls -la build/contracts || true
           npm run build
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
