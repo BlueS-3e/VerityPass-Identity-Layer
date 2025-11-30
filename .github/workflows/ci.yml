@@ -41,6 +41,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Compile contracts and sync artifacts (webapp only)
+        if: "${{ matrix.app == 'webapp' }}"
+        run: |
+          if [ -d contracts ]; then
+            cd contracts
+            npm ci --no-audit --no-fund
+            npx hardhat compile --show-stack-traces
+            cd ..
+            mkdir -p webapp/build/contracts
+            # Copy both Hardhat and Truffle possible locations
+            cp -a contracts/artifacts/contracts/*/*.json webapp/build/contracts/ 2>/dev/null || true
+            cp -a contracts/build/contracts/*.json webapp/build/contracts/ 2>/dev/null || true
+            cp -a build/contracts/*.json webapp/build/contracts/ 2>/dev/null || true
+          fi
       - name: Install & build
         working-directory: ./${{ matrix.app }}
         # For CI builds you may set repository secrets such as CI_VITE_API_BASE.
