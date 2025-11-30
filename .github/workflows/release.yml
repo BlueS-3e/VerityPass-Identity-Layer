@@ -27,8 +27,7 @@ jobs:
       - name: Install and build webapp
         working-directory: ./webapp
         run: |
-          # Prefer reproducible install; fall back when lockfile missing.
-          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run build
 
       - name: Run CSP check
