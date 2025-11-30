@@ -19,6 +19,15 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Build smart contracts (compile artifacts)
+        working-directory: ./contracts
+        run: |
+          npm ci --no-audit --no-fund
+          npx hardhat compile --show-stack-traces
+          # Copy artifacts into webapp build area so frontend imports resolve
+          chmod +x ./../scripts/sync-artifacts.sh || true
+          ./../scripts/sync-artifacts.sh
+
       - name: Install and build webapp
         working-directory: ./webapp
         run: |

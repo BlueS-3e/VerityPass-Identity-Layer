@@ -30,6 +30,15 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
 
+      - name: Build smart contracts (compile artifacts)
+        # Run contract compile to ensure artifacts are available for release packaging
+        working-directory: ./contracts
+        run: |
+          npm ci --no-audit --no-fund
+          npx hardhat compile --show-stack-traces
+          chmod +x ./../scripts/sync-artifacts.sh || true
+          ./../scripts/sync-artifacts.sh
+
       - name: Run CSP check
         run: |
           python3 ./scripts/check_csp.py webapp/dist
