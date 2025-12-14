@@ -94,3 +94,10 @@ Functions (simulation):
 - Add EIP-712 structured signatures to allow user-submitted attestations
 - Add merkle-root based batch attestation publication for gas efficiency
 - Add zk proofs for private attestations and proof-of-income
+
+## deploy and test smart contract on testnet
+ cd contracts
+ set -o allexport; source .env; set +o allexport
+ export DEPLOYER_PRIVATE_KEY="$PRIVATE_KEY"
+ export SEPOLIA_RPC_URL="${SEPOLIA_RPC:-$RPC_URL}"
+ npx hardhat run --network sepolia scripts/deploy.js

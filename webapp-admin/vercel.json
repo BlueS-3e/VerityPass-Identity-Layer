@@ -1,0 +1,48 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "env": {
+    "VITE_NETWORK": "@vite_network",
+    "VITE_RPC_URL_MAINNET": "@vite_rpc_url_mainnet",
+    "VITE_RPC_URL_SEPOLIA": "@vite_rpc_url_sepolia",
+    "VITE_LAUNCHPAD_ADDRESS": "@vite_launchpad_address",
+    "VITE_LAUNCHPAD_ADDRESS_SEPOLIA": "@vite_launchpad_address_sepolia",
+    "VITE_API_BASE": "@vite_api_base",
+    "VITE_CHAIN_ID": "@vite_chain_id",
+    "VITE_SENTRY_DSN": "@vite_sentry_dsn"
+  },
+  "headers": [
+    {
+      "source": "/(.*)\\.(js|css|woff2?)$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

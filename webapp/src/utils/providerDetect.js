@@ -289,7 +289,17 @@ export async function switchNetwork(provider, chainId) {
     throw new Error('Provider does not support network switching');
   }
   
-  const hexChainId = `0x${chainId.toString(16)}`;
+  // Detect if this is Phantom wallet
+  const isPhantom = provider.isPhantom === true;
+  
+  // Handle both numeric and hex chain IDs
+  let hexChainId;
+  if (typeof chainId === 'string' && chainId.startsWith('0x')) {
+    hexChainId = chainId;
+  } else {
+    const numId = typeof chainId === 'string' ? parseInt(chainId, 10) : chainId;
+    hexChainId = `0x${numId.toString(16)}`;
+  }
   
   try {
     await provider.request({
@@ -297,9 +307,29 @@ export async function switchNetwork(provider, chainId) {
       params: [{ chainId: hexChainId }],
     });
   } catch (switchError) {
+    // 4902 = Chain not added to wallet
     if (switchError.code === 4902) {
-      await addNetwork(provider, chainId);
-    } else {
+      // Convert back to numeric for addNetwork if needed
+      const numId = typeof chainId === 'string' ? (chainId.startsWith('0x') ? parseInt(chainId, 16) : parseInt(chainId, 10)) : chainId;
+      await addNetwork(provider, numId);
+    } 
+    // -32002 = Request already pending (ignore)
+    else if (switchError.code === -32002) {
+      // Request already pending, ignore
+      return;
+    }
+    // Phantom returns "unsupported network" - it has very limited EVM support
+    else if (isPhantom && (switchError.message?.includes('unsupported') || switchError.message?.includes('Unsupported'))) {
+      throw new Error(`Phantom Wallet has limited EVM support and does not support this network. Please use MetaMask, Coinbase Wallet, or another EVM-compatible wallet.`);
+    }
+    // Some wallets don't support switching at all
+    else if (switchError.message?.includes('not supported')) {
+      throw new Error(`This wallet does not support automatic network switching. Please switch to ${hexChainId} manually.`);
+    }
+    else if (switchError.message?.includes('not connected') || switchError.message?.includes('requested chain')) {
+      throw new Error(`Wallet is not connected to the requested chain. Please switch to chain ${hexChainId} manually.`);
+    }
+    else {
       throw switchError;
     }
   }
@@ -336,12 +366,33 @@ export function getNetworkConfig(chainId) {
       rpcUrls: ['https://bsc-dataseed.binance.org/'],
       blockExplorerUrls: ['https://bscscan.com']
     },
+    97: {
+      chainId: '0x61',
+      chainName: 'BNB Smart Chain Testnet',
+      nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
+      rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
+      blockExplorerUrls: ['https://testnet.bscscan.com']
+    },
     137: {
       chainId: '0x89',
       chainName: 'Polygon Mainnet',
       nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
       rpcUrls: ['https://polygon-rpc.com/'],
       blockExplorerUrls: ['https://polygonscan.com']
+    },
+    80001: {
+      chainId: '0x13881',
+      chainName: 'Polygon Mumbai Testnet',
+      nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+      rpcUrls: ['https://rpc-mumbai.maticvigil.com/'],
+      blockExplorerUrls: ['https://mumbai.polygonscan.com']
+    },
+    11155111: {
+      chainId: '0xaa36a7',
+      chainName: 'Ethereum Sepolia Testnet',
+      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+      rpcUrls: ['https://sepolia.infura.io/v3/'],
+      blockExplorerUrls: ['https://sepolia.etherscan.io']
     },
     42161: {
       chainId: '0xA4B1',
@@ -378,6 +429,14 @@ export async function preloadWalletConnect() {
     // some CJS/browser shims reference `module`, `process`, or `Buffer`; provide minimal shims
     if (typeof window.module === 'undefined') window.module = { exports: {} };
     if (typeof window.process === 'undefined') window.process = { env: {} };
+    
+    // Provide minimal stream polyfill for readable-stream
+    if (typeof window.process?.version === 'undefined') {
+      try {
+        window.process.version = '14.0.0';
+      } catch (e) {}
+    }
+    
     try {
       // load a browser-compatible Buffer implementation if available
       if (typeof window.Buffer === 'undefined') {
@@ -393,7 +452,9 @@ export async function preloadWalletConnect() {
     _wcModule = mod;
     return _wcModule;
   } catch (e) {
-    console.warn('preloadWalletConnect failed:', e);
+    // Silently fail - WalletConnect preload is non-critical and will be attempted again when needed
+    console.debug('preloadWalletConnect: not available in this environment');
+    _wcModule = null;
     return null;
   }
 }
@@ -509,7 +570,10 @@ export async function connectWallet(providerOrEntry, options = {}) {
       provider.request({ method: 'eth_chainId', params: [] })
     ]);
 
-    return { accounts, chainId, provider };
+    // Normalize chainId to numeric format for consistency
+    const numericChainId = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
+
+    return { accounts, chainId: numericChainId, provider };
   } catch (error) {
     console.error('Wallet connection failed:', error);
     throw error;

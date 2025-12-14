@@ -1,22 +1,46 @@
 // Network and contract config. Update with deployed addresses when available.
 export const NETWORK_CONFIG = {
-  // BSC Testnet (97)
-  97: {
-    name: 'BSC Testnet',
-    chainIdHex: '0x61',
+  // Ethereum Mainnet (1) - Phantom supports this
+  1: {
+    name: 'Ethereum Mainnet',
+    chainId: 1,
+    chainIdHex: '0x1',
     attestationRegistry: '' // set to deployed address when available
   },
-  // BSC Mainnet (56) - aka BNB Chain
+  // Polygon Mainnet (137) - Phantom supports this
+  137: {
+    name: 'Polygon Mainnet',
+    chainId: 137,
+    chainIdHex: '0x89',
+    attestationRegistry: '' // set to deployed address when available
+  },
+  // BSC Mainnet (56) - aka BNB Chain (Phantom may have limited support)
   56: {
-    name: 'BSC Mainnet',
+    name: 'BNB Chain Mainnet',
+    chainId: 56,
     chainIdHex: '0x38',
     attestationRegistry: '' // set to deployed address when available
   },
-  // Ethereum Goerli / Sepolia (example)
-  5: {
-    name: 'Goerli',
-    chainIdHex: '0x5',
-    attestationRegistry: ''
+  // BSC Testnet (97) - for testing
+  97: {
+    name: 'BSC Testnet',
+    chainId: 97,
+    chainIdHex: '0x61',
+    attestationRegistry: '' // set to deployed address when available
+  },
+  // Ethereum Sepolia (11155111) - for testing
+  11155111: {
+    name: 'Ethereum Sepolia',
+    chainId: 11155111,
+    chainIdHex: '0xaa36a7',
+    attestationRegistry: '' // set to deployed address when available
+  },
+  // Polygon Mumbai (80001) - for testing
+  80001: {
+    name: 'Polygon Mumbai',
+    chainId: 80001,
+    chainIdHex: '0x13881',
+    attestationRegistry: '' // set to deployed address when available
   }
 };
 

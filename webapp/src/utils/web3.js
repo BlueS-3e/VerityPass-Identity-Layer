@@ -10,7 +10,7 @@ import { getEthersProvider } from './ethersProvider';
 import apiClient from './apiClient';
 import RealMintLaunchpadABI from "../../build/contracts/RealMintLaunchpad.json";
 import { API_BASE } from "../config.js";
-import { listInjectedProviders } from './providerDetect';
+import { listInjectedProviders, getNetworkConfig } from './providerDetect';
 
 // Network defaults (BSC / BNB Chain)
 const BSC = {
@@ -72,7 +72,19 @@ export function getProvider() {
       // Choose fallback RPC from env or default to configured chain based on runtime selection
       const envRpc = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_RPC_URL) || '';
       const selectedChain = _getRuntimeSelectedChainId();
-      const fallbackRpc = envRpc || (selectedChain === 56 ? BSC.mainnet.rpcUrls[0] : BSC.testnet.rpcUrls[0]);
+      
+      // Get RPC for the selected chain from network config, with fallback to BSC testnet
+      let fallbackRpc;
+      const networkConfig = getNetworkConfig(selectedChain);
+      if (envRpc) {
+        fallbackRpc = envRpc;
+      } else if (networkConfig && Array.isArray(networkConfig.rpcUrls) && networkConfig.rpcUrls.length) {
+        fallbackRpc = networkConfig.rpcUrls[0];
+      } else {
+        // Ultimate fallback to BSC testnet if no config found
+        fallbackRpc = BSC.testnet.rpcUrls[0];
+      }
+      
       _provider = new JsonRpcProvider(fallbackRpc);
     }
   }

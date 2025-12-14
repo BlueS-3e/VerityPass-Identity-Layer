@@ -35,6 +35,13 @@ if REDIS_URL:
     try:
         import redis
         _redis = redis.from_url(REDIS_URL)
+        # verify connectivity early: if Redis is not reachable, disable it and
+        # fall back to in-memory/session cookie behavior for local dev.
+        try:
+            _redis.ping()
+        except Exception as _e:
+            print(f"Warning: Redis at {REDIS_URL} is not reachable: {_e}; disabling Redis usage for this process")
+            _redis = None
     except Exception:
         _redis = None
 
@@ -141,11 +148,50 @@ def set_security_headers(response):
     if custom_csp:
         response.headers.setdefault('Content-Security-Policy', custom_csp)
     else:
-        # Minimal policy which blocks most cross-origin sources; adapt per app's needs
-        response.headers.setdefault('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';")
+        # Build a conservative default CSP. In development we allow an additional
+        # `unsafe-eval` token for trusted localhost origins because tools like
+        # Vite use `eval()` for dev sourcemaps and HMR which would otherwise be
+        # blocked by strict CSP. Do NOT enable `unsafe-eval` in production.
+        try:
+            origin = request.headers.get('Origin') or ''
+        except Exception:
+            origin = ''
+        script_src = ["'self'", "'unsafe-inline'"]
+        # Allow eval in dev only for localhost origins
+        if (not _is_production) and (origin.startswith('http://localhost:') or origin.startswith('http://127.0.0.1:')):
+            script_src.append("'unsafe-eval'")
+        csp = "default-src 'self'; img-src 'self' data:; script-src " + ' '.join(script_src) + "; style-src 'self' 'unsafe-inline';"
+        response.headers.setdefault('Content-Security-Policy', csp)
     # Only set Strict-Transport-Security when cookies are marked secure (i.e. TLS)
     if app.config.get('SESSION_COOKIE_SECURE'):
         response.headers.setdefault('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+    # Development-friendly CORS echo fallback: if the request Origin is one of the
+    # configured `allowed_origins` (or a localhost variant) and Flask-CORS did not
+    # add an `Access-Control-Allow-Origin` header for some reason, echo it here.
+    try:
+        origin_hdr = request.headers.get('Origin')
+    except Exception:
+        origin_hdr = None
+    try:
+        if origin_hdr and not response.headers.get('Access-Control-Allow-Origin'):
+            # `allowed_origins` is defined later in the module but available at
+            # runtime when this function is executed.
+            try:
+                ok = False
+                if origin_hdr in (allowed_origins or []):
+                    ok = True
+                # Also accept common localhost patterns when allowed_origins is empty
+                if not ok and (origin_hdr.startswith('http://localhost:') or origin_hdr.startswith('http://127.0.0.1:')):
+                    ok = True
+                if ok:
+                    response.headers.setdefault('Access-Control-Allow-Origin', origin_hdr)
+                    response.headers.setdefault('Access-Control-Allow-Credentials', 'true')
+                    response.headers.setdefault('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                    response.headers.setdefault('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            except Exception:
+                pass
+    except Exception:
+        pass
     return response
 
 # CORS: allow origins from ALLOWED_ORIGINS env or sane localhost defaults.
@@ -254,9 +300,8 @@ except Exception:
 # Initialize limiter if available (attach after app exists)
 if _limiter_available:
     # Initialize limiter; prefer Redis backend when REDIS_URL is set.
-    limiter_storage = None
-    if REDIS_URL:
-        limiter_storage = REDIS_URL
+    # Use Redis storage only when a Redis client was successfully created
+    limiter_storage = REDIS_URL if (_redis is not None) else None
     try:
         if limiter_storage:
             limiter = Limiter(key_func=get_remote_address, storage_uri=limiter_storage)
@@ -1034,6 +1079,23 @@ def frontend_config():
     }), 200
 
 
+@app.route('/api/debug/env', methods=['GET'])
+def debug_env():
+    """Development-only debug endpoint to inspect a few runtime env vars.
+
+    Returns JSON with `ADMIN_DEV_ALLOW_ANY`, `FLASK_ENV` and whether the app
+    thinks it's running in production. Disabled in production.
+    """
+    if _is_production:
+        return jsonify({'status': 'disabled_in_production'}), 403
+    return jsonify({
+        'ADMIN_DEV_ALLOW_ANY': os.getenv('ADMIN_DEV_ALLOW_ANY'),
+        'FLASK_ENV': os.getenv('FLASK_ENV'),
+        '_is_production': _is_production,
+        'ALLOWED_ORIGINS': allowed_origins
+    }), 200
+
+
 @app.route('/api/identity/bound', methods=['GET'])
 def identity_bound():
     """Return whether the current session has an identity bound via signature."""
@@ -1779,23 +1841,40 @@ def admin_siwe():
     data = request.json or {}
     message = data.get('message')
     signature = data.get('signature')
-    if not message or not signature:
+    # Development override: when ADMIN_DEV_ALLOW_ANY is enabled in dev, allow
+    # a caller to supply `dev_addr` to bypass signature verification. This is
+    # strictly for local development and tests and is disabled in production.
+    dev_override = False
+    try:
+        if (not _is_production) and (os.getenv('ADMIN_DEV_ALLOW_ANY', 'false').lower() in ('1', 'true', 'yes')):
+            dev_addr = data.get('dev_addr')
+            if dev_addr:
+                try:
+                    recovered = to_checksum_address(dev_addr)
+                    dev_override = True
+                except Exception:
+                    dev_override = False
+    except Exception:
+        dev_override = False
+
+    if not dev_override and (not message or not signature):
         return jsonify({'status': 'missing_fields'}), 400
 
-    # Recover the signer from the signed message
-    try:
-        recovered = Account.recover_message(encode_defunct(text=message), signature=signature)
-        recovered = to_checksum_address(recovered)
-    except Exception as e:
-        # log invalid signature attempt
+    # Recover the signer from the signed message unless a dev override is used
+    if not dev_override:
         try:
-            msg = f"SIWE invalid_signature from {request.remote_addr}: {str(e)[:200]}"
-            print(msg)
-            if SENTRY_DSN:
-                sentry_sdk.capture_message(msg)
-        except Exception:
-            pass
-        return jsonify({'status': 'invalid_signature', 'error': str(e)}), 400
+            recovered = Account.recover_message(encode_defunct(text=message), signature=signature)
+            recovered = to_checksum_address(recovered)
+        except Exception as e:
+            # log invalid signature attempt
+            try:
+                msg = f"SIWE invalid_signature from {request.remote_addr}: {str(e)[:200]}"
+                print(msg)
+                if SENTRY_DSN:
+                    sentry_sdk.capture_message(msg)
+            except Exception:
+                pass
+            return jsonify({'status': 'invalid_signature', 'error': str(e)}), 400
 
     # Try to extract address from the SIWE message (second line typically contains the address)
     addr_match = re.search(r'0x[a-fA-F0-9]{40}', message)

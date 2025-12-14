@@ -59,20 +59,20 @@ export default function Home() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <PrimaryCTA
-                to="/attestation"
+                to="/connect"
                 hideWhenSelectedFlow={['launchpad']}
                 onClick={(e) => { 
                   e.preventDefault(); 
                   clearSelectedFlow(); 
                   setSelectedFlow('attestation'); 
-                  navigate('/attestation'); 
+                  navigate('/connect'); 
                 }}
                 className="group inline-flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-teal-400 to-blue-500 text-gray-900 font-bold text-lg shadow-2xl hover:shadow-teal-500/25 hover:scale-105 transition-all duration-300"
               >
                 <div className="text-2xl">📝</div>
                 <div className="text-left">
-                  <div>Create Attestation</div>
-                  <div className="text-sm font-normal opacity-90">Sign & verify instantly</div>
+                  <div>Get Started</div>
+                  <div className="text-sm font-normal opacity-90">Connect wallet & verify income</div>
                 </div>
                 <div className="ml-4 text-2xl group-hover:translate-x-1 transition-transform">→</div>
               </PrimaryCTA>
