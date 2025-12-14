@@ -1,0 +1,9 @@
+node_modules
+.git
+.env.local
+.env.*.local
+*.test.js
+*.test.jsx
+__tests__
+.pytest_cache
+.venv

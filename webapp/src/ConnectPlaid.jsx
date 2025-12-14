@@ -6,15 +6,32 @@ import ProviderPicker from './components/ProviderPicker';
 import WalletConnectModal from './components/WalletConnectModal';
 import { createWalletConnectSession } from './utils/providerDetect';
 import { useToast } from './components/Toast';
+import { NETWORK_CONFIG, DEFAULT_CHAIN_ID } from './config';
 import { 
   listAvailableProviders, 
   selectBestProvider, 
   connectWallet as modernConnectWallet,
+  switchNetwork,
   setupProviderListeners,
   preloadWalletConnect
 } from './utils/providerDetect';
 import { persistPreferredProvider, loadPreferredProvider } from './utils/providerDetect';
 import apiClient from './utils/apiClient';
+import {
+  TX_STATE,
+  saveTxState,
+  getTxState,
+  clearTxState,
+  saveSigningState,
+  getSigningState,
+  clearSigningState
+} from './utils/txStateManager';
+import {
+  saveWalletSession,
+  getWalletSession,
+  clearWalletSession,
+  extendWalletSession
+} from './utils/walletSessionManager';
 
 function StepIndicator({ currentStep, steps }) {
   return (
@@ -208,12 +225,17 @@ export default function ConnectPlaid() {
           }
           try {
             const enabled = await provider.enable();
-            setOwner(enabled[0] || null);
+            const account = enabled[0] || null;
+            setOwner(account);
             // attach the live provider to the selected wallet so signing and listeners work
             setSelectedWallet(prev => ({ ...(prev || {}), provider }));
             setWcProvider(provider);
             setCurrentStep(1);
             setWcStatus('connected');
+            
+            // Save wallet session for Attestation page
+            saveWalletSession(selectedWallet, account, DEFAULT_CHAIN_ID);
+            
             addToast('🎉 Wallet connected successfully', { type: 'success' });
           } catch (err) {
             console.error('enable after connect failed', err);
@@ -263,9 +285,43 @@ export default function ConnectPlaid() {
     setConnecting(true);
     try {
       const connection = await modernConnectWallet(selectedWallet.provider);
+      
+      const expectedChain = NETWORK_CONFIG[DEFAULT_CHAIN_ID];
+      let networkSwitched = false;
+      
+      if (expectedChain && connection.chainId !== expectedChain.chainId) {
+        try {
+          await switchNetwork(selectedWallet.provider, expectedChain.chainId);
+          networkSwitched = true;
+          addToast(`✅ Switched to ${expectedChain.name}`, { type: 'success' });
+        } catch (switchError) {
+          console.warn('Network switch failed:', switchError);
+          const wrongNetwork = NETWORK_CONFIG[connection.chainId];
+          const wrongNetworkName = wrongNetwork?.name || `Chain ${connection.chainId}`;
+          addToast(
+            `⚠️ Connected to ${wrongNetworkName}. Please switch to ${expectedChain.name} manually in your wallet.`,
+            { type: 'warning' }
+          );
+          setOwner(connection.accounts[0]);
+          
+          // Save wallet session even if network switch failed
+          saveWalletSession(selectedWallet, connection.accounts[0], connection.chainId);
+          
+          setCurrentStep(1);
+          return;
+        }
+      }
+      
       setOwner(connection.accounts[0]);
       setCurrentStep(1);
-      addToast('🎉 Wallet connected successfully', { type: 'success' });
+      
+      // Save wallet session for Attestation page
+      saveWalletSession(selectedWallet, connection.accounts[0], expectedChain?.chainId || connection.chainId);
+      
+      // Only show success if on correct network or successfully switched
+      if (!expectedChain || connection.chainId === expectedChain.chainId || networkSwitched) {
+        addToast('🎉 Wallet connected successfully', { type: 'success' });
+      }
     } catch (error) {
       console.error('Wallet connection failed:', error);
       addToast(`❌ ${error?.message || 'Wallet connection failed'}`, { type: 'error' });
@@ -362,12 +418,35 @@ export default function ConnectPlaid() {
     if (!attestationStatus?.id) return;
 
     try {
+      // Show loading state
+      addToast('⏳ Processing draft claim...', { type: 'info' });
+      setSigning(true);
+      
+      // Save transaction state for recovery on refresh
+      saveTxState(TX_STATE.PUBLISHING, {
+        draftId: attestationStatus.id,
+        account: account,
+        chainId: network
+      });
+      
+      // Call claim endpoint
       const data = await apiClient.apiPost(`/api/attestations/${attestationStatus.id}/claim`, {});
 
+      // Give backend time to process before redirecting
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       addToast('🎉 Draft claimed — opening attestation', { type: 'success' });
-      window.location.href = `/attestation?draft_id=${attestationStatus.id}&autostart=1`;
+      
+      // Clear transaction state on success
+      clearTxState();
+      
+      // Redirect with both draft_id and network context
+      const networkParam = network ? `&network=${network}` : '';
+      window.location.href = `/attestation?draft_id=${attestationStatus.id}&autostart=1${networkParam}`;
     } catch (error) {
       console.error('Claim error:', error);
+      setSigning(false);
+      saveTxState(TX_STATE.FAILED, { error: error?.message, draftId: attestationStatus?.id });
       addToast(`❌ ${error?.message || 'Claim request failed'}`, { type: 'error' });
     }
   };

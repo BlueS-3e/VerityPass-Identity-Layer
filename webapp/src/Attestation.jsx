@@ -4,20 +4,14 @@ import { NETWORK_CONFIG, DEFAULT_CHAIN_ID } from './config';
 import { getSelectedFlow, setSelectedFlow } from './flowGate';
 import HeroGraphic from './components/HeroGraphic';
 import NetworkBanner from './components/NetworkBanner';
-// ConfigWarning removed: not used in this component
-import ProviderPicker from './components/ProviderPicker';
-import WalletConnectModal from './components/WalletConnectModal';
-import { createWalletConnectSession } from './utils/providerDetect';
 import { useToast } from './components/Toast';
 import { buildAttestationTypedData, signAttestationTypedData } from './utils/eip712';
 import { 
-  listAvailableProviders, 
-  selectBestProvider, 
+  listAvailableProviders,
   connectWallet as modernConnectWallet,
   switchNetwork,
   setupProviderListeners 
 } from './utils/providerDetect';
-import { persistPreferredProvider, loadPreferredProvider, preloadWalletConnect } from './utils/providerDetect';
 import { isValidCID, normalizeCid } from './utils/ipfs';
 // API_BASE not used in this component; resolved via apiClient when needed
 import apiClient from './utils/apiClient';
@@ -31,6 +25,27 @@ import {
   getBalance,
 } from './utils/web3';
 import assessCredit from './utils/creditApi';
+import {
+  TX_STATE,
+  saveTxState,
+  getTxState,
+  clearTxState,
+  savePendingTx,
+  getPendingTx,
+  clearPendingTx,
+  saveSigningState,
+  getSigningState,
+  clearSigningState,
+  hasOngoingTransaction,
+  getSigningRecoveryContext,
+  getPublishingRecoveryContext
+} from './utils/txStateManager';
+import {
+  getWalletSession,
+  extendWalletSession,
+  clearWalletSession,
+  hasActiveWalletSession
+} from './utils/walletSessionManager';
 
 function FeatureCard({ icon, title, description, gradient }) {
   return (
@@ -89,52 +104,38 @@ export default function Attestation() {
   const [analyzingCredit, setAnalyzingCredit] = useState(false);
   const [bankDataSource, setBankDataSource] = useState('unknown');
   const [identityBound, setIdentityBound] = useState(false);
-  const [showProviderPicker, setShowProviderPicker] = useState(false);
-  const [wcModalOpen, setWcModalOpen] = useState(false);
-  const [wcUri, setWcUri] = useState(null);
-  const [wcProvider, setWcProvider] = useState(null);
-  const [wcStatus, setWcStatus] = useState('pending');
-  const wcTimeoutRef = useRef(null);
 
-  const clearWcTimeout = () => { if (wcTimeoutRef.current) { clearTimeout(wcTimeoutRef.current); wcTimeoutRef.current = null; } };
-
-  // Modern wallet detection
+  // Detect available wallets
   useEffect(() => {
     const wallets = listAvailableProviders() || [];
     setAvailableWallets(wallets);
-
-    if (wallets.length > 1 && !selectedWallet) {
-      setTimeout(() => setShowProviderPicker(true), 250);
-    }
-
-    // restore persisted selection if present
-    try {
-      const persisted = loadPreferredProvider();
-      if (persisted) {
-        const found = wallets.find(w => w.id === persisted.id || w.name === persisted.name);
-        if (found) {
-          setSelectedWallet(found);
-          return;
-        }
-      }
-    } catch (e) {}
-
-    if (wallets.length > 0) {
-      selectBestProvider().then(wallet => {
-        if (!wallet) return setSelectedWallet(wallets[0]);
-        const found = wallets.find(w => w.id === wallet.id || w.name === wallet.name);
-        setSelectedWallet(found || wallets[0]);
-      }).catch(() => { 
-        if (wallets.length) setSelectedWallet(wallets[0]); 
-      });
-    }
   }, []);
 
-  const handleSelectWallet = (wallet) => {
-    setSelectedWallet(wallet);
-    try { persistPreferredProvider(wallet); } catch (e) {}
-    try { if (wallet?.id === 'walletconnect') preloadWalletConnect(); } catch (e) {}
-  };
+  // Restore wallet session if available (from ConnectPlaid)
+  // If no session exists, redirect to ConnectPlaid
+  useEffect(() => {
+    const session = getWalletSession();
+    
+    // No session = user hasn't connected wallet on ConnectPlaid
+    if (!session || !session.account) {
+      console.debug('[Session] No wallet session found, redirecting to ConnectPlaid...');
+      addToast('⚠️ Please connect your wallet first', { type: 'warning' });
+      setTimeout(() => navigate('/connect'), 1500);
+      return;
+    }
+    
+    // Session exists - restore wallet automatically
+    const sessionWallet = availableWallets.find(w => 
+      w.id === session.walletId || w.name === session.walletName
+    );
+    
+    if (sessionWallet && !selectedWallet) {
+      console.debug('[Session] Auto-restoring wallet from ConnectPlaid:', sessionWallet.name);
+      sessionStorage.setItem('realmint:auto_connect', 'true');
+      setSelectedWallet(sessionWallet);
+      extendWalletSession();
+    }
+  }, [availableWallets, navigate, addToast, selectedWallet]);
 
   // Network and contract detection
   useEffect(() => {
@@ -206,18 +207,80 @@ export default function Attestation() {
     } catch (e) {}
   }, [navigate]);
 
+  // Recovery from refresh during signing or publishing
+  useEffect(() => {
+    const signingRecovery = getSigningRecoveryContext();
+    const publishingRecovery = getPublishingRecoveryContext();
+
+    if (signingRecovery) {
+      console.debug('[Recovery] Resuming from signing state', signingRecovery);
+      addToast('📋 Resuming from previous signing session...', { type: 'info' });
+      setStatus('⏳ Resuming signature request...');
+      setBusy(true);
+    }
+
+    if (publishingRecovery) {
+      console.debug('[Recovery] Resuming from publishing state', publishingRecovery);
+      addToast('⏳ Checking publication status...', { type: 'info' });
+      setStatus(`Checking transaction ${publishingRecovery.txHash.slice(0, 8)}...`);
+      setBusy(true);
+      
+      // Poll for transaction receipt
+      (async () => {
+        try {
+          const receipt = await apiClient.apiGet(
+            `/api/transactions/${publishingRecovery.txHash}/receipt`
+          ).catch(() => null);
+          
+          if (receipt && receipt.blockNumber) {
+            clearPendingTx();
+            setStatus(`✅ Transaction confirmed in block ${receipt.blockNumber}`);
+            addToast('🎉 Publication confirmed!', { type: 'success' });
+            setBusy(false);
+            setTimeout(() => setStatus(''), 3000);
+          } else {
+            setStatus('⏳ Still waiting for confirmation...');
+            addToast('Still mining transaction. Watching for confirmation...', { type: 'info' });
+          }
+        } catch (e) {
+          console.debug('Receipt check failed:', e);
+          setStatus('⚠️ Could not verify transaction status. Check etherscan.');
+        }
+      })();
+    }
+  }, [addToast]);
+
   // Draft autostart/prefill
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const draftId = params.get('draft_id');
     const autostart = params.get('autostart');
+    const networkParam = params.get('network');
+    
+    // Enforce network from ConnectPlaid if provided
+    if (networkParam) {
+      const numericNetworkId = typeof networkParam === 'string' ? parseInt(networkParam, 16) : networkParam;
+      // Will use this when connecting wallet
+      setNetwork(numericNetworkId);
+    }
     
     if (!draftId) return;
 
-    const fetchDraft = async () => {
+    const fetchDraft = async (retryCount = 0, maxRetries = 3) => {
       try {
         const draft = await apiClient.apiGet(`/api/attestations/${draftId}`).catch(() => null);
-        if (!draft) return;
+        
+        // Retry if draft not found (race condition from claimDraft)
+        if (!draft) {
+          if (retryCount < maxRetries) {
+            console.debug(`Draft not found, retrying (${retryCount + 1}/${maxRetries})...`);
+            await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+            return fetchDraft(retryCount + 1, maxRetries);
+          }
+          console.warn('Draft not found after retries');
+          return;
+        }
+        
         setDraftInfo(draft);
         
         if (draft.schema_hash) setSchema(draft.schema_hash);
@@ -254,114 +317,102 @@ export default function Attestation() {
 
   const connectWallet = async () => {
     if (!selectedWallet) {
-      const wallets = listAvailableProviders() || [];
-      if (wallets.length === 0) {
-        addToast('No wallets detected. Please install an EVM wallet (MetaMask, Coinbase Wallet, etc.)', { type: 'error' });
-        return null;
-      }
-      const best = await selectBestProvider().catch(() => null);
-      const chosen = best ? (wallets.find(w => w.id === best.id || w.name === best.name) || wallets[0]) : wallets[0];
-      setSelectedWallet(chosen);
-    }
-
-    // If the chosen wallet is SDK-only (no provider instance), guide the user
-    if (!selectedWallet.provider) {
-      if (selectedWallet.installLink) {
-        try { window.open(selectedWallet.installLink, '_blank'); } catch (e) {}
-        addToast('🔗 Opening wallet install page', { type: 'info' });
-      } else {
-        addToast('🔍 Selected wallet has no direct provider. Please select an injected wallet or use WalletConnect.', { type: 'error' });
-        setShowProviderPicker(true);
-      }
+      console.warn('connectWallet called without selectedWallet');
       return null;
     }
 
-    // Special handling for WalletConnect: create a session and show an in-app QR modal
-    if (selectedWallet.id === 'walletconnect') {
-      try {
-        setWcStatus('pending');
-        const { provider, uri } = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
-        setWcProvider(provider);
-        setWcUri(uri);
-        setWcModalOpen(true);
-
-        const connector = provider.connector;
-        const onConnect = async (error, payload) => {
-          if (error) {
-            console.error('WalletConnect connect error', error);
-            setWcStatus('failed');
-            return;
-          }
-          try {
-            const enabled = await provider.enable();
-            const acct = enabled && enabled[0];
-            setAccount(acct || null);
-            // attach provider so later signing uses selectedWallet.provider
-            setSelectedWallet(prev => ({ ...(prev || {}), provider }));
-            setWcProvider(provider);
-            const chain = provider.chainId || DEFAULT_CHAIN_ID;
-            setNetwork(chain);
-            setWcStatus('connected');
-            addToast('Wallet connected successfully', { type: 'success' });
-          } catch (err) {
-            console.error('enable after connect failed', err);
-            setWcStatus('failed');
-            addToast('Failed to enable wallet after connect', { type: 'error' });
-          } finally {
-            if (connector && connector.off) connector.off('connect', onConnect);
-            setTimeout(() => setWcModalOpen(false), 600);
-          }
-        };
-
-        const onDisconnect = (err) => { console.debug('wc disconnect', err); setWcStatus('failed'); setWcModalOpen(false); };
-        if (connector && connector.on) {
-          connector.on('connect', onConnect);
-          connector.on('disconnect', onDisconnect);
-          connector.on('error', (err) => { console.debug('wc error', err); setWcStatus('failed'); });
-        }
-
-        // safety timeout
-        wcTimeoutRef.current = setTimeout(() => {
-          if (wcStatus === 'pending') {
-            try { if (connector && typeof connector.killSession === 'function') connector.killSession(); } catch (e) {}
-            setWcStatus('failed');
-            setWcModalOpen(false);
-            addToast('❌ WalletConnect timeout, please try again', { type: 'error' });
-          }
-        }, 2 * 60 * 1000);
-
-        return null;
-      } catch (e) {
-        console.error('WalletConnect session creation failed', e);
-        setWcStatus('failed');
-        addToast('WalletConnect session failed', { type: 'error' });
-        return null;
-      }
+    // If the wallet has no provider instance, it's not ready
+    if (!selectedWallet.provider) {
+      addToast('Selected wallet has no provider. Please reconnect on the Connect page.', { type: 'error' });
+      return null;
     }
 
     try {
       const connection = await modernConnectWallet(selectedWallet.provider);
 
-      const expectedChain = NETWORK_CONFIG[DEFAULT_CHAIN_ID];
+      // Use network from URL param (set by ConnectPlaid) or fall back to DEFAULT_CHAIN_ID
+      const targetChainId = network || DEFAULT_CHAIN_ID;
+      const expectedChain = NETWORK_CONFIG[targetChainId];
+      let networkSwitched = false;
+      
       if (expectedChain && connection.chainId !== expectedChain.chainId) {
         try {
           await switchNetwork(selectedWallet.provider, expectedChain.chainId);
-        } catch (e) {
-          addToast('Unable to auto-switch network. Please switch your wallet network manually.', { type: 'warning' });
+          networkSwitched = true;
+          addToast(`✅ Switched to ${expectedChain.name}`, { type: 'success' });
+        } catch (switchError) {
+          console.warn('Network switch failed:', switchError);
+          const errorMsg = switchError?.message || String(switchError);
+          
+          // Check if it's a Phantom limitation
+          if (errorMsg.includes('Phantom') || errorMsg.includes('limited EVM')) {
+            addToast(
+              `❌ ${selectedWallet.name} doesn't support this network. Please use MetaMask, Coinbase Wallet, or another EVM wallet.`,
+              { type: 'error' }
+            );
+            return null;
+          }
+          
+          const wrongNetwork = NETWORK_CONFIG[connection.chainId];
+          const wrongNetworkName = wrongNetwork?.name || `Chain ${connection.chainId}`;
+          
+          // Provide helpful error message based on wallet capabilities
+          if (errorMsg.includes('does not support') || errorMsg.includes('not connected')) {
+            addToast(
+              `⚠️ ${selectedWallet.name} is connected to ${wrongNetworkName}. Please switch to ${expectedChain.name} manually in your wallet.`,
+              { type: 'warning' }
+            );
+          } else {
+            addToast(
+              `⚠️ Please switch to ${expectedChain.name} in your wallet to continue.`,
+              { type: 'warning' }
+            );
+          }
+          
+          // Still set account/network so user can manually switch
+          setAccount(connection.accounts[0]);
+          setNetwork(connection.chainId);
+          return connection.accounts[0];
         }
       }
 
       setAccount(connection.accounts[0]);
-      setNetwork(connection.chainId);
-      addToast('Wallet connected successfully', { type: 'success' });
+      setNetwork(networkSwitched ? expectedChain.chainId : connection.chainId);
+      
+      // Extend wallet session to keep user logged in across pages
+      extendWalletSession();
+      
+      // Only show success if on correct network or successfully switched
+      if (!expectedChain || connection.chainId === expectedChain.chainId || networkSwitched) {
+        addToast('🎉 Wallet connected successfully', { type: 'success' });
+      }
 
       return connection.accounts[0];
     } catch (error) {
       console.error('Wallet connection failed:', error);
-      addToast(error?.message || 'Wallet connection failed', { type: 'error' });
+      const errorMsg = error?.message || String(error);
+      if (/user rejected/i.test(errorMsg) || /user denied/i.test(errorMsg)) {
+        addToast('❌ Connection cancelled by user', { type: 'info' });
+      } else {
+        addToast(`❌ ${errorMsg}`, { type: 'error' });
+      }
       return null;
     }
   };
+
+  // Auto-connect wallet if session valid and flag set
+  useEffect(() => {
+    if (!selectedWallet) return;
+    
+    const shouldAutoConnect = sessionStorage.getItem('realmint:auto_connect');
+    if (!shouldAutoConnect) return;
+    
+    // Clear flag so we don't auto-connect again
+    sessionStorage.removeItem('realmint:auto_connect');
+    
+    console.debug('[Session] Auto-connecting wallet from session...');
+    connectWallet();
+  }, [selectedWallet]);
 
   useEffect(() => {
     let mounted = true;
@@ -414,11 +465,15 @@ export default function Attestation() {
 
     setBusy(true);
     setStatus('Preparing attestation...');
+    
+    // Save signing state for recovery if refresh happens
+    saveSigningState('awaiting_user', { draftId: draftInfo?.id });
 
     try {
       const acct = account || await connectWallet();
       if (!acct) {
         addToast('Please connect a wallet before signing', { type: 'error' });
+        clearSigningState();
         setBusy(false);
         return;
       }
@@ -437,6 +492,8 @@ export default function Attestation() {
       });
 
       setStatus('Requesting signature...');
+      saveSigningState('signing_in_progress', { draftId: draftInfo?.id });
+      
       const signature = await signAttestationTypedData(typedData, selectedWallet.provider);
 
       setStatus('Pinning to IPFS...');
@@ -469,11 +526,15 @@ export default function Attestation() {
       setPin(result.pin);
       setCallPayload(result.call_payload);
       addToast(`📌 Attestation pinned: ${result.pin}`, { type: 'success' });
+      
+      // Clear signing state on success
+      clearSigningState();
     } catch (error) {
       const errorMsg = error?.message || String(error);
       setStatus(`Error: ${errorMsg}`);
       console.error('Sign and pin failed:', error);
       addToast(`❌ Error: ${errorMsg}`, { type: 'error' });
+      saveSigningState('failed', { error: errorMsg });
     } finally {
       setBusy(false);
     }
@@ -487,11 +548,15 @@ export default function Attestation() {
 
     setBusy(true);
     setStatus('Preparing for pin + publish...');
+    
+    // Save transaction state for recovery if refresh happens
+    saveTxState(TX_STATE.AWAITING_SIGNATURE, { draftId: draftInfo?.id });
 
     try {
       const acct = account || await connectWallet();
       if (!acct) {
         addToast('Please connect a wallet before signing/publishing', { type: 'error' });
+        clearTxState();
         setBusy(false);
         return;
       }
@@ -510,9 +575,13 @@ export default function Attestation() {
       });
 
       setStatus('Requesting signature...');
+      saveTxState(TX_STATE.SIGNING, { draftId: draftInfo?.id });
+      
       const signature = await signAttestationTypedData(typedData, selectedWallet.provider);
 
       setStatus('Publishing on-chain...');
+      saveTxState(TX_STATE.PUBLISHING, { draftId: draftInfo?.id, account: acct });
+      
       const normalizedCID = normalizeCid(dataCID);
       const payload = {
         issuer: acct,
@@ -532,19 +601,28 @@ export default function Attestation() {
       setCallPayload(pinResp.call_payload);
 
       if (tx) {
+        // Save pending transaction for recovery tracking
+        savePendingTx(tx.hash, { draftId: draftInfo?.id, account: acct, chainId: chosenChainId });
+        
         setStatus(`Transaction sent: ${tx.hash}`);
         addToast('📡 Transaction sent', { type: 'info' });
         await tx.wait?.();
+        
+        // Clear pending tx on confirmation
+        clearPendingTx();
         setStatus(`Transaction confirmed: ${tx.hash}`);
         addToast('✅ Transaction confirmed', { type: 'success' });
+        clearTxState();
       } else {
         setStatus('Pinned successfully (no on-chain publish)');
+        clearTxState();
       }
     } catch (error) {
       const errorMsg = error?.message || String(error);
       setStatus(`Error: ${errorMsg}`);
       console.error('Sign, pin and publish failed:', error);
       addToast(`❌ Error: ${errorMsg}`, { type: 'error' });
+      saveTxState(TX_STATE.FAILED, { error: errorMsg, draftId: draftInfo?.id });
     } finally {
       setBusy(false);
     }
@@ -666,73 +744,38 @@ export default function Attestation() {
               </div>
             </div>
 
-            {/* Wallet Selection */}
+            {/* Wallet Status (Read-only) */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                 <span>🔗</span>
-                Wallet Connection
+                Connected Wallet
               </h2>
               
-              <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                {availableWallets.map((wallet) => (
-                  <button
-                    key={wallet.id}
-                    onClick={() => handleSelectWallet(wallet)}
-                    className={`p-4 rounded-xl border transition-all ${
-                      selectedWallet?.id === wallet.id
-                        ? 'bg-indigo-500/20 border-indigo-400 text-white shadow-lg'
-                        : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {wallet.icon && (
-                        <img src={wallet.icon} alt="" className="w-6 h-6 rounded" />
-                      )}
-                      <span className="font-medium text-sm">{wallet.name}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Mobile compact summary + chooser */}
-              <div className="md:hidden mb-4">
-                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                      {selectedWallet?.icon ? (
-                        <img src={selectedWallet.icon} alt="" className="w-6 h-6" />
-                      ) : (
-                        <span>🔗</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-300">{selectedWallet?.name || 'No wallet selected'}</div>
-                      <div className="text-xs text-gray-400">{selectedWallet?.type || ''}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowProviderPicker(true)}
-                    className="px-3 py-2 bg-white/10 text-white rounded-lg text-sm"
-                  >
-                    Choose wallet…
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                {selectedWallet?.icon && (
+                  <img src={selectedWallet.icon} alt="" className="w-10 h-10 rounded" />
+                )}
                 <div className="flex-1">
-                  <div className="text-sm text-gray-400 mb-1">Connected Address</div>
-                  <div className="font-mono text-white text-sm">
-                    {account ? `${account.slice(0, 8)}...${account.slice(-6)}` : 'Not connected'}
+                  <div className="text-white font-semibold mb-1">
+                    {selectedWallet?.name || 'Loading...'}
+                  </div>
+                  <div className="font-mono text-gray-300 text-sm">
+                    {account ? `${account.slice(0, 10)}...${account.slice(-8)}` : 'Connecting...'}
                   </div>
                 </div>
-                <button
-                  onClick={connectWallet}
-                  disabled={!selectedWallet}
-                  className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-medium disabled:opacity-50 hover:shadow-lg transition-all"
+                <a
+                  href="/connect"
+                  className="px-4 py-2 bg-white/10 text-white rounded-lg text-sm hover:bg-white/20 transition-colors"
                 >
-                  {account ? '🔄 Reconnect' : '🔗 Connect'}
-                </button>
+                  Change Wallet
+                </a>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-200 text-sm">
+                  <span>💡</span>
+                  <span>Wallet connected from previous step. Ready to sign!</span>
+                </div>
               </div>
             </div>
 
@@ -743,22 +786,69 @@ export default function Attestation() {
                 Attestation Details
               </h2>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    🏷️ Schema
-                  </label>
-                  <input 
-                    value={schema} 
-                    onChange={e => setSchema(e.target.value)} 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-indigo-400 transition-colors"
-                    placeholder="income-proof-v1"
-                  />
+              {/* Guidance for users without draft */}
+              {!draftInfo && (
+                <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl mt-1">💡</span>
+                    <div>
+                      <div className="font-semibold text-blue-200 mb-2">No bank data linked yet?</div>
+                      <div className="text-blue-100 text-sm mb-3">
+                        Go back to ConnectPlaid to link your bank account. Your data will automatically appear here.
+                      </div>
+                      <a 
+                        href="/connect"
+                        className="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors text-sm"
+                      >
+                        ← Back to ConnectPlaid
+                      </a>
+                    </div>
+                  </div>
                 </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Only show schema if it's NOT from a draft, or if user wants to override */}
+                {!draftInfo?.schema_hash && (
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+                      <span>🏷️</span>
+                      Schema Type
+                      <span className="text-gray-500 text-xs">(optional)</span>
+                    </label>
+                    <input 
+                      value={schema} 
+                      onChange={e => setSchema(e.target.value)} 
+                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-indigo-400 transition-colors"
+                      placeholder="income-proof-v1"
+                    />
+                    <div className="text-gray-400 text-xs mt-2">
+                      Describes the type of data being attested (e.g., income verification, credit score)
+                    </div>
+                  </div>
+                )}
+
+                {/* Show schema from draft if available */}
+                {draftInfo?.schema_hash && (
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+                      <span>🏷️</span>
+                      Schema Type
+                      <span className="text-green-400 text-xs">✓ From bank data</span>
+                    </label>
+                    <div className="p-4 bg-white/5 border border-green-500/30 rounded-xl text-gray-300 text-sm font-mono">
+                      {draftInfo.schema_hash.slice(0, 20)}...
+                    </div>
+                    <div className="text-gray-400 text-xs mt-2">
+                      Automatically set from your connected bank account
+                    </div>
+                  </div>
+                )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    ⏰ Expires At
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+                    <span>⏰</span>
+                    Valid Until
                   </label>
                   <input 
                     type="datetime-local" 
@@ -766,32 +856,60 @@ export default function Attestation() {
                     onChange={e => setExpiresAt(Math.floor(new Date(e.target.value).getTime() / 1000))} 
                     className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-400 transition-colors"
                   />
+                  <div className="text-gray-400 text-xs mt-2">
+                    When this attestation expires (default: 1 hour from now)
+                  </div>
                 </div>
 
                 <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    🌐 Data CID (IPFS)
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+                    <span>🌐</span>
+                    Data Storage (IPFS)
+                    {draftInfo?.data_cid && <span className="text-green-400 text-xs">✓ Ready</span>}
                   </label>
-                  <input 
-                    value={dataCID} 
-                    onChange={e => { 
-                      const value = e.target.value;
-                      setDataCID(value);
-                      const isValid = isValidCID(value);
-                      setCidValid(isValid);
-                      setCidError(isValid ? '' : 'Invalid IPFS CID');
-                    }} 
-                    className={`w-full p-4 border rounded-xl text-white placeholder-gray-400 focus:border-indigo-400 transition-colors ${
-                      cidValid 
-                        ? 'bg-white/5 border-white/10' 
-                        : 'bg-red-500/10 border-red-500/50'
-                    }`}
-                    placeholder="ipfs://bafy..."
-                  />
-                  {!cidValid && dataCID && (
-                    <div className="text-red-400 text-sm mt-2 flex items-center gap-2">
-                      <span>⚠️</span>
-                      {cidError || 'Invalid IPFS CID format'}
+                  
+                  {draftInfo?.data_cid ? (
+                    <div className="p-4 bg-white/5 border border-green-500/30 rounded-xl">
+                      <div className="text-gray-300 text-sm font-mono break-all mb-2">
+                        {draftInfo.data_cid}
+                      </div>
+                      <div className="text-gray-400 text-xs">
+                        Your verified bank data is securely stored and ready to be signed
+                      </div>
+                      <button
+                        onClick={() => window.open(`https://ipfs.io/ipfs/${draftInfo.data_cid.replace('ipfs://', '')}`, '_blank')}
+                        className="mt-3 text-blue-400 hover:text-blue-300 text-xs font-medium"
+                      >
+                        View data on IPFS →
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <input 
+                        value={dataCID} 
+                        onChange={e => { 
+                          const value = e.target.value;
+                          setDataCID(value);
+                          const isValid = isValidCID(value);
+                          setCidValid(isValid);
+                          setCidError(isValid ? '' : 'Invalid IPFS CID format');
+                        }} 
+                        className={`w-full p-4 border rounded-xl text-white placeholder-gray-400 focus:border-indigo-400 transition-colors ${
+                          cidValid 
+                            ? 'bg-white/5 border-white/10' 
+                            : dataCID ? 'bg-red-500/10 border-red-500/50' : 'bg-white/5 border-white/10'
+                        }`}
+                        placeholder="ipfs://Qm... or bafy..."
+                      />
+                      {!cidValid && dataCID && (
+                        <div className="text-red-400 text-sm mt-2 flex items-center gap-2">
+                          <span>⚠️</span>
+                          Invalid IPFS CID format
+                        </div>
+                      )}
+                      <div className="text-gray-400 text-xs mt-2">
+                        Paste the IPFS hash of your data. <button onClick={() => setShowProviderPicker(true)} className="text-blue-400 hover:text-blue-300">Connect your bank →</button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -803,6 +921,7 @@ export default function Attestation() {
                   onClick={handleSignAndPin}
                   disabled={busy || !dataCID || !cidValid || !selectedWallet}
                   className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold disabled:opacity-50 hover:shadow-lg transition-all flex items-center justify-center gap-3"
+                  title={!dataCID ? 'Enter or auto-populate data CID first' : ''}
                 >
                   {busy ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -816,6 +935,7 @@ export default function Attestation() {
                   onClick={handleSignPinAndPublish}
                   disabled={busy || !dataCID || !cidValid || !selectedWallet}
                   className="p-4 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-semibold disabled:opacity-50 hover:shadow-lg transition-all flex items-center justify-center gap-3"
+                  title={!dataCID ? 'Enter or auto-populate data CID first' : ''}
                 >
                   {busy ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1016,46 +1136,6 @@ export default function Attestation() {
           </div>
         </div>
       </div>
-
-      <ProviderPicker
-        visible={showProviderPicker}
-        wallets={availableWallets}
-        onSelect={(w) => { setSelectedWallet(w); setShowProviderPicker(false); }}
-        onClose={() => setShowProviderPicker(false)}
-      />
-      <WalletConnectModal
-        open={wcModalOpen}
-        uri={wcUri}
-        provider={wcProvider}
-        onClose={() => {
-          try { clearWcTimeout(); } catch (e) {}
-          // attempt to cleanup unconnected session
-          try {
-            if (wcProvider) {
-              const conn = wcProvider.connector;
-              if (conn && typeof conn.killSession === 'function') conn.killSession();
-              else if (typeof wcProvider.disconnect === 'function') wcProvider.disconnect();
-            }
-          } catch (e) { console.debug('wc cleanup failed', e); }
-          setWcModalOpen(false);
-          setWcUri(null);
-          setWcProvider(null);
-        }}
-        onCancel={() => {
-          try { clearWcTimeout(); } catch (e) {}
-          try {
-            if (wcProvider) {
-              const conn = wcProvider.connector;
-              if (conn && typeof conn.killSession === 'function') conn.killSession();
-              else if (typeof wcProvider.disconnect === 'function') wcProvider.disconnect();
-            }
-          } catch (e) { console.debug('wc cleanup failed', e); }
-          setWcModalOpen(false);
-          setWcUri(null);
-          setWcProvider(null);
-        }}
-        status={wcStatus}
-      />
     </div>
   );
 }

@@ -27,6 +27,16 @@ import ProviderPicker from './components/ProviderPicker';
 import WalletConnectModal from './components/WalletConnectModal';
 import { createWalletConnectSession } from './utils/providerDetect';
 import { getSelectedFlow, setSelectedFlow } from './flowGate';
+import {
+  TX_STATE,
+  saveTxState,
+  getTxState,
+  clearTxState,
+  savePendingTx,
+  getPendingTx,
+  clearPendingTx,
+  getPublishingRecoveryContext
+} from './utils/txStateManager';
 
 function StatCard({ icon, title, value, description, color }) {
   const colorClasses = {
@@ -182,6 +192,37 @@ export default function Launchpad() {
     } catch (e) {}
   }, [navigate]);
 
+  // Recovery from refresh during payment
+  useEffect(() => {
+    const publishingRecovery = getPublishingRecoveryContext();
+    
+    if (publishingRecovery) {
+      console.debug('[Recovery] Resuming from payment state', publishingRecovery);
+      addToast('⏳ Checking payment status...', 'info');
+      
+      // Poll for transaction receipt
+      (async () => {
+        try {
+          const receipt = await fetch(
+            `https://etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${publishingRecovery.txHash}&apikey=YourApiKeyToken`,
+            { method: 'GET' }
+          ).then(r => r.json()).catch(() => null);
+          
+          if (receipt && receipt.result && receipt.result.status === '1') {
+            clearPendingTx();
+            addToast('✅ Payment confirmed!', 'success');
+            setPaymentMade(true);
+          } else {
+            addToast('⏳ Still waiting for payment confirmation...', 'info');
+          }
+        } catch (e) {
+          console.debug('Receipt check failed:', e);
+          addToast('⚠️ Could not verify payment status. Check etherscan.', 'warning');
+        }
+      })();
+    }
+  }, []);
+
   // Load projects and auth recipient
   useEffect(() => {
     let mounted = true;
@@ -303,11 +344,32 @@ export default function Launchpad() {
       const connection = await modernConnectWallet(selectedWallet.provider);
 
       const expectedChain = NETWORK_CONFIG[DEFAULT_CHAIN_ID];
+      let networkSwitched = false;
+      
       if (expectedChain && connection.chainId !== expectedChain.chainId) {
         try {
           await switchNetwork(selectedWallet.provider, expectedChain.chainId);
-        } catch (e) {
-          addToast('Unable to auto-switch network. Please switch your wallet network manually.', 'warning');
+          networkSwitched = true;
+          addToast(`✅ Switched to ${expectedChain.name}`, 'success');
+        } catch (switchError) {
+          console.warn('Network switch failed:', switchError);
+          const wrongNetwork = NETWORK_CONFIG[connection.chainId];
+          const wrongNetworkName = wrongNetwork?.name || `Chain ${connection.chainId}`;
+          addToast(
+            `⚠️ Connected to ${wrongNetworkName}. Please switch to ${expectedChain.name} manually in your wallet.`,
+            'warning'
+          );
+          // Still set wallet so user can manually switch
+          setWalletAddress(connection.accounts[0]);
+          setWalletConnected(true);
+          
+          try {
+            const bal = await getBalance(connection.accounts[0]);
+            setBalance(bal);
+          } catch (e) {
+            console.debug('Balance check failed:', e);
+          }
+          return connection.accounts[0];
         }
       }
 
@@ -321,7 +383,10 @@ export default function Launchpad() {
         console.debug('Balance check failed:', e);
       }
 
-      addToast('🎉 Wallet connected successfully', 'success');
+      // Only show success if on correct network or successfully switched
+      if (!expectedChain || connection.chainId === expectedChain.chainId || networkSwitched) {
+        addToast('🎉 Wallet connected successfully', 'success');
+      }
     } catch (error) {
       console.error('Wallet connection failed:', error);
       const message = error?.message || String(error);
@@ -341,14 +406,30 @@ export default function Launchpad() {
       if (!walletAddress) await connectWallet();
       
       addToast(`💳 Processing payment of ${DEFAULT_LISTING_FEE}...`, 'info');
+      
+      // Save transaction state for recovery on refresh
+      saveTxState(TX_STATE.PUBLISHING, {
+        operation: 'payment',
+        amount: DEFAULT_LISTING_FEE,
+        account: walletAddress
+      });
+      
       const tx = await payListingFee(DEFAULT_LISTING_FEE);
       addToast(`📡 Transaction sent: ${tx.hash}`, 'info');
       
+      // Save pending transaction for monitoring
+      savePendingTx(tx.hash, { operation: 'payment', amount: DEFAULT_LISTING_FEE });
+      
       await tx.wait();
+      
+      // Clear pending tx on confirmation
+      clearPendingTx();
       setPaymentMade(true);
+      clearTxState();
       addToast('✅ Payment confirmed', 'success');
     } catch (error) {
       console.error('Payment failed:', error);
+      saveTxState(TX_STATE.FAILED, { error: error?.message, operation: 'payment' });
       addToast('❌ Payment failed', 'error');
     }
   };
@@ -370,8 +451,18 @@ export default function Launchpad() {
     if (whitepaper) formData.append('whitepaper', whitepaper);
 
     try {
+      // Save transaction state for recovery on refresh
+      saveTxState(TX_STATE.PUBLISHING, {
+        operation: 'form_submission',
+        projectName: projectName,
+        account: walletAddress
+      });
+      
       await submitProjectForm(formData);
       addToast('🚀 Project submitted successfully', 'success');
+      
+      // Clear transaction state on success
+      clearTxState();
       
       // Reset form
       setProjectName('');
@@ -387,6 +478,7 @@ export default function Launchpad() {
       setLoadingProjects(false);
     } catch (error) {
       console.error('Submission failed:', error);
+      saveTxState(TX_STATE.FAILED, { error: error?.message, operation: 'form_submission' });
       addToast('❌ Project submission failed', 'error');
     }
   };
