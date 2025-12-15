@@ -34,7 +34,7 @@ jobs:
 
       - name: Run contract tests
         working-directory: ./contracts
-        run: npx hardhat test --timeout 60000
+        run: npx hardhat test
 
       - name: Setup Python for backend tests
         uses: actions/setup-python@v4
