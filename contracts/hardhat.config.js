@@ -41,5 +41,8 @@ module.exports = {
       bsc: process.env.BSCSCAN_API_KEY || '',
       bscTestnet: process.env.BSCSCAN_API_KEY || ''
     }
+  },
+  mocha: {
+    timeout: 60000
   }
 };
