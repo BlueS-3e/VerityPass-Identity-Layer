@@ -3,6 +3,7 @@ services:
     name: realmint-api
     runtime: python
     pythonVersion: 3.11
+    rootDir: api
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
