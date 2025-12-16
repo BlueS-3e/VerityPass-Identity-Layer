@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd webapp && npm run build",
-  "outputDirectory": "webapp/dist",
-  "installCommand": "cd webapp && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
   "headers": [
     {
       "source": "/(.*)\\.(js|css|woff2?)$",
