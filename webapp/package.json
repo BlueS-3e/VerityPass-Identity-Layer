@@ -6,7 +6,6 @@
     "dev": "sh ./scripts/dev.sh",
     "dev:raw": "vite",
     "start": "vite",
-    "prebuild": "mkdir -p build/contracts && cp -r ../contracts/artifacts/contracts/RealMintLaunchpad.sol/RealMintLaunchpad.json build/contracts/ || true",
     "build": "vite build",
     "build:headless": "QT_QPA_PLATFORM=offscreen vite build || xvfb-run -s \"-screen 0 1280x1024x24\" vite build",
     "build:docker": "docker build -f Dockerfile.build -t realmint-webapp-build . && docker create --name tmp-build realmint-webapp-build && docker cp tmp-build:/app/dist ./dist || true && docker rm -f tmp-build || true",

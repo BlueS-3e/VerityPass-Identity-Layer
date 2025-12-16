@@ -8,9 +8,62 @@ const formatUnits = ethers.formatUnits;
 const getAddress = ethers.getAddress;
 import { getEthersProvider } from './ethersProvider';
 import apiClient from './apiClient';
-import RealMintLaunchpadABI from "../../build/contracts/RealMintLaunchpad.json";
 import { API_BASE } from "../config.js";
 import { listInjectedProviders, getNetworkConfig } from './providerDetect';
+
+// RealMintLaunchpad contract ABI (minimal interface for key methods)
+const RealMintLaunchpadABI = {
+  abi: [
+    {
+      "inputs": [
+        { "internalType": "address", "name": "launchpadOwner", "type": "address" },
+        { "internalType": "address", "name": "paymentRecipient", "type": "address" },
+        { "internalType": "uint256", "name": "listingFeeAmount", "type": "uint256" }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "projectId", "type": "bytes32" },
+        { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+        { "internalType": "string", "name": "name", "type": "string" },
+        { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+      ],
+      "name": "ProjectListed",
+      "type": "event"
+    },
+    {
+      "inputs": [{ "internalType": "bytes32", "name": "projectId", "type": "bytes32" }],
+      "name": "getProject",
+      "outputs": [
+        { "internalType": "address", "name": "owner", "type": "address" },
+        { "internalType": "string", "name": "name", "type": "string" },
+        { "internalType": "uint256", "name": "launchDate", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "string", "name": "projectName", "type": "string" },
+        { "internalType": "uint256", "name": "launchDate", "type": "uint256" }
+      ],
+      "name": "listProject",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "listingFee",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+};
 
 // Network defaults (BSC / BNB Chain)
 const BSC = {
