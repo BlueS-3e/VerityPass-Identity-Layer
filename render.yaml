@@ -48,6 +48,9 @@ services:
       - key: CORS_ORIGINS
         scope: project
         sync: false
+      - key: PUBLIC_API_BASE
+        scope: project
+        sync: false
       - key: SENTRY_DSN
         scope: project
         sync: false
