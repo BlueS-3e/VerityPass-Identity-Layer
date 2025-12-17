@@ -24,5 +24,5 @@ RUN mkdir -p uploads
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
 
-# Run migrations and start app
-CMD ["sh", "-c", "python migrate_projects_db.py && gunicorn --workers 4 --worker-class sync --bind 0.0.0.0:5000 --timeout 120 app:app"]
+# Run migrations and start app (single worker to fit 512Mi free tier)
+CMD ["sh", "-c", "python migrate_projects_db.py && gunicorn --workers 1 --worker-class sync --bind 0.0.0.0:5000 --timeout 120 app:app"]
