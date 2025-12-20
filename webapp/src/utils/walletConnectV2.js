@@ -33,15 +33,20 @@ export async function initWeb3Modal(projectId, options = {}) {
 
   const ethersConfig = defaultConfig({ metadata });
 
+  // Enable all wallet features and prevent external redirects
   web3Modal = createWeb3Modal({
     ethersConfig,
     chains,
     projectId,
     enableAnalytics: false,
     themeMode: 'dark',
+    allowUnsupportedChain: true,
+    // Don't open in standalone mode - keep it as embedded modal
+    standaloneMode: false,
     themeVariables: {
       '--w3m-accent': '#6366f1', // indigo-500
-      '--w3m-border-radius-master': '12px'
+      '--w3m-border-radius-master': '12px',
+      '--w3m-z-index': '9999'
     }
   });
 
@@ -58,54 +63,58 @@ export async function connectWithWalletConnect() {
   }
 
   try {
-    // Open the Web3Modal modal with the All Wallets view (no external redirects)
-    // Setting route: 'AllWallets' ensures we show wallet selection, not install page
-    web3Modal.open({ view: 'AllWallets' });
+    // For WalletConnect, open directly without wallet selection modal
+    // This bypasses the wallet list and goes straight to QR code scanning
+    // Don't pass a view - let it use WalletConnect directly
+    web3Modal.open({ view: 'Account' });
     
     // Wait for the user to connect a wallet
-    // web3Modal emits events when wallet is connected
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
+        unsubscribe?.();
         reject(new Error('Connection timeout - wallet selection took too long'));
       }, 120000); // 2 minute timeout
 
-      // Get current provider state
-      const checkConnection = async () => {
+      let unsubscribe = null;
+
+      // Listen for state changes to detect successful connection
+      const handleStateChange = async (state) => {
         try {
-          const provider = web3Modal.getWalletProvider();
-          
-          if (!provider) {
-            // Wallet not connected yet, check again after short delay
-            setTimeout(checkConnection, 500);
-            return;
+          // When modal is closed and we have a provider, connection succeeded
+          if (!state.open) {
+            const provider = web3Modal.getWalletProvider();
+            
+            if (provider) {
+              clearTimeout(timeout);
+              unsubscribe?.();
+              
+              const ethersProvider = new BrowserProvider(provider);
+              const signer = await ethersProvider.getSigner();
+              const address = await signer.getAddress();
+              const network = await ethersProvider.getNetwork();
+              
+              modalProvider = ethersProvider;
+
+              resolve({
+                provider: ethersProvider,
+                address,
+                chainId: Number(network.chainId)
+              });
+            }
           }
-
-          // Wallet is connected, clear timeout and process
-          clearTimeout(timeout);
-          
-          const ethersProvider = new BrowserProvider(provider);
-          const signer = await ethersProvider.getSigner();
-          const address = await signer.getAddress();
-          const network = await ethersProvider.getNetwork();
-          
-          modalProvider = ethersProvider;
-          
-          // Close modal after successful connection
-          web3Modal.close?.();
-
-          resolve({
-            provider: ethersProvider,
-            address,
-            chainId: Number(network.chainId)
-          });
         } catch (err) {
           clearTimeout(timeout);
+          unsubscribe?.();
           reject(err);
         }
       };
 
-      // Start checking for connection
-      checkConnection();
+      // Subscribe to state changes
+      unsubscribe = web3Modal.subscribeState(handleStateChange);
+      
+      // Open the modal - without a specific view, it uses the default behavior
+      // which for a fresh connection shows wallet selection
+      web3Modal.open();
     });
   } catch (error) {
     console.error('WalletConnect connection failed:', error);
