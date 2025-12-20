@@ -286,7 +286,6 @@ export default function Launchpad() {
           setWalletAddress(address || '');
           setWalletConnected(Boolean(address));
           setSelectedWallet(prev => ({ ...(prev || {}), provider }));
-          setWcProvider(provider);
           
           try { 
             const bal = await getBalance(address); 

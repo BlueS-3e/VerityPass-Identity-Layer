@@ -58,9 +58,9 @@ export async function connectWithWalletConnect() {
   }
 
   try {
-    // Open the Web3Modal modal - this shows the wallet selection UI
-    // The modal will be displayed in-app, not as an external page
-    web3Modal.open();
+    // Open the Web3Modal modal with the All Wallets view (no external redirects)
+    // Setting route: 'AllWallets' ensures we show wallet selection, not install page
+    web3Modal.open({ view: 'AllWallets' });
     
     // Wait for the user to connect a wallet
     // web3Modal emits events when wallet is connected
