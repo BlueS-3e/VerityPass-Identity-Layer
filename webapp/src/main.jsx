@@ -21,6 +21,7 @@ import { ToastProvider } from "./components/Toast";
 import NotFound from './components/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorPage from './components/ErrorPage';
+import { initWeb3Modal } from './utils/walletConnectV2';
 // WalletProvider removed from root to avoid mounting wallet context for a browsing-only app.
 
 // Assert required build-time envs (will throw in production builds)
@@ -35,6 +36,17 @@ try { assertEnv(); } catch (e) {
 // backend is unreachable, show a clear overlay so users/CI know why the app
 // would otherwise start with broken API calls.
 async function bootstrap() {
+  // Initialize Web3Modal v2 with WalletConnect Project ID
+  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  if (projectId) {
+    try {
+      await initWeb3Modal(projectId);
+    } catch (err) {
+      console.warn('Failed to initialize Web3Modal:', err);
+      // Non-critical failure - app can continue without Web3Modal, but WalletConnect won't work
+    }
+  }
+
   // Prefer server-provided runtime config when the frontend was built without
   // a VITE_API_BASE, or when the frontend is being served same-origin.
   const buildTimeApiBase = import.meta.env.VITE_API_BASE || '';

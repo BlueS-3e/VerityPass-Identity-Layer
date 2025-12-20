@@ -281,56 +281,39 @@ export default function Launchpad() {
     if (selectedWallet.id === 'walletconnect') {
       try {
         setWcStatus('pending');
-        const { provider, uri } = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
-        setWcProvider(provider);
-        setWcUri(uri);
-        setWcModalOpen(true);
-
-        const connector = provider.connector;
-        const onConnect = async (error, payload) => {
-          if (error) {
-            console.error('WalletConnect connect error', error);
-            setWcStatus('failed');
-            return;
-          }
-          try {
-            const enabled = await provider.enable();
-            const acct = enabled && enabled[0];
-            setWalletAddress(acct || '');
-            setWalletConnected(Boolean(acct));
-            // attach provider so other flows (payments/signing) can use it
-            setSelectedWallet(prev => ({ ...(prev || {}), provider }));
-            setWcProvider(provider);
-            try { const bal = await getBalance(acct); setBalance(bal); } catch (e) { /* ignore */ }
-            setWcStatus('connected');
-            addToast('🎉 Wallet connected successfully', 'success');
-          } catch (err) {
-            console.error('enable after connect failed', err);
-            setWcStatus('failed');
-            addToast('❌ Wallet enabling failed', 'error');
-          } finally {
-            if (connector && connector.off) connector.off('connect', onConnect);
-            setTimeout(() => setWcModalOpen(false), 600);
-          }
-        };
-
-        const onDisconnect = (err) => { console.debug('wc disconnect', err); setWcStatus('failed'); setWcModalOpen(false); };
-        if (connector && connector.on) {
-          connector.on('connect', onConnect);
-          connector.on('disconnect', onDisconnect);
-          connector.on('error', (err) => { console.debug('wc error', err); setWcStatus('failed'); });
+        
+        // Web3Modal v2 opens its own modal and handles the connection flow
+        // connectWithWalletConnect() returns immediately with connected provider
+        try {
+          const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
+          
+          // result is now the provider directly from Web3Modal v2
+          const provider = result;
+          
+          // Get account from connected provider
+          const enabled = await provider.enable();
+          const acct = enabled && enabled[0];
+          
+          setWalletAddress(acct || '');
+          setWalletConnected(Boolean(acct));
+          setSelectedWallet(prev => ({ ...(prev || {}), provider }));
+          setWcProvider(provider);
+          
+          try { 
+            const bal = await getBalance(acct); 
+            setBalance(bal); 
+          } catch (e) { /* ignore */ }
+          
+          setWcStatus('connected');
+          addToast('🎉 Wallet connected successfully', 'success');
+        } catch (err) {
+          console.error('WalletConnect connection failed:', err);
+          setWcStatus('failed');
+          addToast('❌ WalletConnect connection failed', 'error');
+        } finally {
+          // Web3Modal v2 automatically closes the modal, no need to manage it
         }
-
-        // safety timeout
-        wcTimeoutRef.current = setTimeout(() => {
-          if (wcStatus === 'pending') {
-            try { if (connector && typeof connector.killSession === 'function') connector.killSession(); } catch (e) {}
-            setWcStatus('failed');
-            setWcModalOpen(false);
-            addToast('❌ WalletConnect timeout, please try again', 'error');
-          }
-        }, 2 * 60 * 1000);
-
+        
         return;
       } catch (e) {
         console.error('WalletConnect session failed', e);

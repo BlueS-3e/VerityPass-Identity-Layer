@@ -432,9 +432,8 @@ export async function preloadWalletConnect() {
 }
 
 // Connection helper with error handling
-// Create a WalletConnect provider instance (dynamically import to keep bundle small)
-// Create a WalletConnect provider instance (dynamically import to keep bundle small)
-// Use Web3Modal v2 (Reown AppKit) for WalletConnect
+// Create a WalletConnect provider instance using Web3Modal v2 (Reown AppKit)
+// Web3Modal should be initialized in main.jsx at app startup
 export async function createWalletConnectInstance(chainId = 1) {
   if (typeof window === 'undefined') throw new Error('No window');
   
@@ -443,11 +442,6 @@ export async function createWalletConnectInstance(chainId = 1) {
     throw new Error('VITE_WALLETCONNECT_PROJECT_ID not set. Get free at https://cloud.walletconnect.com');
   }
 
-  // Initialize Web3Modal if not already done
-  if (!_wcModule) {
-    await initWeb3Modal(projectId);
-  }
-  
   // Connect via Web3Modal and return the provider
   const provider = await connectWithWalletConnect();
   return provider;
