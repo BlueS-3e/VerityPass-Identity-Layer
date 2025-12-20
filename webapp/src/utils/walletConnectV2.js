@@ -58,29 +58,41 @@ export async function connectWithWalletConnect() {
   }
 
   try {
-    // Open modal and wait for connection
+    // Open modal - it will handle the connection flow
     await web3Modal.open();
     
-    // Wait for wallet to connect (modal will close on success)
-    const walletProvider = await web3Modal.getWalletProvider();
-    
-    if (!walletProvider) {
-      throw new Error('No wallet connected');
-    }
-
-    // Create Ethers provider
-    const provider = new BrowserProvider(walletProvider);
-    const signer = await provider.getSigner();
-    const address = await signer.getAddress();
-    const network = await provider.getNetwork();
-    
-    modalProvider = provider;
-
-    return {
-      provider,
-      address,
-      chainId: Number(network.chainId)
-    };
+    // Subscribe to connection events
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Connection timeout'));
+      }, 120000); // 2 minute timeout
+      
+      // Listen for provider event (when wallet connects)
+      const unsubscribe = web3Modal.subscribeProvider(async (state) => {
+        if (state.provider && state.isConnected) {
+          clearTimeout(timeout);
+          unsubscribe?.();
+          
+          try {
+            // Create Ethers provider from the connected wallet
+            const provider = new BrowserProvider(state.provider);
+            const signer = await provider.getSigner();
+            const address = await signer.getAddress();
+            const network = await provider.getNetwork();
+            
+            modalProvider = provider;
+            
+            resolve({
+              provider,
+              address,
+              chainId: Number(network.chainId)
+            });
+          } catch (err) {
+            reject(err);
+          }
+        }
+      });
+    });
   } catch (error) {
     console.error('WalletConnect connection failed:', error);
     throw error;
