@@ -265,7 +265,7 @@ export default function Launchpad() {
     }
 
     // WalletConnect: create session + show modal (SDK-based, no injected provider)
-    if (walletToConnect.id === 'walletconnect') {
+    if (walletToConnect?.id === 'walletconnect') {
       try {
         // Web3Modal v2 handles connection internally
         const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
@@ -290,8 +290,8 @@ export default function Launchpad() {
     }
 
     // If the chosen wallet has no injected provider (SDK/install link only), handle gracefully
-    if (!walletToConnect.provider) {
-      if (walletToConnect.installLink) {
+    if (!walletToConnect?.provider) {
+      if (walletToConnect?.installLink) {
         try { window.open(walletToConnect.installLink, '_blank'); } catch (e) {}
         addToast('🔗 Opening wallet install page', 'info');
       } else {
