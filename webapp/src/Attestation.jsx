@@ -82,6 +82,7 @@ function LoanCard({ loan, onBorrow }) {
 export default function Attestation() {
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const walletWarningShown = useRef(false);
   
   const [account, setAccount] = useState(null);
   const [schema, setSchema] = useState('income-proof-v1');
@@ -119,7 +120,10 @@ export default function Attestation() {
     // No session = user hasn't connected wallet on ConnectPlaid
     if (!session || !session.account) {
       console.debug('[Session] No wallet session found, redirecting to ConnectPlaid...');
-      addToast('⚠️ Please connect your wallet first', { type: 'warning' });
+      if (!walletWarningShown.current) {
+        addToast('⚠️ Please connect your wallet first', { type: 'warning' });
+        walletWarningShown.current = true;
+      }
       setTimeout(() => navigate('/connect'), 1500);
       return;
     }
