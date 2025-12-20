@@ -461,9 +461,16 @@ export async function preloadWalletConnect() {
 
 // Connection helper with error handling
 // Create a WalletConnect provider instance (dynamically import to keep bundle small)
+// Create a WalletConnect provider instance (dynamically import to keep bundle small)
 export async function createWalletConnectInstance(chainId = 1) {
   if (typeof window === 'undefined') throw new Error('No window');
-  // try to use a global if present (e.g., included via CDN)
+  
+  // Get WalletConnect Project ID from env (required for v2.0+)
+  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  if (!projectId) {
+    console.warn('⚠️ VITE_WALLETCONNECT_PROJECT_ID not set. Get free at https://cloud.walletconnect.com');
+  }
+  
   const rpc = {};
   const netCfg = getNetworkConfig(chainId) || getNetworkConfig(1);
   if (netCfg && Array.isArray(netCfg.rpcUrls) && netCfg.rpcUrls.length) {
@@ -473,15 +480,14 @@ export async function createWalletConnectInstance(chainId = 1) {
   // Prefer a global WC provider if present (e.g., included via script tag)
   if (window.WalletConnectProvider) {
     const WC = window.WalletConnectProvider;
-    const instance = new WC({ rpc, qrcode: true });
+    const instance = new WC({ projectId, rpc, qrcode: true });
     return instance;
   }
   // Otherwise dynamically import the package at runtime (bundled when installed)
   try {
-    // Some WalletConnect-related packages expect `global` to exist (Node.js-like).
+    // Some WalletConnect-related packages expect 'global' to exist (Node.js-like).
     // Provide a minimal shim in the browser to avoid ReferenceError: global is not defined
     if (typeof window.global === 'undefined') {
-      // eslint-disable-next-line no-undef
       window.global = window;
     }
     // provide lightweight shims for module/process used by some CJS bundles
@@ -490,7 +496,7 @@ export async function createWalletConnectInstance(chainId = 1) {
 
     const mod = await import('@walletconnect/web3-provider');
     const WC = mod.default || mod;
-    const instance = new WC({ rpc, qrcode: true });
+    const instance = new WC({ projectId, rpc, qrcode: true });
     return instance;
   } catch (e) {
     console.error('Dynamic import of WalletConnect failed:', e);
