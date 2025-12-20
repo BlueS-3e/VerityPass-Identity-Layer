@@ -21,7 +21,6 @@ import { ToastProvider } from "./components/Toast";
 import NotFound from './components/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorPage from './components/ErrorPage';
-import { initWeb3Modal } from './utils/walletConnectV2';
 // WalletProvider removed from root to avoid mounting wallet context for a browsing-only app.
 
 // Assert required build-time envs (will throw in production builds)
