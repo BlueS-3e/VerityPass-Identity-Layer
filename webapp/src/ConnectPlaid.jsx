@@ -3,7 +3,6 @@ import PlaidLink from './components/PlaidLink';
 import { getSignerAddress } from './utils/web3';
 import PrimaryCTA from './components/PrimaryCTA';
 import ProviderPicker from './components/ProviderPicker';
-import WalletConnectModal from './components/WalletConnectModal';
 import { createWalletConnectSession } from './utils/providerDetect';
 import { useToast } from './components/Toast';
 import { NETWORK_CONFIG, DEFAULT_CHAIN_ID } from './config';
@@ -79,12 +78,6 @@ export default function ConnectPlaid() {
   const [showProviderPicker, setShowProviderPicker] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [signing, setSigning] = useState(false);
-  const [wcModalOpen, setWcModalOpen] = useState(false);
-  const [wcUri, setWcUri] = useState(null);
-  const [wcProvider, setWcProvider] = useState(null);
-  const [wcStatus, setWcStatus] = useState('pending');
-  const wcTimeoutRef = useRef(null);
-  const clearWcTimeout = () => { if (wcTimeoutRef.current) { clearTimeout(wcTimeoutRef.current); wcTimeoutRef.current = null; } };
   const [currentStep, setCurrentStep] = useState(0);
   const { addToast } = useToast();
 
@@ -209,7 +202,6 @@ export default function ConnectPlaid() {
     // If WalletConnect is the selected wallet, use Web3Modal v2
     if (selectedWallet.id === 'walletconnect') {
       setConnecting(true);
-      setWcStatus('pending');
       try {
         // Web3Modal v2 opens its own modal and handles the connection flow
         const result = await createWalletConnectSession(1);
@@ -219,9 +211,7 @@ export default function ConnectPlaid() {
         
         setOwner(address);
         setSelectedWallet(prev => ({ ...(prev || {}), provider }));
-        setWcProvider(provider);
         setCurrentStep(1);
-        setWcStatus('connected');
         
         // Save wallet session for Attestation page
         saveWalletSession(selectedWallet, address, DEFAULT_CHAIN_ID);
@@ -233,7 +223,6 @@ export default function ConnectPlaid() {
         console.error('wc session create failed', e);
         addToast('❌ WalletConnect session failed', { type: 'error' });
         setConnecting(false);
-        setWcStatus('failed');
       }
       return;
     }
@@ -284,24 +273,6 @@ export default function ConnectPlaid() {
     } finally {
       setConnecting(false);
     }
-  };
-
-  const handleCloseWcModal = () => {
-    // clear any pending safety timeout
-    try { clearWcTimeout(); } catch (e) {}
-    // if a session was created but not connected, try to kill it
-    try {
-      if (wcProvider) {
-        const conn = wcProvider.connector;
-        if (conn && typeof conn.killSession === 'function') conn.killSession();
-        else if (typeof wcProvider.disconnect === 'function') wcProvider.disconnect();
-      }
-    } catch (e) {
-      console.debug('Failed to cleanup WalletConnect session', e);
-    }
-    setWcModalOpen(false);
-    setWcUri(null);
-    setWcProvider(null);
   };
 
   const copyAddress = async () => {
@@ -724,14 +695,6 @@ export default function ConnectPlaid() {
         wallets={availableWallets}
         onSelect={(w) => { handleSelectWallet(w); setShowProviderPicker(false); }}
         onClose={() => setShowProviderPicker(false)}
-      />
-      <WalletConnectModal
-        open={wcModalOpen}
-        uri={wcUri}
-        provider={wcProvider}
-        onClose={handleCloseWcModal}
-        onCancel={handleCloseWcModal}
-        status={wcStatus}
       />
     </div>
   );

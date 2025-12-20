@@ -24,7 +24,7 @@ import NetworkBanner from './components/NetworkBanner';
 import HeroGraphic from './components/HeroGraphic';
 import Footer from './components/Footer';
 import ProviderPicker from './components/ProviderPicker';
-import WalletConnectModal from './components/WalletConnectModal';
+// WalletConnect is handled by Web3Modal v2
 import { createWalletConnectSession } from './utils/providerDetect';
 import { getSelectedFlow, setSelectedFlow } from './flowGate';
 import {
@@ -132,12 +132,6 @@ export default function Launchpad() {
   const [availableWallets, setAvailableWallets] = useState([]);
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [showProviderPicker, setShowProviderPicker] = useState(false);
-  const [wcModalOpen, setWcModalOpen] = useState(false);
-  const [wcUri, setWcUri] = useState(null);
-  const [wcProvider, setWcProvider] = useState(null);
-  const [wcStatus, setWcStatus] = useState('pending');
-  const wcTimeoutRef = useRef(null);
-  const clearWcTimeout = () => { if (wcTimeoutRef.current) { clearTimeout(wcTimeoutRef.current); wcTimeoutRef.current = null; } };
 
   // Redirect if launchpad disabled
   useEffect(() => {
@@ -280,7 +274,7 @@ export default function Launchpad() {
     // WalletConnect: create session + show modal
     if (selectedWallet.id === 'walletconnect') {
       try {
-        setWcStatus('pending');
+        // Web3Modal v2 handles connection internally
         
         // Web3Modal v2 opens its own modal and handles the connection flow
         try {
@@ -298,19 +292,14 @@ export default function Launchpad() {
             const bal = await getBalance(address); 
             setBalance(bal); 
           } catch (e) { /* ignore */ }
-          
-          setWcStatus('connected');
           addToast('🎉 Wallet connected successfully', 'success');
         } catch (err) {
-          console.error('WalletConnect connection failed:', err);
-          setWcStatus('failed');
           addToast('❌ WalletConnect connection failed', 'error');
         }
         
         return;
       } catch (e) {
         console.error('WalletConnect session failed', e);
-        setWcStatus('failed');
         addToast('❌ WalletConnect session failed', 'error');
         return;
       }
@@ -839,39 +828,6 @@ export default function Launchpad() {
         wallets={availableWallets}
         onSelect={(w) => { handleSelectWallet(w); setShowProviderPicker(false); }}
         onClose={() => setShowProviderPicker(false)}
-      />
-
-      <WalletConnectModal
-        open={wcModalOpen}
-        uri={wcUri}
-        provider={wcProvider}
-        onClose={() => {
-          try { clearWcTimeout(); } catch (e) {}
-          try {
-            if (wcProvider) {
-              const conn = wcProvider.connector;
-              if (conn && typeof conn.killSession === 'function') conn.killSession();
-              else if (typeof wcProvider.disconnect === 'function') wcProvider.disconnect();
-            }
-          } catch (e) { console.debug('wc cleanup failed', e); }
-          setWcModalOpen(false);
-          setWcUri(null);
-          setWcProvider(null);
-        }}
-        onCancel={() => {
-          try { clearWcTimeout(); } catch (e) {}
-          try {
-            if (wcProvider) {
-              const conn = wcProvider.connector;
-              if (conn && typeof conn.killSession === 'function') conn.killSession();
-              else if (typeof wcProvider.disconnect === 'function') wcProvider.disconnect();
-            }
-          } catch (e) { console.debug('wc cleanup failed', e); }
-          setWcModalOpen(false);
-          setWcUri(null);
-          setWcProvider(null);
-        }}
-        status={wcStatus}
       />
 
       <Footer />
