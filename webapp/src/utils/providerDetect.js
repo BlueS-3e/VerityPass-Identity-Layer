@@ -433,7 +433,7 @@ export async function preloadWalletConnect() {
 
 // Connection helper with error handling
 // Create a WalletConnect provider instance using Web3Modal v2 (Reown AppKit)
-// Web3Modal should be initialized in main.jsx at app startup
+// Web3Modal is initialized on-demand when user clicks WalletConnect
 export async function createWalletConnectInstance(chainId = 1) {
   if (typeof window === 'undefined') throw new Error('No window');
   
@@ -442,9 +442,20 @@ export async function createWalletConnectInstance(chainId = 1) {
     throw new Error('VITE_WALLETCONNECT_PROJECT_ID not set. Get free at https://cloud.walletconnect.com');
   }
 
-  // Connect via Web3Modal and return the provider
-  const provider = await connectWithWalletConnect();
-  return provider;
+  // Initialize Web3Modal if not already initialized
+  if (!_wcModule) {
+    try {
+      await initWeb3Modal(projectId);
+      _wcModule = true; // Mark as initialized
+    } catch (err) {
+      console.error('Failed to initialize Web3Modal:', err);
+      throw new Error('Web3Modal initialization failed');
+    }
+  }
+
+  // Connect via Web3Modal and return the result
+  const result = await connectWithWalletConnect();
+  return result;
 }
 
 // Legacy session creation (replaced by Web3Modal)

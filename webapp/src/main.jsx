@@ -40,15 +40,10 @@ async function bootstrap() {
   // This is non-blocking - if it fails, the app still renders
   const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
   if (projectId) {
-    try {
-      await Promise.race([
-        initWeb3Modal(projectId),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Web3Modal init timeout')), 2000))
-      ]);
-    } catch (err) {
-      console.warn('Failed to initialize Web3Modal:', err && err.message ? err.message : err);
-      // Non-critical failure - app can continue without Web3Modal
-    }
+    // Don't initialize Web3Modal at startup - it can cause issues
+    // Initialize only when user actually clicks WalletConnect
+    // Web3Modal will be lazy-loaded in providerDetect.js
+    console.log('[Bootstrap] Web3Modal will be initialized on demand');
   }
 
   // Prefer server-provided runtime config when the frontend was built without
