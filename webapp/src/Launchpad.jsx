@@ -249,7 +249,10 @@ export default function Launchpad() {
   }, []);
 
   const connectWallet = async () => {
-    if (!selectedWallet) {
+    // Determine which wallet to connect
+    let walletToConnect = selectedWallet;
+    
+    if (!walletToConnect) {
       const wallets = listAvailableProviders() || [];
       if (wallets.length === 0) {
         addToast('No wallets detected. Please install an EVM wallet (MetaMask, Coinbase Wallet, etc.)', 'error');
@@ -258,10 +261,11 @@ export default function Launchpad() {
       const best = await selectBestProvider().catch(() => null);
       const chosen = best ? (wallets.find(w => w.id === best.id || w.name === best.name) || wallets[0]) : wallets[0];
       setSelectedWallet(chosen);
+      walletToConnect = chosen; // Use chosen immediately, don't wait for state update
     }
 
     // WalletConnect: create session + show modal (SDK-based, no injected provider)
-    if (selectedWallet.id === 'walletconnect') {
+    if (walletToConnect.id === 'walletconnect') {
       try {
         // Web3Modal v2 handles connection internally
         const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
@@ -286,9 +290,9 @@ export default function Launchpad() {
     }
 
     // If the chosen wallet has no injected provider (SDK/install link only), handle gracefully
-    if (!selectedWallet.provider) {
-      if (selectedWallet.installLink) {
-        try { window.open(selectedWallet.installLink, '_blank'); } catch (e) {}
+    if (!walletToConnect.provider) {
+      if (walletToConnect.installLink) {
+        try { window.open(walletToConnect.installLink, '_blank'); } catch (e) {}
         addToast('🔗 Opening wallet install page', 'info');
       } else {
         addToast('🔍 Selected wallet has no direct provider. Please select a different wallet or use WalletConnect.', 'error');
@@ -298,14 +302,14 @@ export default function Launchpad() {
     }
 
     try {
-      const connection = await modernConnectWallet(selectedWallet.provider);
+      const connection = await modernConnectWallet(walletToConnect.provider);
 
       const expectedChain = NETWORK_CONFIG[DEFAULT_CHAIN_ID];
       let networkSwitched = false;
       
       if (expectedChain && connection.chainId !== expectedChain.chainId) {
         try {
-          await switchNetwork(selectedWallet.provider, expectedChain.chainId);
+          await switchNetwork(walletToConnect.provider, expectedChain.chainId);
           networkSwitched = true;
           addToast(`✅ Switched to ${expectedChain.name}`, 'success');
         } catch (switchError) {
