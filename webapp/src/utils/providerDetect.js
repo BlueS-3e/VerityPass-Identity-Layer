@@ -419,126 +419,44 @@ export async function createFallbackProvider() {
 // WalletConnect module cache for preloading
 let _wcModule = null;
 
+// Preload Web3Modal (v2)
 export async function preloadWalletConnect() {
   if (_wcModule) return _wcModule;
   if (typeof window === 'undefined') return null;
-
-  try {
-    // minimal global shim for libs that expect `global`
-    if (typeof window.global === 'undefined') window.global = window;
-    // some CJS/browser shims reference `module`, `process`, or `Buffer`; provide minimal shims
-    if (typeof window.module === 'undefined') window.module = { exports: {} };
-    if (typeof window.process === 'undefined') window.process = { env: {} };
-    
-    // Provide minimal stream polyfill for readable-stream
-    if (typeof window.process?.version === 'undefined') {
-      try {
-        window.process.version = '14.0.0';
-      } catch (e) {}
-    }
-    
-    try {
-      // load a browser-compatible Buffer implementation if available
-      if (typeof window.Buffer === 'undefined') {
-        const bufMod = await import('buffer');
-        if (bufMod && bufMod.Buffer) window.Buffer = bufMod.Buffer;
-      }
-    } catch (bufErr) {
-      // if buffer import fails, continue; WalletConnect import may still fail, which we'll handle below
-      console.debug('buffer polyfill not available:', bufErr && bufErr.message ? bufErr.message : bufErr);
-    }
-
-    const mod = await import('@walletconnect/web3-provider');
-    _wcModule = mod;
-    return _wcModule;
-  } catch (e) {
-    // Silently fail - WalletConnect preload is non-critical and will be attempted again when needed
-    console.debug('preloadWalletConnect: not available in this environment');
-    _wcModule = null;
-    return null;
+  
+  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  if (projectId) {
+    _wcModule = await initWeb3Modal(projectId);
   }
+  return _wcModule;
 }
 
 // Connection helper with error handling
 // Create a WalletConnect provider instance (dynamically import to keep bundle small)
 // Create a WalletConnect provider instance (dynamically import to keep bundle small)
+// Use Web3Modal v2 (Reown AppKit) for WalletConnect
 export async function createWalletConnectInstance(chainId = 1) {
   if (typeof window === 'undefined') throw new Error('No window');
   
-  // Get WalletConnect Project ID from env (required for v2.0+)
   const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
   if (!projectId) {
-    console.warn('⚠️ VITE_WALLETCONNECT_PROJECT_ID not set. Get free at https://cloud.walletconnect.com');
+    throw new Error('VITE_WALLETCONNECT_PROJECT_ID not set. Get free at https://cloud.walletconnect.com');
+  }
+
+  // Initialize Web3Modal if not already done
+  if (!_wcModule) {
+    await initWeb3Modal(projectId);
   }
   
-  const rpc = {};
-  const netCfg = getNetworkConfig(chainId) || getNetworkConfig(1);
-  if (netCfg && Array.isArray(netCfg.rpcUrls) && netCfg.rpcUrls.length) {
-    rpc[chainId] = netCfg.rpcUrls[0];
-  }
-
-  // Prefer a global WC provider if present (e.g., included via script tag)
-  if (window.WalletConnectProvider) {
-    const WC = window.WalletConnectProvider;
-    const instance = new WC({ projectId, rpc, qrcode: true });
-    return instance;
-  }
-  // Otherwise dynamically import the package at runtime (bundled when installed)
-  try {
-    // Some WalletConnect-related packages expect 'global' to exist (Node.js-like).
-    // Provide a minimal shim in the browser to avoid ReferenceError: global is not defined
-    if (typeof window.global === 'undefined') {
-      window.global = window;
-    }
-    // provide lightweight shims for module/process used by some CJS bundles
-    if (typeof window.module === 'undefined') window.module = { exports: {} };
-    if (typeof window.process === 'undefined') window.process = { env: {} };
-
-    const mod = await import('@walletconnect/web3-provider');
-    const WC = mod.default || mod;
-    const instance = new WC({ projectId, rpc, qrcode: true });
-    return instance;
-  } catch (e) {
-    console.error('Dynamic import of WalletConnect failed:', e);
-    throw new Error('WalletConnect provider not available in this environment');
-  }
+  // Connect via Web3Modal and return the provider
+  const provider = await connectWithWalletConnect();
+  return provider;
 }
 
-// Create a WalletConnect session without opening the default modal.
-// Returns { provider, uri } where uri can be rendered as a QR
+// Legacy session creation (replaced by Web3Modal)
+// Returns the provider from Web3Modal connection
 export async function createWalletConnectSession(chainId = 1) {
-  // create instance with qrcode disabled
-  if (typeof window === 'undefined') throw new Error('No window');
-  const rpc = {};
-  const netCfg = getNetworkConfig(chainId) || getNetworkConfig(1);
-  if (netCfg && Array.isArray(netCfg.rpcUrls) && netCfg.rpcUrls.length) {
-    rpc[chainId] = netCfg.rpcUrls[0];
-  }
-
-  // ensure global shim
-  if (typeof window.global === 'undefined') window.global = window;
-  if (typeof window.module === 'undefined') window.module = { exports: {} };
-  if (typeof window.process === 'undefined') window.process = { env: {} };
-
-  const mod = await import('@walletconnect/web3-provider');
-  const WC = mod.default || mod;
-  const instance = new WC({ rpc, qrcode: false });
-
-  // The underlying connector should expose a createSession method that generates a URI
-  const connector = instance.connector;
-  if (connector && typeof connector.createSession === 'function') {
-    try {
-      // createSession will generate connector.uri
-      await connector.createSession({ chainId });
-      const uri = connector.uri || connector._uri || null;
-      return { provider: instance, uri };
-    } catch (e) {
-      console.error('createWalletConnectSession failed to create session:', e);
-      throw e;
-    }
-  }
-
-  throw new Error('WalletConnect connector not available');
+  return createWalletConnectInstance(chainId);
 }
 
 // Connection helper with error handling
@@ -548,15 +466,11 @@ export async function connectWallet(providerOrEntry, options = {}) {
 
   // If a provider entry object was passed
   if (providerOrEntry && providerOrEntry.id && !providerOrEntry.request) {
-    // SDK-based WalletConnect
+    // SDK-based WalletConnect using Web3Modal v2
     if (providerOrEntry.id === 'walletconnect' || providerOrEntry.type === 'sdk') {
-      // attempt to create an instance dynamically
       try {
         provider = await createWalletConnectInstance(options.chainId || 1);
-        // enable to establish session (some providers require enable)
-        if (typeof provider.enable === 'function') {
-          await provider.enable();
-        }
+        // Web3Modal v2 provider is already connected after connectWithWalletConnect
       } catch (e) {
         console.error('Failed to create WalletConnect instance:', e);
         throw e;

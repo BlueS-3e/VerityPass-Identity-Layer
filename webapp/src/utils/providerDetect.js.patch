@@ -1,0 +1,60 @@
+--- a/webapp/src/utils/providerDetect.js
++++ b/webapp/src/utils/providerDetect.js
+@@ -1,6 +1,7 @@
+ // Modern EIP-6963 + EIP-1193 compatible wallet detection
+ // Cleaned and optimized version
+-
++import { initWeb3Modal, connectWithWalletConnect } from './walletConnectV2.js';
++ 
+ // Note: we avoid a top-level WalletConnect import to prevent build/runtime issues.
+ // The provider will be dynamically imported at runtime when needed and a small
+ // `global` shim is applied for libraries that expect Node-style globals in the browser.
+@@ -419,32 +420,12 @@ export async function createFallbackProvider() {
+ // WalletConnect module cache for preloading
+ let _wcModule = null;
+ 
++// Preload Web3Modal (v2)
+ export async function preloadWalletConnect() {
+   if (_wcModule) return _wcModule;
+   if (typeof window === 'undefined') return null;
+-
+-  try {
+-    // minimal global shim for libs that expect `global`
+-    if (typeof window.global === 'undefined') window.global = window;
+-    // some CJS/browser shims reference `module`, `process`, or `Buffer`; provide minimal shims
+-    if (typeof window.module === 'undefined') window.module = { exports: {} };
+-    if (typeof window.process === 'undefined') window.process = { env: {} };
+-    
+-    // Provide minimal stream polyfill for readable-stream
+-    if (typeof window.process?.version === 'undefined') {
+-      try {
+-        window.process.version = '14.0.0';
+-      } catch (e) {}
+-    }
+-    
+-    try {
+-      // load a browser-compatible Buffer implementation if available
+-      if (typeof window.Buffer === 'undefined') {
+-        const bufMod = await import('buffer');
+-        if (bufMod && bufMod.Buffer) window.Buffer = bufMod.Buffer;
+-      }
+-    } catch (bufErr) {
+-      // if buffer import fails, continue; WalletConnect import may still fail, which we'll handle below
+-      console.debug('buffer polyfill not available:', bufErr && bufErr.message ? bufErr.message : bufErr);
+-    }
+-
+-    const mod = await import('@walletconnect/web3-provider');
+-    _wcModule = mod;
+-    return _wcModule;
+-  } catch (e) {
+-    // Silently fail - WalletConnect preload is non-critical and will be attempted again when needed
+-    console.debug('preloadWalletConnect: not available in this environment');
+-    _wcModule = null;
+-    return null;
++  
++  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
++  if (projectId) {
++    _wcModule = await initWeb3Modal(projectId);
+   }
++  return _wcModule;
+ }
