@@ -283,24 +283,19 @@ export default function Launchpad() {
         setWcStatus('pending');
         
         // Web3Modal v2 opens its own modal and handles the connection flow
-        // connectWithWalletConnect() returns immediately with connected provider
         try {
           const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
           
-          // result is now the provider directly from Web3Modal v2
-          const provider = result;
+          // result from Web3Modal v2 is { provider, address, chainId }
+          const { provider, address, chainId } = result;
           
-          // Get account from connected provider
-          const enabled = await provider.enable();
-          const acct = enabled && enabled[0];
-          
-          setWalletAddress(acct || '');
-          setWalletConnected(Boolean(acct));
+          setWalletAddress(address || '');
+          setWalletConnected(Boolean(address));
           setSelectedWallet(prev => ({ ...(prev || {}), provider }));
           setWcProvider(provider);
           
           try { 
-            const bal = await getBalance(acct); 
+            const bal = await getBalance(address); 
             setBalance(bal); 
           } catch (e) { /* ignore */ }
           
@@ -310,8 +305,6 @@ export default function Launchpad() {
           console.error('WalletConnect connection failed:', err);
           setWcStatus('failed');
           addToast('❌ WalletConnect connection failed', 'error');
-        } finally {
-          // Web3Modal v2 automatically closes the modal, no need to manage it
         }
         
         return;

@@ -206,78 +206,34 @@ export default function ConnectPlaid() {
       return;
     }
 
-    // If WalletConnect is the selected wallet, create an in-app session and show QR
+    // If WalletConnect is the selected wallet, use Web3Modal v2
     if (selectedWallet.id === 'walletconnect') {
       setConnecting(true);
       setWcStatus('pending');
       try {
-        const { provider, uri } = await createWalletConnectSession(1);
+        // Web3Modal v2 opens its own modal and handles the connection flow
+        const result = await createWalletConnectSession(1);
+        
+        // result from Web3Modal v2 is { provider, address, chainId }
+        const { provider, address, chainId } = result;
+        
+        setOwner(address);
+        setSelectedWallet(prev => ({ ...(prev || {}), provider }));
         setWcProvider(provider);
-        setWcUri(uri);
-        setWcModalOpen(true);
-
-        const connector = provider.connector;
-        const onConnect = async (error, payload) => {
-          if (error) {
-            console.error('WalletConnect connect error', error);
-            setWcStatus('failed');
-            return;
-          }
-          try {
-            const enabled = await provider.enable();
-            const account = enabled[0] || null;
-            setOwner(account);
-            // attach the live provider to the selected wallet so signing and listeners work
-            setSelectedWallet(prev => ({ ...(prev || {}), provider }));
-            setWcProvider(provider);
-            setCurrentStep(1);
-            setWcStatus('connected');
-            
-            // Save wallet session for Attestation page
-            saveWalletSession(selectedWallet, account, DEFAULT_CHAIN_ID);
-            
-            addToast('🎉 Wallet connected successfully', { type: 'success' });
-          } catch (err) {
-            console.error('enable after connect failed', err);
-            addToast('❌ Wallet enabling failed', { type: 'error' });
-            setWcStatus('failed');
-          } finally {
-            setConnecting(false);
-            if (connector && connector.off) connector.off('connect', onConnect);
-            // keep modal briefly to show connected state, then close
-            setTimeout(() => setWcModalOpen(false), 600);
-          }
-        };
-
-        const onDisconnect = (error, payload) => {
-          console.debug('wc disconnected', error, payload);
-          setWcStatus('failed');
-          setWcModalOpen(false);
-        };
-
-        if (connector && connector.on) {
-          connector.on('connect', onConnect);
-          connector.on('disconnect', onDisconnect);
-          connector.on('error', (err) => { console.debug('wc error', err); setWcStatus('failed'); });
-        }
-
-        // safety timeout: if no connect after 2 minutes, mark as failed
-        wcTimeoutRef.current = setTimeout(() => {
-          if (wcStatus === 'pending') {
-            try {
-              if (connector && typeof connector.killSession === 'function') connector.killSession();
-            } catch (e) { /* noop */ }
-            setWcStatus('failed');
-            setWcModalOpen(false);
-            setConnecting(false);
-            addToast('❌ WalletConnect timeout, please try again', { type: 'error' });
-          }
-        }, 2 * 60 * 1000);
-
+        setCurrentStep(1);
+        setWcStatus('connected');
+        
+        // Save wallet session for Attestation page
+        saveWalletSession(selectedWallet, address, DEFAULT_CHAIN_ID);
+        
+        addToast('🎉 Wallet connected successfully', { type: 'success' });
+        setConnecting(false);
+        
       } catch (e) {
         console.error('wc session create failed', e);
         addToast('❌ WalletConnect session failed', { type: 'error' });
         setConnecting(false);
+        setWcStatus('failed');
       }
       return;
     }
