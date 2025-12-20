@@ -98,12 +98,13 @@ function detectSDKProviders() {
   
   // WalletConnect
   // Always offer WalletConnect as an SDK option; connect flow will instantiate
+  // Note: No installLink - Web3Modal handles the entire connection flow
   providers.push({
     id: 'walletconnect',
     name: 'WalletConnect',
     icon: 'https://avatars.githubusercontent.com/u/37784886',
-    type: 'sdk',
-    installLink: 'https://walletconnect.com/'
+    type: 'sdk'
+    // No provider or installLink - Web3Modal v2 will create the provider on demand
   });
   
   // Phantom

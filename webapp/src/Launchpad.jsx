@@ -260,6 +260,31 @@ export default function Launchpad() {
       setSelectedWallet(chosen);
     }
 
+    // WalletConnect: create session + show modal (SDK-based, no injected provider)
+    if (selectedWallet.id === 'walletconnect') {
+      try {
+        // Web3Modal v2 handles connection internally
+        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
+        
+        // result from Web3Modal v2 is { provider, address, chainId }
+        const { provider, address, chainId } = result;
+        
+        setWalletAddress(address || '');
+        setWalletConnected(Boolean(address));
+        setSelectedWallet(prev => ({ ...(prev || {}), provider }));
+        
+        try { 
+          const bal = await getBalance(address); 
+          setBalance(bal); 
+        } catch (e) { /* ignore */ }
+        addToast('🎉 Wallet connected successfully', 'success');
+        return;
+      } catch (err) {
+        addToast('❌ WalletConnect connection failed', 'error');
+        return;
+      }
+    }
+
     // If the chosen wallet has no injected provider (SDK/install link only), handle gracefully
     if (!selectedWallet.provider) {
       if (selectedWallet.installLink) {
@@ -270,38 +295,6 @@ export default function Launchpad() {
         setShowProviderPicker(true);
       }
       return;
-    }
-    // WalletConnect: create session + show modal
-    if (selectedWallet.id === 'walletconnect') {
-      try {
-        // Web3Modal v2 handles connection internally
-        
-        // Web3Modal v2 opens its own modal and handles the connection flow
-        try {
-          const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
-          
-          // result from Web3Modal v2 is { provider, address, chainId }
-          const { provider, address, chainId } = result;
-          
-          setWalletAddress(address || '');
-          setWalletConnected(Boolean(address));
-          setSelectedWallet(prev => ({ ...(prev || {}), provider }));
-          
-          try { 
-            const bal = await getBalance(address); 
-            setBalance(bal); 
-          } catch (e) { /* ignore */ }
-          addToast('🎉 Wallet connected successfully', 'success');
-        } catch (err) {
-          addToast('❌ WalletConnect connection failed', 'error');
-        }
-        
-        return;
-      } catch (e) {
-        console.error('WalletConnect session failed', e);
-        addToast('❌ WalletConnect session failed', 'error');
-        return;
-      }
     }
 
     try {
