@@ -37,13 +37,17 @@ try { assertEnv(); } catch (e) {
 // would otherwise start with broken API calls.
 async function bootstrap() {
   // Initialize Web3Modal v2 with WalletConnect Project ID
+  // This is non-blocking - if it fails, the app still renders
   const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
   if (projectId) {
     try {
-      await initWeb3Modal(projectId);
+      await Promise.race([
+        initWeb3Modal(projectId),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Web3Modal init timeout')), 2000))
+      ]);
     } catch (err) {
-      console.warn('Failed to initialize Web3Modal:', err);
-      // Non-critical failure - app can continue without Web3Modal, but WalletConnect won't work
+      console.warn('Failed to initialize Web3Modal:', err && err.message ? err.message : err);
+      // Non-critical failure - app can continue without Web3Modal
     }
   }
 
@@ -82,7 +86,10 @@ async function bootstrap() {
   // Use the runtime-aware API_BASE() helper so the health check targets the
   // same endpoint that the app will use for API calls.
   const apiBase = API_BASE();
-  const backendOk = await checkBackend().catch(() => false);
+  
+  // In dev, allow app to render even if backend is unreachable
+  const isDev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
+  const backendOk = isDev ? true : await checkBackend().catch(() => false);
 
   const root = ReactDOM.createRoot(document.getElementById("root"));
 
