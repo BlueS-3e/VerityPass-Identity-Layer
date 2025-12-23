@@ -7,10 +7,12 @@ export async function checkBackend(timeoutMs = 3000) {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
-    await apiClient.apiFetch('/api/health', { signal: controller.signal, cache: 'no-store' });
+    // Use /api/version endpoint which always exists as a lightweight health check
+    await apiClient.apiFetch('/api/version', { signal: controller.signal, cache: 'no-store' });
     clearTimeout(id);
     return true;
   } catch (e) {
+    console.debug('[checkBackend] Backend health check failed:', e.message);
     return false;
   }
 }

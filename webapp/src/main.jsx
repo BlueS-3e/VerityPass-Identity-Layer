@@ -97,10 +97,16 @@ async function bootstrap() {
       console.warn('[Bootstrap] Production build with unconfigured API_BASE — skipping health check. Set VITE_API_BASE in Vercel env.');
       backendOk = true; // Allow UI to render; API calls will fail gracefully
     } else {
+      // Try health check but don't block UI if it fails
+      // The app will show errors for individual API calls that fail
       backendOk = await checkBackend().catch(() => false);
+      if (!backendOk) {
+        console.warn('[Bootstrap] Backend health check failed — app will render but API calls may fail. Check VITE_API_BASE and backend status.');
+        backendOk = true; // Still render UI; let individual API calls fail gracefully
+      }
     }
   }
-  console.log('[Bootstrap] Backend health check:', backendOk ? 'OK' : 'FAILED');
+  console.log('[Bootstrap] Backend health check:', backendOk ? 'OK' : 'SKIPPED');
 
   const root = ReactDOM.createRoot(document.getElementById("root"));
 
