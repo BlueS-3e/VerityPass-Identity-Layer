@@ -23,7 +23,7 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: true,
+    sourcemap: !process.env.CI, // Only enable sourcemaps in dev/preview to avoid slow builds on Vercel
     rollupOptions: {
       output: {
         // Encourage splitting heavy wallet libraries and ethers into separate
