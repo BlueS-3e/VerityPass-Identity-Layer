@@ -86,8 +86,8 @@ export default function ConnectPlaid() {
 
   // Initialize Web3Modal on component mount
   useEffect(() => {
-    // Replace with your actual WalletConnect Project ID
-    const walletConnectProjectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID_HERE';
+    // WalletConnect Project ID from Vite env
+    const walletConnectProjectId = (import.meta?.env?.VITE_WALLETCONNECT_PROJECT_ID) || 'YOUR_PROJECT_ID_HERE';
     
     if (walletConnectProjectId && walletConnectProjectId !== 'YOUR_PROJECT_ID_HERE') {
       initWeb3Modal(walletConnectProjectId).catch(console.error);

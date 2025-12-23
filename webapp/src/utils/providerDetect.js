@@ -430,9 +430,7 @@ export async function preloadWalletConnect() {
   if (typeof window === 'undefined') return null;
   
   // Get project ID from environment variables
-  const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 
-                   import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID ||
-                   import.meta.env?.REACT_APP_WALLETCONNECT_PROJECT_ID;
+  const projectId = import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID;
   
   console.log('[providerDetect] Preloading WalletConnect with project ID:', 
     projectId ? `${projectId.substring(0, 10)}...` : 'NOT SET');
@@ -455,15 +453,13 @@ export async function preloadWalletConnect() {
 export async function createWalletConnectInstance(chainId = 1) {
   if (typeof window === 'undefined') throw new Error('No window');
   
-  const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 
-                   import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID ||
-                   import.meta.env?.REACT_APP_WALLETCONNECT_PROJECT_ID;
+  const projectId = import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID;
   
   console.log('[providerDetect] Creating WalletConnect instance. Project ID:', 
     projectId ? `${projectId.substring(0, 10)}...` : 'NOT SET');
   
   if (!projectId) {
-    throw new Error('WalletConnect Project ID not set. Please set REACT_APP_WALLETCONNECT_PROJECT_ID or VITE_WALLETCONNECT_PROJECT_ID environment variable. Get free at https://cloud.walletconnect.com');
+    throw new Error('WalletConnect Project ID not set. Please set VITE_WALLETCONNECT_PROJECT_ID (Vite). Get one at https://cloud.walletconnect.com');
   }
 
   // Initialize Web3Modal if not already initialized
