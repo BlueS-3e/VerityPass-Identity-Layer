@@ -37,17 +37,21 @@ try { assertEnv(); } catch (e) {
 async function bootstrap() {
   // Initialize Web3Modal v2 with WalletConnect Project ID
   // This is non-blocking - if it fails, the app still renders
-  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
   if (projectId) {
     // Don't initialize Web3Modal at startup - it can cause issues
     // Initialize only when user actually clicks WalletConnect
     // Web3Modal will be lazy-loaded in providerDetect.js
     console.log('[Bootstrap] Web3Modal will be initialized on demand');
+  } else {
+    console.warn('[Bootstrap] VITE_WALLETCONNECT_PROJECT_ID not set — WalletConnect will not be available');
   }
 
   // Prefer server-provided runtime config when the frontend was built without
   // a VITE_API_BASE, or when the frontend is being served same-origin.
   const buildTimeApiBase = import.meta.env.VITE_API_BASE || '';
+  console.log('[Bootstrap] Build-time API base:', buildTimeApiBase ? `${buildTimeApiBase.substring(0, 20)}...` : 'NOT SET');
+  
   if (!buildTimeApiBase || (typeof window !== 'undefined' && buildTimeApiBase && buildTimeApiBase.startsWith(window.location.origin))) {
     try {
       const cfg = await apiClient.apiGet('/api/frontend-config').catch(() => null);
@@ -80,10 +84,23 @@ async function bootstrap() {
   // Use the runtime-aware API_BASE() helper so the health check targets the
   // same endpoint that the app will use for API calls.
   const apiBase = API_BASE();
+  console.log('[Bootstrap] Resolved API base:', apiBase ? `${apiBase.substring(0, 30)}...` : 'NOT SET');
   
   // In dev, allow app to render even if backend is unreachable
   const isDev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
-  const backendOk = isDev ? true : await checkBackend().catch(() => false);
+  
+  // Skip health check on Vercel (production) if API_BASE is not fully configured
+  // This prevents the app from blocking on an unreachable backend URL
+  let backendOk = isDev;
+  if (!isDev) {
+    if (!apiBase || apiBase === 'http://localhost:5000') {
+      console.warn('[Bootstrap] Production build with unconfigured API_BASE — skipping health check. Set VITE_API_BASE in Vercel env.');
+      backendOk = true; // Allow UI to render; API calls will fail gracefully
+    } else {
+      backendOk = await checkBackend().catch(() => false);
+    }
+  }
+  console.log('[Bootstrap] Backend health check:', backendOk ? 'OK' : 'FAILED');
 
   const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -142,3 +159,30 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+// Add global error handler to catch any unhandled JS errors
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    console.error('[Global Error Handler] Uncaught error:', event.error);
+    const root = document.getElementById('root');
+    if (root && root.children.length === 0) {
+      root.innerHTML = `
+        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(to br, #1e293b, #3f0f5c); font-family: system-ui, sans-serif; color: white; padding: 20px;">
+          <div style="max-width: 600px; background: #111827; padding: 40px; border: 1px solid #374151; border-radius: 12px; text-align: center;">
+            <h1 style="font-size: 24px; margin: 0 0 16px 0;">Application Error</h1>
+            <p style="color: #9ca3af; margin: 0 0 16px 0;">An error occurred loading the application.</p>
+            <pre style="text-align: left; background: #000; padding: 12px; border-radius: 6px; overflow: auto; font-size: 12px; color: #fbbf24; margin: 0;">
+${event.error?.message || 'Unknown error'}
+${event.error?.stack ? '\n' + event.error.stack.split('\n').slice(0, 5).join('\n') : ''}
+            </pre>
+            <button onclick="location.reload()" style="margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">Reload Page</button>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('[Unhandled Promise Rejection]', event.reason);
+  });
+}
