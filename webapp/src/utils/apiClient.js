@@ -25,7 +25,18 @@ async function apiFetch(path, opts = {}) {
     final.headers = { 'Content-Type': 'application/json', ...(final.headers || {}) };
     final.body = JSON.stringify(final.body);
   }
-  const res = await fetch(url, final);
+  
+  // Log the request for debugging
+  console.debug('[apiClient] Request:', { method: final.method || 'GET', path, url, hasBody: !!final.body });
+  
+  let res;
+  try {
+    res = await fetch(url, final);
+  } catch (fetchError) {
+    console.error('[apiClient] Fetch failed:', { path, url, error: fetchError.message });
+    throw new Error(`Network error calling ${path}: ${fetchError.message}`);
+  }
+  
   // Some tests or environments may mock fetch and return a plain object
   // without a Headers instance. Be defensive when reading headers.
   let contentType = '';
@@ -50,7 +61,12 @@ async function apiFetch(path, opts = {}) {
   } else {
     payload = null;
   }
+  
+  // Log response for debugging
+  console.debug('[apiClient] Response:', { path, status: res.status, ok: res.ok, contentType });
+  
   if (!res.ok) {
+    console.error('[apiClient] API error:', { path, status: res.status, payload });
     const err = new Error((payload && payload.error) || `API error: ${res.status}`);
     err.status = res.status;
     err.payload = payload;
