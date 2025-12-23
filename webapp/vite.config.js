@@ -9,13 +9,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-  // Some environments / mirrors produce package metadata that forces Vite
-  // to pick an export path that isn't present on disk. Map react-router
-  // to the *production* build files which are present and stable. We
-  // map the more specific 'react-router/dom' first so subpath imports
-  // (used by `react-router-dom`) resolve correctly.
-  'react-router/dom': resolve(__dirname, 'node_modules/react-router/dist/production/dom-export.js'),
-  'react-router': resolve(__dirname, 'node_modules/react-router/dist/production')
+      
     }
   },
   server: {
@@ -29,6 +23,7 @@ export default defineConfig({
     }
   },
   build: {
+    sourcemap: true,
     rollupOptions: {
       output: {
         // Encourage splitting heavy wallet libraries and ethers into separate
