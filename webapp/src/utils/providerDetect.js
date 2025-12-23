@@ -1,4 +1,6 @@
 // Modern EIP-6963 + EIP-1193 compatible wallet detection
+import { initWeb3Modal, connectWithWalletConnect, disconnectWalletConnect, getWalletConnectProvider, getWalletConnectAccount } from './walletConnectV2';
+export { initWeb3Modal } from './walletConnectV2';
 // Cleaned and optimized version
 
 // Note: we avoid a top-level WalletConnect import to prevent build/runtime issues.
@@ -214,7 +216,8 @@ export function getProviderIcon(provider) {
     'Brave Wallet': 'https://brave.com/static-assets/images/brave-favicon.png',
     'Rabby Wallet': 'https://rabby.io/images/logo-128.png',
     'OKX Wallet': 'https://www.okx.com/cdn/assets/files/logo/favicon.ico',
-    'Phantom': 'https://phantom.app/img/phantom-logo.svg'
+    'Phantom': 'https://phantom.app/img/phantom-logo.svg',
+    'WalletConnect': 'https://avatars.githubusercontent.com/u/37784886'
   };
   
   return iconMap[name] || null;
@@ -409,11 +412,12 @@ export function getNetworkConfig(chainId) {
 
 // Fallback provider
 export async function createFallbackProvider() {
+  // Offer WalletConnect via Web3Modal instead of an install link
   return {
-    id: 'fallback',
+    id: 'walletconnect',
     name: 'WalletConnect',
     type: 'sdk',
-    installLink: 'https://walletconnect.com/'
+    icon: 'https://avatars.githubusercontent.com/u/37784886'
   };
 }
 
@@ -425,38 +429,69 @@ export async function preloadWalletConnect() {
   if (_wcModule) return _wcModule;
   if (typeof window === 'undefined') return null;
   
-  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  // Get project ID from environment variables
+  const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 
+                   import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID ||
+                   import.meta.env?.REACT_APP_WALLETCONNECT_PROJECT_ID;
+  
+  console.log('[providerDetect] Preloading WalletConnect with project ID:', 
+    projectId ? `${projectId.substring(0, 10)}...` : 'NOT SET');
+  
   if (projectId) {
-    _wcModule = await initWeb3Modal(projectId);
+    try {
+      _wcModule = await initWeb3Modal(projectId);
+      console.log('[providerDetect] Web3Modal initialized successfully');
+    } catch (error) {
+      console.error('[providerDetect] Failed to initialize Web3Modal:', error);
+      _wcModule = null;
+    }
+  } else {
+    console.warn('[providerDetect] WalletConnect project ID not set. Please set REACT_APP_WALLETCONNECT_PROJECT_ID or VITE_WALLETCONNECT_PROJECT_ID');
   }
   return _wcModule;
 }
 
-// Connection helper with error handling
 // Create a WalletConnect provider instance using Web3Modal v2 (Reown AppKit)
-// Web3Modal is initialized on-demand when user clicks WalletConnect
 export async function createWalletConnectInstance(chainId = 1) {
   if (typeof window === 'undefined') throw new Error('No window');
   
-  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 
+                   import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID ||
+                   import.meta.env?.REACT_APP_WALLETCONNECT_PROJECT_ID;
+  
+  console.log('[providerDetect] Creating WalletConnect instance. Project ID:', 
+    projectId ? `${projectId.substring(0, 10)}...` : 'NOT SET');
+  
   if (!projectId) {
-    throw new Error('VITE_WALLETCONNECT_PROJECT_ID not set. Get free at https://cloud.walletconnect.com');
+    throw new Error('WalletConnect Project ID not set. Please set REACT_APP_WALLETCONNECT_PROJECT_ID or VITE_WALLETCONNECT_PROJECT_ID environment variable. Get free at https://cloud.walletconnect.com');
   }
 
   // Initialize Web3Modal if not already initialized
   if (!_wcModule) {
     try {
+      console.log('[providerDetect] Initializing Web3Modal...');
       await initWeb3Modal(projectId);
       _wcModule = true; // Mark as initialized
+      console.log('[providerDetect] Web3Modal initialized');
     } catch (err) {
-      console.error('Failed to initialize Web3Modal:', err);
-      throw new Error('Web3Modal initialization failed');
+      console.error('[providerDetect] Failed to initialize Web3Modal:', err);
+      throw new Error(`Web3Modal initialization failed: ${err.message}`);
     }
   }
 
   // Connect via Web3Modal and return the result
-  const result = await connectWithWalletConnect();
-  return result;
+  console.log('[providerDetect] Connecting with WalletConnect...');
+  try {
+    const result = await connectWithWalletConnect();
+    console.log('[providerDetect] WalletConnect connection successful:', {
+      address: result.address ? `${result.address.substring(0, 10)}...` : 'none',
+      chainId: result.chainId
+    });
+    return result;
+  } catch (error) {
+    console.error('[providerDetect] WalletConnect connection failed:', error);
+    throw error;
+  }
 }
 
 // Legacy session creation (replaced by Web3Modal)
@@ -475,10 +510,24 @@ export async function connectWallet(providerOrEntry, options = {}) {
     // SDK-based WalletConnect using Web3Modal v2
     if (providerOrEntry.id === 'walletconnect' || providerOrEntry.type === 'sdk') {
       try {
-        provider = await createWalletConnectInstance(options.chainId || 1);
-        // Web3Modal v2 provider is already connected after connectWithWalletConnect
+        console.log('[providerDetect] Connecting with WalletConnect...');
+        const wcResult = await createWalletConnectInstance(options.chainId || 1);
+        
+        if (!wcResult || !wcResult.provider) {
+          throw new Error('WalletConnect provider not available after session creation');
+        }
+        
+        provider = wcResult.provider;
+        
+        // Return formatted result including address and chainId from WalletConnect
+        return {
+          accounts: wcResult.address ? [wcResult.address] : [],
+          chainId: wcResult.chainId || 1,
+          provider: wcResult.provider,
+          address: wcResult.address // Additional field for convenience
+        };
       } catch (e) {
-        console.error('Failed to create WalletConnect instance:', e);
+        console.error('[providerDetect] Failed to create WalletConnect instance:', e);
         throw e;
       }
     } else if (providerOrEntry.provider) {
@@ -499,9 +548,14 @@ export async function connectWallet(providerOrEntry, options = {}) {
     // Normalize chainId to numeric format for consistency
     const numericChainId = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
 
-    return { accounts, chainId: numericChainId, provider };
+    return { 
+      accounts, 
+      chainId: numericChainId, 
+      provider,
+      address: accounts[0] // Additional field for convenience
+    };
   } catch (error) {
-    console.error('Wallet connection failed:', error);
+    console.error('[providerDetect] Wallet connection failed:', error);
     throw error;
   }
 }
@@ -529,5 +583,19 @@ export function setupProviderListeners(provider, callbacks) {
         provider.removeListener('disconnect', onDisconnect);
       }
     }
+  };
+}
+
+// WalletConnect specific event setup
+export function setupWalletConnectListeners(callbacks) {
+  if (typeof window === 'undefined') return null;
+  
+  // Note: Web3Modal v2 handles its own listeners internally
+  // This is a placeholder for any custom WalletConnect event handling needed
+  const { onAccountsChanged, onChainChanged, onDisconnect } = callbacks;
+  
+  // Return a dummy cleanup function
+  return () => {
+    // Web3Modal v2 handles cleanup internally
   };
 }

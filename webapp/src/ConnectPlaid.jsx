@@ -2,8 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import PlaidLink from './components/PlaidLink';
 import { getSignerAddress } from './utils/web3';
 import PrimaryCTA from './components/PrimaryCTA';
-import ProviderPicker from './components/ProviderPicker';
-import { createWalletConnectSession } from './utils/providerDetect';
+import { createWalletConnectSession, initWeb3Modal } from './utils/providerDetect'; // Added initWeb3Modal
 import { useToast } from './components/Toast';
 import { NETWORK_CONFIG, DEFAULT_CHAIN_ID } from './config';
 import { 
@@ -12,9 +11,11 @@ import {
   connectWallet as modernConnectWallet,
   switchNetwork,
   setupProviderListeners,
-  preloadWalletConnect
+  preloadWalletConnect,
+  // Ensure these are imported:
+  persistPreferredProvider, 
+  loadPreferredProvider
 } from './utils/providerDetect';
-import { persistPreferredProvider, loadPreferredProvider } from './utils/providerDetect';
 import apiClient from './utils/apiClient';
 import {
   TX_STATE,
@@ -75,19 +76,30 @@ export default function ConnectPlaid() {
   const [allowAnonFlow, setAllowAnonFlow] = useState(false);
   const [availableWallets, setAvailableWallets] = useState([]);
   const [selectedWallet, setSelectedWallet] = useState(null);
-  const [showProviderPicker, setShowProviderPicker] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [signing, setSigning] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const { addToast } = useToast();
 
   const steps = ['Connect Wallet', 'Verify Identity', 'Link Bank'];
+  const walletConnectRef = useRef(false); // Track if WalletConnect is being used
+
+  // Initialize Web3Modal on component mount
+  useEffect(() => {
+    // Replace with your actual WalletConnect Project ID
+    const walletConnectProjectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID_HERE';
+    
+    if (walletConnectProjectId && walletConnectProjectId !== 'YOUR_PROJECT_ID_HERE') {
+      initWeb3Modal(walletConnectProjectId).catch(console.error);
+    }
+  }, []);
 
   // Modern wallet detection
   useEffect(() => {
     const wallets = listAvailableProviders();
     setAvailableWallets(wallets);
-    // try to restore previously persisted selection
+    
+    // Try to restore previously persisted selection
     try {
       const persisted = loadPreferredProvider();
       if (persisted) {
@@ -97,7 +109,9 @@ export default function ConnectPlaid() {
           return;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Failed to load preferred provider:', e);
+    }
 
     if (wallets.length > 0) {
       selectBestProvider().then(wallet => {
@@ -108,9 +122,23 @@ export default function ConnectPlaid() {
 
   const handleSelectWallet = (wallet) => {
     setSelectedWallet(wallet);
-    try { persistPreferredProvider(wallet); } catch (e) {}
-    // pre-load WalletConnect code when user selects it to improve latency
-    try { if (wallet?.id === 'walletconnect') preloadWalletConnect(); } catch (e) {}
+    try { 
+      persistPreferredProvider(wallet); 
+    } catch (e) {
+      console.warn('Failed to persist provider:', e);
+    }
+    
+    // Pre-load WalletConnect code when user selects it to improve latency
+    if (wallet?.id === 'walletconnect') {
+      try { 
+        preloadWalletConnect(); 
+        walletConnectRef.current = true;
+      } catch (e) {
+        console.warn('Failed to preload WalletConnect:', e);
+      }
+    } else {
+      walletConnectRef.current = false;
+    }
   };
 
   // Load signer address and setup wallet listeners
@@ -132,7 +160,9 @@ export default function ConnectPlaid() {
 
     loadAddress();
 
-    if (selectedWallet?.provider) {
+    // Only setup listeners for non-WalletConnect providers
+    // WalletConnect handles its own listeners through Web3Modal
+    if (selectedWallet?.provider && selectedWallet.id !== 'walletconnect') {
       cleanup = setupProviderListeners(selectedWallet.provider, {
         onAccountsChanged: (accounts) => {
           setOwner(accounts[0] || null);
@@ -183,53 +213,101 @@ export default function ConnectPlaid() {
   }, [owner]);
 
   const connectWallet = async () => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (isMobile) {
+      setConnecting(true);
+      walletConnectRef.current = true;
+      try {
+        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID);
+        if (!result) throw new Error('WalletConnect session returned no result');
+        const { provider, address, chainId } = result;
+        setOwner(address);
+        setSelectedWallet(prev => ({ ...(prev || {}), provider, id: 'walletconnect', name: 'WalletConnect' }));
+        setCurrentStep(1);
+        saveWalletSession({ id: 'walletconnect', name: 'WalletConnect', provider }, address, chainId || DEFAULT_CHAIN_ID);
+        addToast('🎉 Wallet connected successfully', { type: 'success' });
+      } catch (e) {
+        console.error('WalletConnect session failed:', e);
+        addToast(e.message?.includes('timeout') ? '⏰ Connection timeout - please try again' : `❌ ${e.message || 'WalletConnect connection failed'}`, { type: 'error' });
+        walletConnectRef.current = false;
+      } finally {
+        setConnecting(false);
+      }
+      return;
+    }
+
     if (!selectedWallet) {
       addToast('👛 Please select a wallet first', { type: 'error' });
       return;
     }
-    // If selected wallet doesn't expose a provider (e.g., SDK/install-only), handle gracefully
-    if (!selectedWallet.provider) {
-      if (selectedWallet.installLink) {
-        try { window.open(selectedWallet.installLink, '_blank'); } catch (e) { /* noop */ }
-        addToast('🔗 Opening wallet install page', { type: 'info' });
-      } else {
-        addToast('🔍 Selected wallet has no direct provider. Please choose a different wallet or use WalletConnect.', { type: 'error' });
-        setShowProviderPicker(true);
-      }
-      return;
-    }
-
-    // If WalletConnect is the selected wallet, use Web3Modal v2
+    
+    // WalletConnect: handle first regardless of provider presence
     if (selectedWallet.id === 'walletconnect') {
       setConnecting(true);
+      walletConnectRef.current = true;
+      
       try {
         // Web3Modal v2 opens its own modal and handles the connection flow
-        const result = await createWalletConnectSession(1);
+        console.log('Starting WalletConnect session...');
+        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID); // Pass the chain ID
+        
+        if (!result) {
+          throw new Error('WalletConnect session returned no result');
+        }
         
         // result from Web3Modal v2 is { provider, address, chainId }
         const { provider, address, chainId } = result;
         
+        console.log('WalletConnect connected:', { address, chainId });
+        
         setOwner(address);
-        setSelectedWallet(prev => ({ ...(prev || {}), provider }));
+        setSelectedWallet(prev => ({ 
+          ...(prev || {}), 
+          provider,
+          id: 'walletconnect',
+          name: 'WalletConnect'
+        }));
         setCurrentStep(1);
         
         // Save wallet session for Attestation page
-        saveWalletSession(selectedWallet, address, DEFAULT_CHAIN_ID);
+        saveWalletSession({
+          id: 'walletconnect',
+          name: 'WalletConnect',
+          provider
+        }, address, chainId || DEFAULT_CHAIN_ID);
         
         addToast('🎉 Wallet connected successfully', { type: 'success' });
-        setConnecting(false);
         
       } catch (e) {
-        console.error('wc session create failed', e);
-        addToast('❌ WalletConnect session failed', { type: 'error' });
+        console.error('WalletConnect session failed:', e);
+        addToast(
+          e.message.includes('timeout') 
+            ? '⏰ Connection timeout - please try again' 
+            : `❌ ${e.message || 'WalletConnect connection failed'}`,
+          { type: 'error' }
+        );
+        walletConnectRef.current = false;
+      } finally {
         setConnecting(false);
       }
       return;
     }
 
+    // If selected wallet doesn't expose a provider (e.g., SDK/install-only), handle gracefully
+    if (!selectedWallet.provider) {
+      addToast('🔍 Selected wallet has no direct provider. Please choose a different wallet or use WalletConnect.', { type: 'error' });
+      return;
+    }
+
     setConnecting(true);
+    walletConnectRef.current = false;
+    
     try {
       const connection = await modernConnectWallet(selectedWallet.provider);
+      
+      if (!connection || !connection.accounts || connection.accounts.length === 0) {
+        throw new Error('Connection failed: no accounts returned');
+      }
       
       const expectedChain = NETWORK_CONFIG[DEFAULT_CHAIN_ID];
       let networkSwitched = false;
@@ -269,7 +347,12 @@ export default function ConnectPlaid() {
       }
     } catch (error) {
       console.error('Wallet connection failed:', error);
-      addToast(`❌ ${error?.message || 'Wallet connection failed'}`, { type: 'error' });
+      addToast(
+        error.message?.includes('rejected') 
+          ? '❌ Connection rejected by user' 
+          : `❌ ${error?.message || 'Wallet connection failed'}`,
+        { type: 'error' }
+      );
     } finally {
       setConnecting(false);
     }
@@ -294,23 +377,51 @@ export default function ConnectPlaid() {
 
     setSigning(true);
     try {
-  const nonceData = await apiClient.apiGet('/api/identity/nonce');
-  const nonce = nonceData?.nonce;
+      const nonceData = await apiClient.apiGet('/api/identity/nonce');
+      const nonce = nonceData?.nonce;
       if (!nonce) throw new Error('Invalid nonce received');
 
-      const signature = await selectedWallet.provider.request({
-        method: 'personal_sign',
-        params: [nonce, owner]
-      });
+      // For WalletConnect, we need to get the signer differently
+      let signature;
+      
+      if (selectedWallet.id === 'walletconnect' && walletConnectRef.current) {
+        // WalletConnect specific signing
+        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID);
+        if (result.provider) {
+          signature = await result.provider.request({
+            method: 'personal_sign',
+            params: [nonce, owner]
+          });
+        }
+      } else {
+        // Standard provider signing
+        signature = await selectedWallet.provider.request({
+          method: 'personal_sign',
+          params: [nonce, owner]
+        });
+      }
 
-      const bindData = await apiClient.apiPost('/api/identity/bind', { owner_addr: owner, nonce, signature });
+      if (!signature) {
+        throw new Error('Failed to get signature');
+      }
+
+      const bindData = await apiClient.apiPost('/api/identity/bind', { 
+        owner_addr: owner, 
+        nonce, 
+        signature 
+      });
 
       setIdentityBound(true);
       setCurrentStep(2);
       addToast('🔐 Identity successfully bound to session', { type: 'success' });
     } catch (error) {
       console.error('Bind error:', error);
-      addToast(`❌ ${error?.message || 'Signature or binding failed'}`, { type: 'error' });
+      addToast(
+        error.message?.includes('rejected') 
+          ? '❌ Signature rejected by user' 
+          : `❌ ${error?.message || 'Signature or binding failed'}`,
+        { type: 'error' }
+      );
     } finally {
       setSigning(false);
     }
@@ -319,7 +430,10 @@ export default function ConnectPlaid() {
   const onPlaidSuccess = async (payload) => {
     try {
       const ownerForDraft = owner || 'anon';
-      const data = await apiClient.apiPost('/api/attestations/draft', { owner_addr: ownerForDraft, plaid: payload });
+      const data = await apiClient.apiPost('/api/attestations/draft', { 
+        owner_addr: ownerForDraft, 
+        plaid: payload 
+      });
 
       setAttestationStatus({ 
         ok: true, 
@@ -350,6 +464,10 @@ export default function ConnectPlaid() {
       setSigning(true);
       
       // Save transaction state for recovery on refresh
+      // Fixed: Use actual account and network variables
+      const account = owner;
+      const network = DEFAULT_CHAIN_ID;
+      
       saveTxState(TX_STATE.PUBLISHING, {
         draftId: attestationStatus.id,
         account: account,
@@ -373,7 +491,10 @@ export default function ConnectPlaid() {
     } catch (error) {
       console.error('Claim error:', error);
       setSigning(false);
-      saveTxState(TX_STATE.FAILED, { error: error?.message, draftId: attestationStatus?.id });
+      saveTxState(TX_STATE.FAILED, { 
+        error: error?.message, 
+        draftId: attestationStatus?.id 
+      });
       addToast(`❌ ${error?.message || 'Claim request failed'}`, { type: 'error' });
     }
   };
@@ -412,10 +533,12 @@ export default function ConnectPlaid() {
           <div className="lg:col-span-2 space-y-6">
             {/* Wallet Connection */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <span>👛</span>
-                Step 1: Connect Wallet
-              </h2>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2 m-0">
+                  <span>👛</span>
+                  Step 1: Connect Wallet
+                </h2>
+              </div>
 
               <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                 {availableWallets.map((wallet) => (
@@ -427,20 +550,24 @@ export default function ConnectPlaid() {
                         ? 'bg-indigo-500/20 border-indigo-400 text-white shadow-lg'
                         : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20'
                     }`}
+                    disabled={connecting && selectedWallet?.id === wallet.id}
                   >
                     <div className="flex items-center gap-3">
                       {wallet.icon && (
                         <img src={wallet.icon} alt="" className="w-6 h-6 rounded" />
                       )}
                       <span className="font-medium text-sm">{wallet.name}</span>
+                      {connecting && selectedWallet?.id === wallet.id && (
+                        <div className="ml-auto w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      )}
                     </div>
                   </button>
                 ))}
               </div>
 
-              {/* Mobile compact summary + chooser */}
+              {/* Mobile compact summary (selection via Connect modal) */}
               <div className="md:hidden mb-4">
-                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 mb-3">
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
                       {selectedWallet?.icon ? (
@@ -450,24 +577,28 @@ export default function ConnectPlaid() {
                       )}
                     </div>
                     <div>
-                      <div className="text-sm text-gray-300">{selectedWallet?.name || 'No wallet selected'}</div>
-                      <div className="text-xs text-gray-400">{selectedWallet?.type || ''}</div>
+                      <div className="text-sm text-gray-300">{selectedWallet?.name || 'Wallet not selected'}</div>
+                      <div className="text-xs text-gray-400">Use Connect to choose</div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowProviderPicker(true)}
-                    className="px-3 py-2 bg-white/10 text-white rounded-lg text-sm"
-                  >
-                    Choose wallet…
-                  </button>
                 </div>
               </div>
+              
 
               <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
                 <div className="flex-1">
                   <div className="text-sm text-gray-400 mb-1">Connected Address</div>
-                  <div className="font-mono text-white text-sm">
+                  <div className="font-mono text-white text-sm flex items-center gap-2">
                     {owner ? shortAddress(owner) : 'Not connected'}
+                    {owner && (
+                      <button
+                        onClick={copyAddress}
+                        className="text-gray-400 hover:text-white transition-colors"
+                        title="Copy address"
+                      >
+                        📋
+                      </button>
+                    )}
                   </div>
                 </div>
                 <button
@@ -655,9 +786,15 @@ export default function ConnectPlaid() {
                   {attestationStatus.anon && identityBound && (
                     <button
                       onClick={claimDraft}
-                      className="w-full px-4 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
+                      disabled={signing}
+                      className="w-full px-4 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      Claim Draft
+                      {signing ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Claiming...
+                        </>
+                      ) : 'Claim Draft'}
                     </button>
                   )}
                 </div>
@@ -689,13 +826,6 @@ export default function ConnectPlaid() {
           </div>
         </div>
       </div>
-
-      <ProviderPicker
-        visible={showProviderPicker}
-        wallets={availableWallets}
-        onSelect={(w) => { handleSelectWallet(w); setShowProviderPicker(false); }}
-        onClose={() => setShowProviderPicker(false)}
-      />
     </div>
   );
 }

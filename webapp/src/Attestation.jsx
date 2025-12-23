@@ -325,10 +325,24 @@ export default function Attestation() {
       return null;
     }
 
-    // If the wallet has no provider instance, it's not ready
+    // If the wallet has no provider instance, try WalletConnect fallback
     if (!selectedWallet.provider) {
-      addToast('Selected wallet has no provider. Please reconnect on the Connect page.', { type: 'error' });
-      return null;
+      try {
+        if (selectedWallet.id === 'walletconnect') {
+          // Lazy-init Web3Modal then fetch provider
+          await preloadWalletConnect();
+          const { getWalletConnectProvider } = await import('./utils/walletConnectV2.js');
+          const wcProvider = getWalletConnectProvider();
+          if (wcProvider) {
+            selectedWallet.provider = wcProvider;
+          }
+        }
+      } catch (e) {}
+      
+      if (!selectedWallet.provider) {
+        addToast('Selected wallet has no provider. Please reconnect on the Connect page.', { type: 'error' });
+        return null;
+      }
     }
 
     try {

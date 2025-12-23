@@ -23,7 +23,6 @@ import { API_BASE, NETWORK_CONFIG, DEFAULT_CHAIN_ID } from './config';
 import NetworkBanner from './components/NetworkBanner';
 import HeroGraphic from './components/HeroGraphic';
 import Footer from './components/Footer';
-import ProviderPicker from './components/ProviderPicker';
 // WalletConnect is handled by Web3Modal v2
 import { createWalletConnectSession } from './utils/providerDetect';
 import { getSelectedFlow, setSelectedFlow } from './flowGate';
@@ -131,7 +130,6 @@ export default function Launchpad() {
   const [authRecipient, setAuthRecipient] = useState(null);
   const [availableWallets, setAvailableWallets] = useState([]);
   const [selectedWallet, setSelectedWallet] = useState(null);
-  const [showProviderPicker, setShowProviderPicker] = useState(false);
 
   // Redirect if launchpad disabled
   useEffect(() => {
@@ -146,9 +144,6 @@ export default function Launchpad() {
     
     const wallets = listAvailableProviders() || [];
     setAvailableWallets(wallets);
-    if (wallets.length > 1 && !selectedWallet) {
-      setTimeout(() => setShowProviderPicker(true), 250);
-    }
 
     // try to restore persisted selection
     try {
@@ -249,7 +244,25 @@ export default function Launchpad() {
   }, []);
 
   const connectWallet = async () => {
-    // Determine which wallet to connect
+    // Mobile: open Web3Modal directly to choose wallet
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (isMobile) {
+      try {
+        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
+        const { provider, address } = result || {};
+        setWalletAddress(address || '');
+        setWalletConnected(Boolean(address));
+        setSelectedWallet(prev => ({ ...(prev || {}), id: 'walletconnect', name: 'WalletConnect', provider }));
+        try { const bal = address ? await getBalance(address) : null; if (bal) setBalance(bal); } catch {}
+        addToast('🎉 Wallet connected successfully', 'success');
+        return;
+      } catch (err) {
+        addToast('❌ Wallet connection canceled or failed', 'error');
+        return;
+      }
+    }
+
+    // Desktop: Determine which wallet to connect
     let walletToConnect = selectedWallet;
     
     if (!walletToConnect) {
@@ -296,7 +309,6 @@ export default function Launchpad() {
         addToast('🔗 Opening wallet install page', 'info');
       } else {
         addToast('🔍 Selected wallet has no direct provider. Please select a different wallet or use WalletConnect.', 'error');
-        setShowProviderPicker(true);
       }
       return;
     }
@@ -564,9 +576,9 @@ export default function Launchpad() {
                 ))}
               </div>
 
-              {/* Mobile compact summary + chooser */}
+              {/* Mobile compact summary (selection via Connect modal) */}
               <div className="md:hidden mb-4">
-                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 mb-3">
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
                       {selectedWallet?.icon ? (
@@ -576,16 +588,10 @@ export default function Launchpad() {
                       )}
                     </div>
                     <div>
-                      <div className="text-sm text-gray-300">{selectedWallet?.name || 'No wallet selected'}</div>
-                      <div className="text-xs text-gray-400">{selectedWallet?.type || ''}</div>
+                      <div className="text-sm text-gray-300">{selectedWallet?.name || 'Wallet not selected'}</div>
+                      <div className="text-xs text-gray-400">Use Connect to choose</div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowProviderPicker(true)}
-                    className="px-3 py-2 bg-white/10 text-white rounded-lg text-sm"
-                  >
-                    Choose wallet…
-                  </button>
                 </div>
               </div>
 
@@ -818,13 +824,6 @@ export default function Launchpad() {
           </div>
         ))}
       </div>
-
-      <ProviderPicker
-        visible={showProviderPicker}
-        wallets={availableWallets}
-        onSelect={(w) => { handleSelectWallet(w); setShowProviderPicker(false); }}
-        onClose={() => setShowProviderPicker(false)}
-      />
 
       <Footer />
     </div>
