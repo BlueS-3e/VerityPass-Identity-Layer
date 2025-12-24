@@ -12,6 +12,12 @@ export default defineConfig({
       
     }
   },
+  define: {
+    // Ensure a fallback API base is always available, even if not explicitly set
+    'import.meta.env.VITE_API_BASE': JSON.stringify(
+      process.env.VITE_API_BASE || '/api'  // Default to same-origin /api if not set
+    ),
+  },
   server: {
     proxy: {
       '/api': {

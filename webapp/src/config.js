@@ -54,5 +54,7 @@ export const DEFAULT_CHAIN_ID = (typeof import.meta !== 'undefined' && import.me
 // server-provided `/api/frontend-config` (set on window.__RUNTIME_API_BASE).
 export function API_BASE() {
   if (typeof window !== 'undefined' && window.__RUNTIME_API_BASE) return window.__RUNTIME_API_BASE;
-  return import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+  const buildTimeBase = import.meta.env.VITE_API_BASE;
+  // If VITE_API_BASE is not set, use /api (works when Vercel proxies /api to backend)
+  return buildTimeBase || '/api';
 }
