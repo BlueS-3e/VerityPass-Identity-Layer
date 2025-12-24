@@ -55,6 +55,9 @@ export const DEFAULT_CHAIN_ID = (typeof import.meta !== 'undefined' && import.me
 export function API_BASE() {
   if (typeof window !== 'undefined' && window.__RUNTIME_API_BASE) return window.__RUNTIME_API_BASE;
   const buildTimeBase = import.meta.env.VITE_API_BASE;
-  // If VITE_API_BASE is not set, use /api (works when Vercel proxies /api to backend)
-  return buildTimeBase || '/api';
+  // On production (Vercel), if no VITE_API_BASE, default to Render backend
+  // On localhost, default to localhost:5000
+  if (buildTimeBase) return buildTimeBase;
+  const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  return isDev ? 'http://localhost:5000' : 'https://realmint-api.onrender.com';
 }
