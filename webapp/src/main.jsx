@@ -53,34 +53,33 @@ async function bootstrap() {
     const buildTimeApiBase = import.meta.env.VITE_API_BASE || '';
     console.log('[Bootstrap] Build-time API base:', buildTimeApiBase ? `${buildTimeApiBase.substring(0, 20)}...` : 'NOT SET');
     
+    // On Vercel, always try to fetch runtime config from /api/frontend-config
+    // This ensures the frontend can discover the backend URL even if env vars weren't injected
     if (!buildTimeApiBase || (typeof window !== 'undefined' && buildTimeApiBase && buildTimeApiBase.startsWith(window.location.origin))) {
       try {
+        // First: try same-origin fetch (works for Vercel when API is served from same domain)
         const cfg = await apiClient.apiGet('/api/frontend-config').catch(() => null);
         if (cfg && cfg.api_base) {
-          // expose runtime API base for API_BASE() to pick up
           if (typeof window !== 'undefined') {
             window.__RUNTIME_API_BASE = cfg.api_base;
             window.__RUNTIME_FRONTEND_CONFIG = cfg;
           }
+          console.log('[Bootstrap] Frontend config from /api/frontend-config:', cfg.api_base);
         } else {
-          // If same-origin attempt failed (common in local dev when the API runs on
-          // a different port), try a sensible localhost fallback so `npm run dev`
-          // works without setting VITE_API_BASE explicitly.
+          // Second: try localhost fallback for dev mode
           try {
             const fallback = 'http://localhost:5000';
-            // try a direct request to the fallback host if same-origin didn't yield a config
             const fallbackCfg = await fetch(fallback + '/api/frontend-config', { credentials: 'include' }).then(r => r.ok ? r.json().catch(() => null) : null).catch(() => null);
             if (fallbackCfg && fallbackCfg.api_base && typeof window !== 'undefined') {
               window.__RUNTIME_API_BASE = fallbackCfg.api_base;
               window.__RUNTIME_FRONTEND_CONFIG = fallbackCfg;
+              console.log('[Bootstrap] Frontend config from localhost fallback:', fallbackCfg.api_base);
             }
           } catch (e) {
-            // ignore fallback failures
-            console.debug('[Bootstrap] Fallback API config fetch failed:', e.message);
+            console.debug('[Bootstrap] Localhost fallback failed:', e.message);
           }
         }
       } catch (e) {
-        // ignore: fallback to apiBase below
         console.debug('[Bootstrap] Frontend config fetch failed:', e.message);
       }
     }

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vercel Build Diagnostics</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #00ccff; }
+        .section {
+            margin: 20px 0;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            background: #0a0a0a;
+        }
+        .env-var {
+            margin: 5px 0;
+            padding: 5px;
+            background: #2a2a2a;
+            border-left: 3px solid #00ff00;
+        }
+        .error { color: #ff0000; }
+        .success { color: #00ff00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 RealMint Vercel Build Diagnostics</h1>
+        
+        <div class="section">
+            <h2>Build-Time Environment Variables (from Vite)</h2>
+            <div id="build-env"></div>
+        </div>
+
+        <div class="section">
+            <h2>Runtime Information</h2>
+            <div id="runtime-info"></div>
+        </div>
+
+        <div class="section">
+            <h2>Frontend Config</h2>
+            <div id="frontend-config"></div>
+        </div>
+
+        <div class="section">
+            <h2>Window Object Inspection</h2>
+            <div id="window-inspection"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Build-time env vars (these are injected by Vite during build)
+        const buildEnv = {
+            VITE_API_BASE: '__VITE_API_BASE__',
+            VITE_WALLETCONNECT_PROJECT_ID: '__VITE_WALLETCONNECT_PROJECT_ID__',
+            VITE_DEFAULT_CHAIN_ID: '__VITE_DEFAULT_CHAIN_ID__',
+            VITE_ENABLE_AAVE_DEMO: '__VITE_ENABLE_AAVE_DEMO__'
+        };
+
+        // Display build-time env
+        const buildEnvDiv = document.getElementById('build-env');
+        Object.entries(buildEnv).forEach(([key, value]) => {
+            const div = document.createElement('div');
+            div.className = 'env-var';
+            const status = value.startsWith('__VITE') ? 'error' : 'success';
+            div.innerHTML = `<span class="${status}">${key}</span>: <code>${value}</code>`;
+            buildEnvDiv.appendChild(div);
+        });
+
+        // Runtime info
+        const runtimeDiv = document.getElementById('runtime-info');
+        const runtimeInfo = [
+            `Origin: ${window.location.origin}`,
+            `Hostname: ${window.location.hostname}`,
+            `Protocol: ${window.location.protocol}`,
+            `User Agent: ${navigator.userAgent.substring(0, 60)}...`
+        ];
+        runtimeInfo.forEach(info => {
+            const div = document.createElement('div');
+            div.className = 'env-var';
+            div.textContent = info;
+            runtimeDiv.appendChild(div);
+        });
+
+        // Check for runtime API base
+        const configDiv = document.getElementById('frontend-config');
+        if (window.__RUNTIME_API_BASE) {
+            const div = document.createElement('div');
+            div.className = 'env-var success';
+            div.innerHTML = `<strong>✓ window.__RUNTIME_API_BASE found</strong>: ${window.__RUNTIME_API_BASE}`;
+            configDiv.appendChild(div);
+        } else {
+            const div = document.createElement('div');
+            div.className = 'env-var error';
+            div.textContent = '✗ window.__RUNTIME_API_BASE NOT SET - app will try to use build-time VITE_API_BASE';
+            configDiv.appendChild(div);
+        }
+
+        // Fetch and display frontend config
+        (async () => {
+            try {
+                const res = await fetch('/api/frontend-config', { credentials: 'include' });
+                const configDiv = document.getElementById('frontend-config');
+                if (res.ok) {
+                    const cfg = await res.json();
+                    const div = document.createElement('div');
+                    div.className = 'env-var success';
+                    div.innerHTML = `<strong>✓ /api/frontend-config reachable</strong>: ${JSON.stringify(cfg, null, 2)}`;
+                    configDiv.appendChild(div);
+                } else {
+                    const div = document.createElement('div');
+                    div.className = 'env-var error';
+                    div.innerHTML = `✗ /api/frontend-config returned ${res.status}`;
+                    configDiv.appendChild(div);
+                }
+            } catch (e) {
+                const configDiv = document.getElementById('frontend-config');
+                const div = document.createElement('div');
+                div.className = 'env-var error';
+                div.textContent = `✗ /api/frontend-config fetch failed: ${e.message}`;
+                configDiv.appendChild(div);
+            }
+        })();
+
+        // Window inspection
+        const windowDiv = document.getElementById('window-inspection');
+        const checks = [
+            ['__RUNTIME_API_BASE', window.__RUNTIME_API_BASE ? 'PRESENT' : 'MISSING'],
+            ['__RUNTIME_FRONTEND_CONFIG', window.__RUNTIME_FRONTEND_CONFIG ? 'PRESENT' : 'MISSING'],
+            ['root element', document.getElementById('root') ? 'EXISTS' : 'MISSING']
+        ];
+        checks.forEach(([key, value]) => {
+            const div = document.createElement('div');
+            div.className = 'env-var ' + (value === 'MISSING' || value === 'MISSING' ? 'error' : 'success');
+            div.innerHTML = `<strong>${key}</strong>: ${value}`;
+            windowDiv.appendChild(div);
+        });
+    </script>
+</body>
+</html>
