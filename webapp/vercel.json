@@ -48,11 +48,9 @@
     {
       "source": "/api/:path*",
       "destination": "https://realmint-api.onrender.com/api/:path*"
-    }
-  ],
-  "redirects": [
+    },
     {
-      "source": "/",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],
