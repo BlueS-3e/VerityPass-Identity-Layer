@@ -245,12 +245,12 @@ contract RealMintLaunchpad is Ownable, ReentrancyGuard {
     }
 
     /// @notice Convert USD cents to token units using token's registered feed and decimals
-    /// @dev Fixed: Uses safer math order to prevent overflow with large decimals
+    /// @dev Multiplies by decimals BEFORE dividing to prevent integer division precision loss
     /**
-     * Formula: tokenUnits = (usdCents * chainlinkUint) * (10 ** decimals) / (100 * price)
-     * Where chainlinkUint = 10^8 (Chainlink price has 8 decimals)
+     * Formula: tokenUnits = (usdCents * 1e8 * 10^decimals) / (100 * price)
+     * Where 1e8 = Chainlink price decimals
      * 
-     * This avoids overflow by dividing first, then multiplying by token decimals
+     * Key fix: Multiply by token decimals first to preserve precision in integer division
      */
     function usdCentsToTokenUnits(address tokenAddr, uint256 usdCents) public view returns (uint256) {
         address feed = tokenPriceFeed[tokenAddr];
@@ -262,13 +262,13 @@ contract RealMintLaunchpad is Ownable, ReentrancyGuard {
         require(price > 0, "Invalid price");
         uint256 priceUint = uint256(price);
         
-        // FIXED: Safer order of operations to prevent overflow
+        // FIXED: Multiply by decimals BEFORE dividing to prevent integer precision loss
         // Step 1: usdCents * 1e8 (Chainlink decimals)
         uint256 adjusted = usdCents * 1e8;
-        // Step 2: Divide by (100 * price) to get units
-        uint256 baseUnits = adjusted / (100 * priceUint);
-        // Step 3: Multiply by 10**decimals for token-specific scale
-        uint256 result = baseUnits * (10 ** decimals);
+        // Step 2: Multiply by token decimals to preserve precision during division
+        uint256 withDecimals = adjusted * (10 ** decimals);
+        // Step 3: Divide by (100 * price) to get token units
+        uint256 result = withDecimals / (100 * priceUint);
         
         return result;
     }
