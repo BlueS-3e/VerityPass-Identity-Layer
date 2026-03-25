@@ -1,12 +1,18 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      nodePolyfills({
+        include: ['buffer', 'process', 'util', 'stream', 'events', 'crypto', 'vm']
+      })
+    ],
     // Fix base path for proper asset loading
     base: './',
     // Define global constants
@@ -18,9 +24,10 @@ export default defineConfig(({ mode }) => {
         env.VITE_WALLETCONNECT_PROJECT_ID || ''
       ),
       'import.meta.env.VITE_DEFAULT_CHAIN_ID': JSON.stringify(
-        env.VITE_DEFAULT_CHAIN_ID || '97'
+        env.VITE_DEFAULT_CHAIN_ID || '56'
       ),
       __APP_ENV__: JSON.stringify(env.APP_ENV || mode),
+      global: 'globalThis'
     },
     // Development server configuration
     server: {
@@ -78,7 +85,7 @@ export default defineConfig(({ mode }) => {
     },
     // CSS configuration
     css: {
-      devSourcemap: true, // Enable sourcemaps for CSS in development
+      devSourcemap: false, // Avoid noisy third-party sourcemap warnings in dev
       modules: {
         localsConvention: 'camelCase',
       },
@@ -88,12 +95,19 @@ export default defineConfig(({ mode }) => {
       alias: {
         // Add path aliases if needed
         '@': '/src',
+        util: 'util/',
+        process: 'process/browser',
+        buffer: 'buffer/',
+        vm: 'vm-browserify'
       },
     },
     // Optimize dependencies
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom'],
-      exclude: ['@web3modal/ethers', '@web3modal/ui'], // Exclude to prevent pre-bundling issues
+      include: ['react', 'react-dom', 'react-router-dom', 'process', 'buffer', 'util', 'vm-browserify'],
+      // Keep Web3Modal deps pre-bundled so Vite does not serve their broken upstream maps directly.
+      esbuildOptions: {
+        sourcemap: false,
+      },
     },
   };
 });

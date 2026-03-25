@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import AdminDashboard from './AdminDashboard'
 import { ToastProvider } from './components/Toast'
+import './index.css'
 
 function App(){
   // Wrap with BrowserRouter so components like <Link> have router context.

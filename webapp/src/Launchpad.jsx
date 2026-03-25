@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import { 
   getBalance, 
@@ -13,6 +13,7 @@ import {
 import ConfigWarning from './components/ConfigWarning';
 import { 
   listAvailableProviders, 
+  getOperationalWallets,
   selectBestProvider, 
   connectWallet as modernConnectWallet,
   switchNetwork,
@@ -26,6 +27,7 @@ import Footer from './components/Footer';
 // WalletConnect is handled by Web3Modal v2
 import { createWalletConnectSession } from './utils/providerDetect';
 import { getSelectedFlow, setSelectedFlow } from './flowGate';
+import { isMobileDevice } from './utils/deviceDetect';
 import {
   TX_STATE,
   saveTxState,
@@ -112,6 +114,16 @@ export default function Launchpad() {
   const navigate = useNavigate();
   const ENABLE_LAUNCHPAD = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_ENABLE_LAUNCHPAD) !== 'false';
 
+  const prioritizeWalletConnect = (wallets = []) => {
+    const list = [...wallets];
+    list.sort((a, b) => {
+      const aWC = a?.id === 'walletconnect' ? 0 : 1;
+      const bWC = b?.id === 'walletconnect' ? 0 : 1;
+      return aWC - bWC;
+    });
+    return list;
+  };
+
   // State
   const [projectName, setProjectName] = useState('');
   const [contractLink, setContractLink] = useState('');
@@ -130,6 +142,27 @@ export default function Launchpad() {
   const [authRecipient, setAuthRecipient] = useState(null);
   const [availableWallets, setAvailableWallets] = useState([]);
   const [selectedWallet, setSelectedWallet] = useState(null);
+  const [showAdvancedForm, setShowAdvancedForm] = useState(false);
+
+  // Keep wallet picker minimal to avoid duplicate UX with WalletConnect's own wallet chooser.
+  const displayWallets = useMemo(() => {
+    const wallets = Array.isArray(availableWallets) ? availableWallets : [];
+    const wc = wallets.find(w => w?.id === 'walletconnect');
+    const priority = ['MetaMask', 'Coinbase Wallet', 'Rabby Wallet', 'Brave Wallet', 'OKX Wallet'];
+    const injectedWallets = wallets.filter(w => w?.id !== 'walletconnect' && w?.provider);
+    const prioritizedInjected = priority
+      .map(name => injectedWallets.find(w => w?.name === name))
+      .filter(Boolean);
+    const topInjected = prioritizedInjected.length
+      ? prioritizedInjected.slice(0, 3)
+      : injectedWallets.slice(0, 1);
+
+    const compact = [];
+    if (wc) compact.push(wc);
+    compact.push(...topInjected);
+
+    return compact.length ? compact : wallets;
+  }, [availableWallets]);
 
   // Redirect if launchpad disabled
   useEffect(() => {
@@ -142,7 +175,7 @@ export default function Launchpad() {
   useEffect(() => {
     setSelectedFlow('launchpad');
     
-    const wallets = listAvailableProviders() || [];
+    const wallets = prioritizeWalletConnect(getOperationalWallets(listAvailableProviders() || []));
     setAvailableWallets(wallets);
 
     // try to restore persisted selection
@@ -157,6 +190,12 @@ export default function Launchpad() {
     } catch (e) {}
 
     if (wallets.length > 0) {
+      const wc = wallets.find(w => w.id === 'walletconnect');
+      if (wc) {
+        setSelectedWallet(wc);
+        try { preloadWalletConnect(); } catch (e) {}
+        return;
+      }
       selectBestProvider().then(wallet => {
         if (!wallet) return setSelectedWallet(wallets[0]);
         const found = wallets.find(w => w.id === wallet.id || w.name === wallet.name);
@@ -245,11 +284,14 @@ export default function Launchpad() {
 
   const connectWallet = async () => {
     // Mobile: open Web3Modal directly to choose wallet
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const isMobile = isMobileDevice();
     if (isMobile) {
       try {
         const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
         const { provider, address } = result || {};
+        if (!provider || !address) {
+          throw new Error('WalletConnect did not return an approved account');
+        }
         setWalletAddress(address || '');
         setWalletConnected(Boolean(address));
         setSelectedWallet(prev => ({ ...(prev || {}), id: 'walletconnect', name: 'WalletConnect', provider }));
@@ -257,7 +299,12 @@ export default function Launchpad() {
         addToast('🎉 Wallet connected successfully', 'success');
         return;
       } catch (err) {
-        addToast('❌ Wallet connection canceled or failed', 'error');
+        const message = err?.message || '';
+        if (/cancelled|canceled|not completed/i.test(message)) {
+          addToast('❌ Wallet connection cancelled or not completed', 'error');
+        } else {
+          addToast('❌ Wallet connection canceled or failed', 'error');
+        }
         return;
       }
     }
@@ -266,7 +313,7 @@ export default function Launchpad() {
     let walletToConnect = selectedWallet;
     
     if (!walletToConnect) {
-      const wallets = listAvailableProviders() || [];
+      const wallets = getOperationalWallets(listAvailableProviders() || []);
       if (wallets.length === 0) {
         addToast('No wallets detected. Please install an EVM wallet (MetaMask, Coinbase Wallet, etc.)', 'error');
         return;
@@ -284,7 +331,10 @@ export default function Launchpad() {
         const result = await createWalletConnectSession(DEFAULT_CHAIN_ID || 1);
         
         // result from Web3Modal v2 is { provider, address, chainId }
-        const { provider, address, chainId } = result;
+        const { provider, address } = result || {};
+        if (!provider || !address) {
+          throw new Error('WalletConnect did not return an approved account');
+        }
         
         setWalletAddress(address || '');
         setWalletConnected(Boolean(address));
@@ -297,7 +347,12 @@ export default function Launchpad() {
         addToast('🎉 Wallet connected successfully', 'success');
         return;
       } catch (err) {
-        addToast('❌ WalletConnect connection failed', 'error');
+        const message = err?.message || '';
+        if (/cancelled|canceled|not completed/i.test(message)) {
+          addToast('❌ WalletConnect connection cancelled or not completed', 'error');
+        } else {
+          addToast('❌ WalletConnect connection failed', 'error');
+        }
         return;
       }
     }
@@ -488,33 +543,33 @@ export default function Launchpad() {
   const totalCount = projects.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-zinc-900 to-amber-950 page-shell sm:py-8 lg:py-10">
       {/* Background Elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-l from-blue-500/10 to-purple-600/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-r from-teal-400/10 to-cyan-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-l from-yellow-500/10 to-amber-600/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-r from-cyan-400/10 to-emerald-500/10 rounded-full blur-3xl" />
       
       <HeroGraphic />
       <NetworkBanner expectedChainHex={expectedChainHex} expectedName={expectedName} addToast={addToast} />
 
       <div className="relative max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10 sm:mb-12 reveal">
           <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm mb-6">
-            <span className="text-2xl">🚀</span>
-            <span className="text-white font-semibold">Project Launchpad</span>
+            <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-6 h-6" />
+            <span className="text-white font-semibold">BNB Lending Launch Desk</span>
           </div>
           
           <h1 className="text-5xl lg:text-6xl font-bold text-white mb-4">
             Launch Your
-            <span className="bg-gradient-to-r from-teal-300 to-blue-400 bg-clip-text text-transparent"> Project</span>
+            <span className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent"> Credit Product</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Launch curated projects with built-in fee mechanics, referral systems, and trust verification.
+            Configure listings for lending pools, risk terms, and verified onboarding on BNB Chain.
           </p>
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12 reveal reveal-delay-1">
           <StatCard
             icon="📊"
             title="Total Projects"
@@ -545,24 +600,48 @@ export default function Launchpad() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="mb-10 p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm reveal reveal-delay-2">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Lending Desk Snapshot</h3>
+            <span className="text-xs text-amber-300">Live BNB metrics</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="text-xs text-gray-400 mb-2">Avg Collateral Ratio</div>
+              <div className="text-2xl font-bold text-white mb-2">42%</div>
+              <div className="h-2 rounded bg-white/10 overflow-hidden"><div className="h-full w-2/5 bg-gradient-to-r from-emerald-400 to-cyan-400" /></div>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="text-xs text-gray-400 mb-2">Approved Limit Utilization</div>
+              <div className="text-2xl font-bold text-white mb-2">68%</div>
+              <div className="h-2 rounded bg-white/10 overflow-hidden"><div className="h-full w-2/3 bg-gradient-to-r from-amber-400 to-yellow-300" /></div>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="text-xs text-gray-400 mb-2">Onchain Repayment Trend</div>
+              <div className="text-2xl font-bold text-white mb-2">+14%</div>
+              <div className="h-2 rounded bg-white/10 overflow-hidden"><div className="h-full w-3/4 bg-gradient-to-r from-sky-400 to-indigo-400" /></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 reveal reveal-delay-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Wallet Connection */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                 <span>🔗</span>
-                Wallet Connection
+                Treasury Wallet Connection
               </h2>
               
               <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                {availableWallets.map((wallet) => (
+                {displayWallets.map((wallet) => (
                   <button
                     key={wallet.id}
                     onClick={() => handleSelectWallet(wallet)}
                     className={`p-4 rounded-xl border transition-all ${
                       selectedWallet?.id === wallet.id
-                        ? 'bg-indigo-500/20 border-indigo-400 text-white shadow-lg'
+                        ? 'bg-amber-500/20 border-amber-400 text-white shadow-lg'
                         : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20'
                     }`}
                   >
@@ -608,7 +687,7 @@ export default function Launchpad() {
                 <button
                   onClick={connectWallet}
                   disabled={!selectedWallet}
-                  className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-medium disabled:opacity-50 hover:shadow-lg transition-all"
+                  className="px-6 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-xl font-medium disabled:opacity-50 hover:shadow-lg transition-all"
                 >
                   {walletConnected ? '🔄 Reconnect' : '🔗 Connect'}
                 </button>
@@ -619,14 +698,14 @@ export default function Launchpad() {
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <span>📝</span>
-                Project Details
+                Lending Product Details
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      🏷️ Project Name
+                      🏷️ Product Name
                     </label>
                     <input 
                       value={projectName} 
@@ -639,7 +718,7 @@ export default function Launchpad() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      🌐 Contract Link
+                      🌐 Pool Contract Link
                     </label>
                     <input 
                       type="url" 
@@ -650,30 +729,42 @@ export default function Launchpad() {
                       placeholder="https://..."
                     />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      📅 Launch Date
-                    </label>
-                    <input 
-                      type="datetime-local" 
-                      value={launchDate} 
-                      onChange={e => setLaunchDate(e.target.value)} 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-400 transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      📄 Whitepaper (Optional)
-                    </label>
-                    <input 
-                      type="file" 
-                      onChange={handleWhitepaperUpload} 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
-                    />
-                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedForm(v => !v)}
+                  className="px-4 py-2 bg-white/10 text-white rounded-xl text-sm font-medium hover:bg-white/20 transition-colors"
+                >
+                  {showAdvancedForm ? 'Hide advanced fields' : 'Show advanced fields'}
+                </button>
+
+                {showAdvancedForm && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 rounded-xl border border-white/10 bg-white/5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        📅 Go-Live Date
+                      </label>
+                      <input 
+                        type="datetime-local" 
+                        value={launchDate} 
+                        onChange={e => setLaunchDate(e.target.value)} 
+                        className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-400 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        📄 Risk Memo / Whitepaper (Optional)
+                      </label>
+                      <input 
+                        type="file" 
+                        onChange={handleWhitepaperUpload} 
+                        className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -693,8 +784,8 @@ export default function Launchpad() {
                 <div className="p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-500/20">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="text-white font-semibold">💳 Listing Fee</div>
-                      <div className="text-gray-300 text-sm">One-time payment for project submission</div>
+                      <div className="text-white font-semibold">💳 Desk Listing Fee</div>
+                      <div className="text-gray-300 text-sm">One-time fee for BNB lending desk submission</div>
                     </div>
                     <div className="text-2xl font-bold text-white">{DEFAULT_LISTING_FEE}</div>
                   </div>
@@ -707,7 +798,7 @@ export default function Launchpad() {
                       className={`flex-1 py-4 rounded-xl font-semibold transition-all ${
                         paymentMade 
                           ? 'bg-green-500 text-white' 
-                          : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg'
+                          : 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black hover:shadow-lg'
                       } disabled:opacity-50`}
                     >
                       {paymentMade ? '✅ Paid' : `💳 Pay ${DEFAULT_LISTING_FEE}`}
@@ -718,7 +809,7 @@ export default function Launchpad() {
                       disabled={!walletConnected || !paymentMade}
                       className="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
                     >
-                      🚀 Submit Project
+                      🚀 Submit Lending Product
                     </button>
                   </div>
                 </div>
@@ -794,7 +885,7 @@ export default function Launchpad() {
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span>⭐</span>
-                Featured Projects
+                Featured Credit Products
               </h3>
               <div className="space-y-3">
                 {projects.slice(0, 3).map((project, index) => (

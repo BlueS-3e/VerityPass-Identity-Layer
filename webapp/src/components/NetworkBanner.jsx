@@ -6,7 +6,7 @@ import { chooseInjectedProvider, listInjectedProviders, normalizeProviderEntry }
 const RPC_MAP = {
   '0x61': 'https://data-seed-prebsc-1-s1.binance.org:8545/', // BSC testnet
   '0x38': 'https://bsc-dataseed.binance.org/', // BSC mainnet
-  '0x5': 'https://rpc.ankr.com/eth_goerli' // example
+  '0x1': 'https://eth.llamarpc.com' // optional secondary
 };
 
 export default function NetworkBanner({ expectedChainHex, expectedName, addToast, provider: injectedProvider }) {
@@ -113,7 +113,8 @@ export default function NetworkBanner({ expectedChainHex, expectedName, addToast
       {/* If multiple injected providers exist, offer a selector so users can pick which wallet to act with */}
       {/* Provider selection UI removed per user request */}
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
-        <div className="flex-1 text-sm">
+        <div className="flex-1 text-sm flex items-center gap-2">
+          <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-5 h-5" />
           <strong className="mr-2">Wrong network:</strong>
           Connected to <span className="font-mono">{currentChain}</span> — expected <span className="font-semibold">{expectedName || expectedChainHex}</span>.
         </div>

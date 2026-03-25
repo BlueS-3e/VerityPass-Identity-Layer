@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,10 +35,16 @@
 
   body {
     @apply antialiased text-gray-900 bg-gray-50 dark:text-gray-100 dark:bg-gray-900;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
     padding-top: var(--safe-top);
     padding-bottom: var(--safe-bottom);
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Space Grotesk', 'Manrope', sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -171,6 +179,37 @@
     }
   }
 
+  @keyframes rise-fade {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes bank-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.15);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(245, 158, 11, 0.02);
+    }
+  }
+
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
   /* Animation classes */
   .animate-gradient-x {
     background-size: 200% 200%;
@@ -189,8 +228,39 @@
     animation: scale-in 0.3s ease-out;
   }
 
+  .animate-slide-in {
+    animation: slide-in 0.4s ease-out;
+  }
+
   .animate-spin-slow {
     animation: spin 3s linear infinite;
+  }
+
+  .reveal {
+    opacity: 0;
+    animation: rise-fade 500ms ease-out forwards;
+  }
+
+  .reveal-delay-1 { animation-delay: 80ms; }
+  .reveal-delay-2 { animation-delay: 160ms; }
+  .reveal-delay-3 { animation-delay: 240ms; }
+  .reveal-delay-4 { animation-delay: 320ms; }
+
+  .card-hover-lift {
+    transition: transform 220ms ease, box-shadow 220ms ease;
+  }
+
+  .card-hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 30px rgba(2, 6, 23, 0.3);
+  }
+
+  .bank-pulse {
+    animation: bank-pulse 2.4s ease-in-out infinite;
+  }
+
+  .page-shell {
+    @apply px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10;
   }
 
   /* Custom delays */

@@ -246,7 +246,9 @@ export default function AaveDemo() {
         aria-expanded={isOpen}
         aria-controls="aave-demo"
       >
-        <div className="demo-trigger-icon" aria-hidden>🚀</div>
+        <div className="demo-trigger-icon" aria-hidden>
+          <img src="/bnb-chain-logo.svg" alt="" className="h-4 w-4" />
+        </div>
         <span className="demo-trigger-label">Try Aave Demo</span>
       </button>
     </div>

@@ -148,31 +148,27 @@ export default function NavBar() {
       { 
         key: 'launch', 
         to: '/launch', 
-        icon: '⭐', 
-        label: 'Launchpad', 
+        label: 'Lending Desk', 
         show: ENABLE_LAUNCHPAD && selectedFlow !== 'attestation' && (!mobile || !isLaunch),
         isActive: isLaunch
       },
       { 
         key: 'attest', 
         to: '/attestation', 
-        icon: '📝', 
-        label: mobile ? 'Create Attestation' : 'Attest', 
+        label: mobile ? 'Attestation Workspace' : 'Attest', 
         show: selectedFlow !== 'launchpad' && (!mobile || !isAttest),
         isActive: isAttest
       },
       { 
         key: 'guide', 
         to: '/guide', 
-        icon: '📚', 
-        label: mobile ? 'Guides & Help' : 'Guides', 
+        label: mobile ? 'Playbook & Help' : 'Playbook', 
         show: true,
         isActive: isGuide
       },
       { 
         key: 'aave', 
         to: '/aave-demo', 
-        icon: '🏦', 
         label: 'Aave Demo', 
         show: ENABLE_AAVE_DEMO,
         isActive: false
@@ -188,10 +184,13 @@ export default function NavBar() {
       // For mobile, use consistent button approach for all items
       if (mobile) {
         const isActive = i.isActive;
-        const baseClasses = `flex items-center gap-3 p-4 text-lg font-medium transition-colors w-full text-left ${
-          isActive 
-            ? 'bg-indigo-500/20 text-indigo-300 border-r-2 border-indigo-400' 
-            : 'text-gray-300 hover:text-white hover:bg-white/5'
+        const isAave = i.key === 'aave';
+        const baseClasses = `flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-base font-semibold transition-all w-full text-left border ${
+          isAave
+            ? 'bg-gradient-to-r from-cyan-400/20 to-blue-400/20 text-cyan-100 border-cyan-300/45 hover:brightness-110 shadow-[0_10px_34px_rgba(34,211,238,0.25)]'
+            : isActive
+              ? 'bg-amber-400/15 text-amber-200 border-amber-300/40 shadow-[0_10px_30px_rgba(245,158,11,0.2)]'
+              : 'text-slate-200 hover:text-white bg-white/[0.03] hover:bg-white/[0.07] border-white/10'
         }`;
         
         return (
@@ -201,18 +200,24 @@ export default function NavBar() {
             className={baseClasses}
             onClick={() => handleMobileNavigation(i.to, i.key === 'aave')}
           >
-            <span className="text-lg">{i.icon}</span>
-            {i.label}
+            <span className="flex items-center gap-2">
+              {isAave && <span className="inline-block h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(34,211,238,0.9)]" />}
+              {i.label}
+            </span>
+            <span className={`text-xs ${isAave ? 'text-cyan-200' : 'text-slate-400'}`}>Open</span>
           </button>
         );
       }
 
       // Desktop - use Link components
       const isActive = i.isActive;
-      const baseClasses = `flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-        isActive 
-          ? 'bg-indigo-500/20 text-indigo-300 shadow-lg' 
-          : 'text-gray-400 hover:text-white hover:bg-white/5'
+      const isAave = i.key === 'aave';
+      const baseClasses = `flex items-center gap-2 px-4 py-2 rounded-xl transition-all border ${
+        isAave
+          ? 'border-cyan-300/40 text-cyan-100 bg-cyan-400/10 hover:bg-cyan-400/18 shadow-[0_8px_24px_rgba(34,211,238,0.18)]'
+          : isActive
+            ? 'bg-indigo-500/20 text-indigo-300 border-transparent shadow-lg'
+            : 'text-gray-400 hover:text-white hover:bg-white/5 border-transparent'
       }`;
 
       return (
@@ -222,7 +227,7 @@ export default function NavBar() {
           className={baseClasses}
           onClick={() => { if (menuOpen) setMenuOpen(false); }}
         >
-          <span className="text-lg">{i.icon}</span>
+          {isAave && <span className="inline-block h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.85)]" />}
           {i.label}
         </Link>
       );
@@ -232,17 +237,17 @@ export default function NavBar() {
   return (
     <>
       {/* Main Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/10">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg group-hover:scale-105 transition-transform">
-                🚀
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-bold shadow-lg group-hover:scale-105 transition-transform bank-pulse">
+                <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-xl font-bold text-white">RealMint</div>
-                <div className="text-xs text-gray-400 -mt-1">Build Trust</div>
+                <div className="text-xs text-gray-400 -mt-1">BNB Credit Infrastructure</div>
               </div>
             </Link>
 
@@ -255,10 +260,27 @@ export default function NavBar() {
             <button
               ref={menuButtonRef}
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
+              className="md:hidden relative w-11 h-11 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/20 transition-colors"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav-drawer"
             >
-              {menuOpen ? '✕' : '☰'}
+              <span className="sr-only">Toggle menu</span>
+              <span
+                className={`absolute left-3 right-3 h-0.5 bg-white rounded-full transition-all duration-300 ${
+                  menuOpen ? 'top-5 rotate-45' : 'top-3.5'
+                }`}
+              />
+              <span
+                className={`absolute left-3 right-3 h-0.5 bg-white rounded-full transition-all duration-300 ${
+                  menuOpen ? 'opacity-0 top-5' : 'top-5 opacity-100'
+                }`}
+              />
+              <span
+                className={`absolute left-3 right-3 h-0.5 bg-white rounded-full transition-all duration-300 ${
+                  menuOpen ? 'top-5 -rotate-45' : 'top-6.5'
+                }`}
+              />
             </button>
           </div>
         </div>
@@ -269,13 +291,14 @@ export default function NavBar() {
         <div className="fixed inset-0 z-50 md:hidden">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
             onClick={() => setMenuOpen(false)}
           />
           
           {/* Slide-out Menu */}
           <nav
-            className="absolute top-0 right-0 w-80 h-full bg-slate-900/95 backdrop-blur-2xl border-l border-white/10 shadow-2xl"
+            id="mobile-nav-drawer"
+            className="absolute top-0 right-0 h-full w-[88vw] max-w-sm bg-[radial-gradient(circle_at_top,#1f2937_0%,#0f172a_55%,#020617_100%)] backdrop-blur-2xl border-l border-white/10 shadow-2xl"
             role="dialog"
             aria-modal="true"
             ref={menuRef}
@@ -292,37 +315,54 @@ export default function NavBar() {
             }}
           >
             {/* Menu Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white">
-                  🚀
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white shadow-lg shrink-0">
+                  <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-6 h-6" />
                 </div>
-                <div>
-                  <div className="text-white font-bold text-lg">RealMint</div>
-                  <div className="text-gray-400 text-sm">Navigation</div>
+                <div className="min-w-0">
+                  <div className="text-white font-bold text-lg leading-tight">RealMint</div>
+                  <div className="text-slate-400 text-sm truncate">BNB Lending Interface</div>
                 </div>
               </div>
               <button
                 ref={closeButtonRef}
                 onClick={() => setMenuOpen(false)}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
+                className="p-2 text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10"
                 aria-label="Close menu"
               >
-                ✕
+                Close
               </button>
             </div>
 
+            <div className="px-5 pt-4">
+              <div className="flex items-center justify-between rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200">Network</span>
+                <span className="text-xs font-medium text-emerald-100">BNB Smart Chain</span>
+              </div>
+            </div>
+
             {/* Mobile Navigation Links */}
-            <div className="p-4 space-y-2">
+            <div className="p-5 space-y-3">
               {renderNavItems(true)}
+            </div>
+
+            <div className="px-5">
+              <button
+                type="button"
+                onClick={() => handleMobileNavigation('/connect')}
+                className="w-full rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 px-4 py-3 text-sm font-bold text-slate-950 shadow-[0_14px_34px_rgba(245,158,11,0.3)] hover:brightness-105 transition"
+              >
+                Connect Identity Signal
+              </button>
             </div>
 
       {/* Aave demo is exposed via the menu items above */}
 
             {/* Additional Info Section */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-white/10 bg-slate-900/80">
-              <div className="text-xs text-gray-400 text-center">
-                RealMint v1.0 • Build Trust
+            <div className="absolute bottom-0 left-0 right-0 p-5 border-t border-white/10 bg-slate-950/70">
+              <div className="text-xs text-slate-400 text-center">
+                RealMint v1.0 • Secure credit primitives on BNB
               </div>
             </div>
           </nav>

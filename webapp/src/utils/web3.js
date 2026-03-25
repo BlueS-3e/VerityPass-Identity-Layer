@@ -228,6 +228,17 @@ export async function ensureBscChain({ useTestnet = true } = {}, injectedProvide
 }
 
 export async function requestAccounts(provider = null) {
+  const mapWalletRequestError = (e) => {
+    const msg = String(e?.message || '').toLowerCase();
+    const nestedMethod = String(e?.data?.method || '').toLowerCase();
+    const code = Number(e?.code);
+    if (code === 4001) return new Error('User rejected account access');
+    if (code === -32603 && (nestedMethod.includes('public_requestaccounts') || msg.includes('origin not allowed'))) {
+      return new Error('Wallet origin is not allowed by this extension. Please use MetaMask/WalletConnect or disable non-EVM wallet extensions for this site.');
+    }
+    return e;
+  };
+
   // If a provider object was explicitly provided, prefer using it directly
   // but only when it implements the EIP-1193 `request()` method. Otherwise
   // fall back to enumerating injected providers.
@@ -238,8 +249,7 @@ export async function requestAccounts(provider = null) {
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
         return accounts;
       } catch (e) {
-        if (e && e.code === 4001) throw new Error('User rejected account access');
-        throw e;
+        throw mapWalletRequestError(e);
       }
     }
 
@@ -249,8 +259,7 @@ export async function requestAccounts(provider = null) {
         const accounts = await provider.provider.request({ method: 'eth_requestAccounts' });
         return accounts;
       } catch (e) {
-        if (e && e.code === 4001) throw new Error('User rejected account access');
-        throw e;
+        throw mapWalletRequestError(e);
       }
     }
 
@@ -268,8 +277,7 @@ export async function requestAccounts(provider = null) {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         return accounts;
       } catch (e) {
-        if (e && e.code === 4001) throw new Error('User rejected account access');
-        throw e;
+        throw mapWalletRequestError(e);
       }
     }
     throw new Error('No injected wallet detected');
@@ -284,7 +292,7 @@ export async function requestAccounts(provider = null) {
       const accs = await found.provider.request({ method: 'eth_requestAccounts' });
       return accs;
     } catch (e) {
-      if (e && e.code === 4001) throw new Error('User rejected account access');
+      if (Number(e?.code) === 4001) throw mapWalletRequestError(e);
       // otherwise continue to next candidate
     }
   }
@@ -296,7 +304,7 @@ export async function requestAccounts(provider = null) {
       const accs = await it.provider.request({ method: 'eth_requestAccounts' });
       return accs;
     } catch (e) {
-      if (e && e.code === 4001) throw new Error('User rejected account access');
+      if (Number(e?.code) === 4001) throw mapWalletRequestError(e);
     }
   }
 
@@ -307,8 +315,7 @@ export async function requestAccounts(provider = null) {
       const accs = await trust.provider.request({ method: 'eth_requestAccounts' });
       return accs;
     } catch (e) {
-      if (e && e.code === 4001) throw new Error('User rejected account access');
-      throw e;
+      throw mapWalletRequestError(e);
     }
   }
 
@@ -318,8 +325,7 @@ export async function requestAccounts(provider = null) {
       const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
       return accs;
     } catch (e) {
-      if (e && e.code === 4001) throw new Error('User rejected account access');
-      throw e;
+      throw mapWalletRequestError(e);
     }
   }
 
@@ -624,6 +630,20 @@ export async function getFeePreview(contractAddress = CONTRACT_ADDRESS, projectI
 }
 
 export async function getSignerAddress() {
+  // Important: never trigger a wallet popup from passive page loads.
+  // Prefer a silent account probe via `eth_accounts` and only return if already authorized.
+  try {
+    if (typeof window !== 'undefined' && window.ethereum && typeof window.ethereum.request === 'function') {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (Array.isArray(accounts) && accounts.length > 0) {
+        return accounts[0];
+      }
+      return null;
+    }
+  } catch (e) {
+    return null;
+  }
+
   const signer = getSigner();
   if (!signer) return null;
   try { return await signer.getAddress(); } catch (e) { return null; }

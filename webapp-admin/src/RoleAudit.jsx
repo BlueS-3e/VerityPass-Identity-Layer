@@ -23,7 +23,7 @@ function AuditEntry({ entry }) {
   };
 
   return (
-    <div className="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-all">
+    <div className="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-cyan-200/40 transition-all stagger-item">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-sm">{getActionIcon(entry.action)}</span>
@@ -61,6 +61,23 @@ function AuditEntry({ entry }) {
   );
 }
 
+function AuditSkeleton() {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="p-4 bg-white/5 rounded-xl border border-cyan-200/20">
+          <div className="skeleton h-4 w-40 rounded mb-3" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="skeleton h-3 w-full rounded" />
+            <div className="skeleton h-3 w-4/5 rounded" />
+            <div className="skeleton h-3 w-full rounded sm:col-span-2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function RoleAuditViewer() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -94,11 +111,11 @@ export default function RoleAuditViewer() {
   }, []);
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+    <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-cyan-200/20 p-4 sm:p-6 shadow-xl shadow-cyan-500/5 animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5 sm:mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-300/20 to-amber-300/20 border border-cyan-200/30 flex items-center justify-center">
             <span className="text-lg">📋</span>
           </div>
           <div>
@@ -110,7 +127,7 @@ export default function RoleAuditViewer() {
         <button
           onClick={() => fetchAudit(true)}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-white/10 text-gray-300 rounded-xl hover:bg-white/20 hover:text-white transition-all disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-white/10 text-gray-300 rounded-xl hover:bg-cyan-500/20 hover:text-cyan-100 transition-all disabled:opacity-50 border border-white/10 hover:border-cyan-200/40"
         >
           {refreshing ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -122,25 +139,25 @@ export default function RoleAuditViewer() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
-          <div className="text-2xl font-bold text-white">{entries.length}</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
+        <div className="text-center p-3 bg-white/5 rounded-xl border border-cyan-200/20">
+          <div className="text-2xl font-bold text-cyan-100">{entries.length}</div>
           <div className="text-gray-400 text-sm">Total Events</div>
         </div>
-        <div className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+        <div className="text-center p-3 bg-white/5 rounded-xl border border-cyan-200/20">
           <div className="text-2xl font-bold text-green-400">
             {entries.filter(e => e.action?.toLowerCase() === 'grant').length}
           </div>
           <div className="text-gray-400 text-sm">Grants</div>
         </div>
-        <div className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+        <div className="text-center p-3 bg-white/5 rounded-xl border border-cyan-200/20">
           <div className="text-2xl font-bold text-red-400">
             {entries.filter(e => e.action?.toLowerCase() === 'revoke').length}
           </div>
           <div className="text-gray-400 text-sm">Revokes</div>
         </div>
-        <div className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
-          <div className="text-2xl font-bold text-blue-400">
+        <div className="text-center p-3 bg-white/5 rounded-xl border border-cyan-200/20">
+          <div className="text-2xl font-bold text-amber-300">
             {entries.filter(e => !['grant', 'revoke'].includes(e.action?.toLowerCase())).length}
           </div>
           <div className="text-gray-400 text-sm">Other</div>
@@ -150,28 +167,27 @@ export default function RoleAuditViewer() {
       {/* Audit List */}
       <div className="space-y-3">
         {loading ? (
-          <div className="text-center py-8">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <div className="text-gray-400">Loading audit trail...</div>
-          </div>
+          <AuditSkeleton />
         ) : entries.length === 0 ? (
-          <div className="text-center py-8 bg-white/5 rounded-xl border border-white/10">
+          <div className="text-center py-8 bg-white/5 rounded-xl border border-cyan-200/20">
             <div className="text-4xl mb-3 opacity-50">📝</div>
             <div className="text-gray-400 text-lg mb-2">No audit entries yet</div>
             <div className="text-gray-500 text-sm">Role changes will appear here</div>
           </div>
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-            {entries.map((entry) => (
-              <AuditEntry key={entry.id} entry={entry} />
+            {entries.map((entry, idx) => (
+              <div key={entry.id} style={{ animationDelay: `${Math.min(idx * 60, 320)}ms` }}>
+                <AuditEntry entry={entry} />
+              </div>
             ))}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="mt-4 pt-4 border-t border-white/10">
-        <div className="text-xs text-gray-400 text-center">
+      <div className="mt-4 pt-4 border-t border-cyan-200/20">
+        <div className="text-xs text-cyan-100/70 text-center">
           🔍 Monitoring all role management activities
         </div>
       </div>

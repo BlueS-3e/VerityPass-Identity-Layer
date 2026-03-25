@@ -19,14 +19,14 @@ function RoleCard({ role, onDelete }) {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-all group">
+    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-cyan-200/40 transition-all group stagger-item">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-300/20 to-amber-300/20 border border-cyan-200/30 flex items-center justify-center">
           <span className="text-lg">🔑</span>
         </div>
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-white font-semibold bg-blue-500/20 px-2 py-1 rounded-lg text-sm">
+            <span className="text-white font-semibold bg-cyan-500/20 px-2 py-1 rounded-lg text-sm border border-cyan-300/30">
               {role.role}
             </span>
             <span className="text-gray-400 text-sm">
@@ -42,7 +42,7 @@ function RoleCard({ role, onDelete }) {
       <button
         onClick={handleDelete}
         disabled={deleting}
-        className="px-4 py-2 bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl hover:bg-red-500/30 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2 group-hover:border-red-400/50"
+        className="px-4 py-2 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl hover:bg-rose-500/30 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2 group-hover:border-rose-300/50"
       >
         {deleting ? (
           <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -63,6 +63,7 @@ export default function RoleManager() {
   const [csrf, setCsrf] = useState(null);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [showForm, setShowForm] = useState(false); // ADDED: Progressive disclosure
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -172,11 +173,11 @@ export default function RoleManager() {
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+    <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-cyan-200/20 p-4 sm:p-6 shadow-xl shadow-cyan-500/5 animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5 sm:mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-300/20 to-amber-300/20 border border-cyan-200/30 flex items-center justify-center">
             <span className="text-lg">👥</span>
           </div>
           <div>
@@ -188,7 +189,7 @@ export default function RoleManager() {
         <button
           onClick={fetchRoles}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white/10 text-gray-300 rounded-xl hover:bg-white/20 hover:text-white transition-all disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-white/10 text-gray-300 rounded-xl hover:bg-cyan-500/20 hover:text-cyan-100 transition-all disabled:opacity-50 border border-white/10 hover:border-cyan-200/40"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -199,13 +200,22 @@ export default function RoleManager() {
         </button>
       </div>
 
-      {/* Add Role Form */}
-      <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-xl border border-blue-500/20 p-6 mb-6">
-        <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <span>➕</span>
-          Assign New Role
-        </h4>
+      {/* Add Role Form - Progressive Disclosure */}
+      <div className="bg-gradient-to-br from-cyan-400/10 to-amber-300/10 rounded-xl border border-cyan-200/30 p-4 sm:p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+            <span>➕</span>
+            Assign New Role
+          </h4>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="text-sm px-3 py-1 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30 rounded border border-cyan-300/30 transition-all"
+          >
+            {showForm ? '✕ Hide' : '+ Show'}
+          </button>
+        </div>
         
+        {showForm && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-3">
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -214,7 +224,7 @@ export default function RoleManager() {
             <select 
               value={principalType} 
               onChange={(e) => setPrincipalType(e.target.value)}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-400 transition-colors"
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-cyan-300 transition-colors"
             >
               <option value="email">📧 Email</option>
               <option value="address">👤 Address</option>
@@ -229,7 +239,7 @@ export default function RoleManager() {
               value={principal}
               onChange={(e) => setPrincipal(e.target.value)}
               placeholder={getPlaceholder()}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-400 transition-colors"
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-cyan-300 transition-colors"
             />
           </div>
           
@@ -241,7 +251,7 @@ export default function RoleManager() {
               value={roleName}
               onChange={(e) => setRoleName(e.target.value)}
               placeholder="admin"
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-400 transition-colors"
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-cyan-300 transition-colors"
             />
           </div>
           
@@ -249,7 +259,7 @@ export default function RoleManager() {
             <button
               onClick={handleAdd}
               disabled={adding || !principal.trim() || !roleName.trim()}
-              className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full px-6 py-3 bg-gradient-to-r from-amber-200 to-cyan-200 text-slate-900 rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {adding ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -260,6 +270,7 @@ export default function RoleManager() {
             </button>
           </div>
         </div>
+        )}
       </div>
 
       {/* Roles List */}
@@ -275,27 +286,25 @@ export default function RoleManager() {
             <div className="text-gray-400">Loading roles...</div>
           </div>
         ) : roles.length === 0 ? (
-          <div className="text-center py-8 bg-white/5 rounded-xl border border-white/10">
+          <div className="text-center py-8 bg-white/5 rounded-xl border border-cyan-200/20">
             <div className="text-4xl mb-3 opacity-50">🔑</div>
             <div className="text-gray-400 text-lg mb-2">No role assignments</div>
             <div className="text-gray-500 text-sm">Use the form above to assign roles</div>
           </div>
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-            {roles.map((role) => (
-              <RoleCard 
-                key={role.id} 
-                role={role} 
-                onDelete={handleDelete}
-              />
+            {roles.map((role, idx) => (
+              <div key={role.id} style={{ animationDelay: `${Math.min(idx * 55, 320)}ms` }}>
+                <RoleCard role={role} onDelete={handleDelete} />
+              </div>
             ))}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="mt-6 pt-4 border-t border-white/10">
-        <div className="text-xs text-gray-400 text-center">
+      <div className="mt-6 pt-4 border-t border-cyan-200/20">
+        <div className="text-xs text-cyan-100/70 text-center">
           🔒 Secure role management with audit trail
         </div>
       </div>

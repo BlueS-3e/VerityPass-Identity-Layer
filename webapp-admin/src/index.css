@@ -1,0 +1,83 @@
+/* Admin Dashboard Custom Styles & Animations */
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Utility Classes */
+.animate-slide-in {
+  animation: slide-in 0.4s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.stagger-item {
+  opacity: 0;
+  animation: fade-in-up 0.45s ease-out forwards;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 25%, rgba(255, 255, 255, 0.14) 37%, rgba(255, 255, 255, 0.06) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+/* Toast-specific polish */
+.toast-error {
+  animation: fade-in-up 0.4s ease-out;
+}
+
+.toast-success {
+  animation: fade-in-up 0.4s ease-out;
+}
+
+.toast-warning {
+  animation: fade-in-up 0.4s ease-out;
+}
+
+.toast-info {
+  animation: fade-in-up 0.4s ease-out;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-150;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus states */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-blue-500;
+}

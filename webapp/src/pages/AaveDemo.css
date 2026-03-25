@@ -10,31 +10,40 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 12px 18px;
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.95) 0%, rgba(37, 99, 235, 0.92) 100%);
   color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
+  border: 1px solid rgba(103, 232, 249, 0.45);
+  border-radius: 14px;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 32px rgba(14, 116, 144, 0.35);
   transition: all 0.3s ease;
 }
 
 .demo-trigger-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 14px 44px rgba(14, 116, 144, 0.42);
+  filter: brightness(1.05);
 }
 
 .demo-trigger-icon {
-  font-size: 16px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .demo-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(2, 6, 23, 0.62);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -44,10 +53,10 @@
 }
 
 .demo-container {
-  /* Use system color scheme where possible */
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  box-shadow: 0 24px 64px rgba(2, 6, 23, 0.3);
   width: 100%;
   max-width: 800px;
   max-height: 90vh;
@@ -61,8 +70,8 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.22);
+  background: linear-gradient(120deg, rgba(34, 211, 238, 0.16) 0%, rgba(59, 130, 246, 0.14) 60%, rgba(245, 158, 11, 0.14) 100%);
 }
 
 .demo-header-content h2 {
@@ -74,7 +83,7 @@
 
 .demo-header-content p {
   margin: 0;
-  color: #6b7280;
+  color: #475569;
   font-size: 14px;
 }
 
@@ -85,9 +94,9 @@
 
 .demo-btn {
   padding: 8px 16px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 8px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
@@ -104,30 +113,33 @@
 }
 
 .demo-btn-primary {
-  background: #4f46e5;
-  color: white;
+  background: linear-gradient(135deg, #06b6d4 0%, #2563eb 70%, #f59e0b 130%);
+  color: #f8fafc;
+  border-color: rgba(103, 232, 249, 0.6);
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.28);
 }
 
 .demo-btn-primary:hover {
-  background: #4338ca;
+  filter: brightness(1.05);
   transform: translateY(-1px);
 }
 
 .demo-btn-secondary {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: rgba(255, 255, 255, 0.72);
+  color: #0f172a;
+  border-color: rgba(148, 163, 184, 0.4);
 }
 
 .demo-btn-secondary:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.95);
+  color: #020617;
 }
 
 /* Focus & disabled states for accessibility */
 .demo-btn:focus-visible,
 .demo-trigger-btn:focus-visible,
 .demo-minimized-btn:focus-visible {
-  outline: 3px solid rgba(79,70,229,0.18);
+  outline: 3px solid rgba(34,211,238,0.35);
   outline-offset: 3px;
 }
 
@@ -176,11 +188,12 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.38);
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .demo-account-dot {
@@ -201,10 +214,10 @@
 }
 
 .demo-info {
-  background: #f8fafc;
+  background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(239,246,255,0.9) 100%);
   padding: 20px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(34, 211, 238, 0.22);
 }
 
 .demo-info h4 {
@@ -217,7 +230,7 @@
 .demo-info ul {
   margin: 0;
   padding-left: 20px;
-  color: #6b7280;
+  color: #334155;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -227,11 +240,11 @@
 }
 
 .demo-info code {
-  background: #e5e7eb;
+  background: rgba(203, 213, 225, 0.45);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 12px;
-  color: #374151;
+  color: #0f172a;
 }
 
 .demo-minimized {
@@ -246,20 +259,20 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: white;
-  color: #374151;
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(120deg, rgba(8, 145, 178, 0.95) 0%, rgba(37, 99, 235, 0.9) 100%);
+  color: #f8fafc;
+  border: 1px solid rgba(125, 211, 252, 0.55);
   border-radius: 12px;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 34px rgba(14, 116, 144, 0.36);
   transition: all 0.3s ease;
 }
 
 .demo-minimized-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 14px 40px rgba(14, 116, 144, 0.42);
 }
 
 /* Make trigger and minimized controls full-width and touch-friendly on small screens */
@@ -289,22 +302,23 @@
 }
 
 .demo-badge {
-  background: #4f46e5;
-  color: white;
+  background: rgba(245, 158, 11, 0.96);
+  color: #1e293b;
   padding: 2px 8px;
   border-radius: 12px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .demo-status {
   margin-left: auto;
   padding: 2px 8px;
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ecfeff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 8px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Responsive design */
@@ -339,21 +353,21 @@
     backdrop-filter: blur(10px) saturate(120%);
   }
   .demo-container {
-    background: #0b1220;
+    background: linear-gradient(180deg, #071225 0%, #09162d 100%);
     box-shadow: 0 20px 60px rgba(2,6,23,0.6);
-    border: 1px solid rgba(255,255,255,0.04);
+    border: 1px solid rgba(34, 211, 238, 0.22);
   }
   .demo-header {
-    background: linear-gradient(135deg, #071226 0%, #071827 100%);
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    background: linear-gradient(120deg, rgba(8, 145, 178, 0.2) 0%, rgba(37, 99, 235, 0.16) 60%, rgba(245, 158, 11, 0.12) 100%);
+    border-bottom: 1px solid rgba(34, 211, 238, 0.2);
   }
   .demo-header-content h2 { color: #f8fafc; }
   .demo-header-content p { color: #cbd5e1; }
-  .demo-info { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.03); color: #cbd5e1; }
-  .demo-info code { background: rgba(255,255,255,0.02); color: #e6eef8; }
-  .demo-btn-secondary { background: rgba(255,255,255,0.02); color: #cbd5e1; }
-  .demo-btn-primary { background: linear-gradient(135deg,#5b6bf8 0%,#7b57d6 100%); color: white; }
-  .demo-account-badge { background: rgba(16,185,129,0.12); color: #bbf7d0; }
+  .demo-info { background: rgba(8, 47, 73, 0.35); border-color: rgba(34, 211, 238, 0.2); color: #cbd5e1; }
+  .demo-info code { background: rgba(148, 163, 184, 0.16); color: #e2e8f0; }
+  .demo-btn-secondary { background: rgba(15, 23, 42, 0.7); border-color: rgba(103, 232, 249, 0.25); color: #dbeafe; }
+  .demo-btn-primary { background: linear-gradient(135deg,#0891b2 0%,#2563eb 70%,#f59e0b 130%); color: #ecfeff; border-color: rgba(125, 211, 252, 0.5); }
+  .demo-account-badge { background: rgba(16,185,129,0.18); color: #bbf7d0; border-color: rgba(16, 185, 129, 0.38); }
 }
 
 /* Scrollbar styling */
@@ -362,14 +376,14 @@
 }
 
 .demo-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: rgba(148, 163, 184, 0.2);
 }
 
 .demo-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(56, 189, 248, 0.5);
   border-radius: 3px;
 }
 
 .demo-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(56, 189, 248, 0.75);
 }

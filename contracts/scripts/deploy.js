@@ -53,7 +53,15 @@ async function main() {
   await launchpad.waitForDeployment();
   console.log('RealMintLaunchpad deployed at', launchpad.target);
 
+  // Deploy AttestationRegistry
+  console.log('Deploying AttestationRegistry...');
+  const Registry = await hre.ethers.getContractFactory('AttestationRegistry');
+  const registry = await Registry.deploy();
+  await registry.waitForDeployment();
+  console.log('AttestationRegistry deployed at', registry.target);
+
   deployments.RealMintLaunchpad = launchpad.target;
+  deployments.AttestationRegistry = registry.target;
   deployments.priceFeed = priceFeed || null;
 
   // Optionally transfer ownership to a multisig (recommended for production)

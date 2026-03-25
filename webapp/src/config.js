@@ -1,34 +1,41 @@
 // Network and contract config. Update with deployed addresses when available.
 export const NETWORK_CONFIG = {
-  // Ethereum Mainnet (1) - Phantom supports this
-  1: {
-    name: 'Ethereum Mainnet',
-    chainId: 1,
-    chainIdHex: '0x1',
-    attestationRegistry: '' // set to deployed address when available
-  },
-  // Polygon Mainnet (137) - Phantom supports this
-  137: {
-    name: 'Polygon Mainnet',
-    chainId: 137,
-    chainIdHex: '0x89',
-    attestationRegistry: '' // set to deployed address when available
-  },
-  // BSC Mainnet (56) - aka BNB Chain (Phantom may have limited support)
+  // BNB Chain Mainnet (56) - primary production network
   56: {
     name: 'BNB Chain Mainnet',
     chainId: 56,
     chainIdHex: '0x38',
+    rpcUrl: 'https://bsc-dataseed.binance.org/',
+    blockExplorer: 'https://bscscan.com',
     attestationRegistry: '' // set to deployed address when available
   },
-  // BSC Testnet (97) - for testing
+  // BNB Chain Testnet (97) - primary staging network
   97: {
-    name: 'BSC Testnet',
+    name: 'BNB Chain Testnet',
     chainId: 97,
     chainIdHex: '0x61',
+    rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+    blockExplorer: 'https://testnet.bscscan.com',
+    attestationRegistry: '0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0' // deployed 2026-03-25
+  },
+  // Optional secondary networks
+  1: {
+    name: 'Ethereum Mainnet',
+    chainId: 1,
+    chainIdHex: '0x1',
+    rpcUrl: 'https://eth.llamarpc.com',
+    blockExplorer: 'https://etherscan.io',
     attestationRegistry: '' // set to deployed address when available
   },
-  // Ethereum Sepolia (11155111) - for testing
+  137: {
+    name: 'Polygon Mainnet',
+    chainId: 137,
+    chainIdHex: '0x89',
+    rpcUrl: 'https://polygon-rpc.com',
+    blockExplorer: 'https://polygonscan.com',
+    attestationRegistry: '' // set to deployed address when available
+  },
+  // Optional legacy testnets
   11155111: {
     name: 'Ethereum Sepolia',
     chainId: 11155111,
@@ -44,10 +51,10 @@ export const NETWORK_CONFIG = {
   }
 };
 
-// Allow build-time override with Vite env var VITE_DEFAULT_CHAIN_ID (e.g. 56 for BSC mainnet)
+// Allow build-time override with Vite env var VITE_DEFAULT_CHAIN_ID.
 export const DEFAULT_CHAIN_ID = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_DEFAULT_CHAIN_ID)
   ? Number(import.meta.env.VITE_DEFAULT_CHAIN_ID)
-  : 97; // default to BSC testnet for demo
+  : 56; // default to BNB Chain mainnet
 
 // Base URL for backend API. When building with Vite you can set VITE_API_BASE.
 // API_BASE is exposed as a function so the runtime can be overridden by a

@@ -3,7 +3,7 @@
 ## Current Status
 ✅ dApp live on Vercel: https://realmint-platform.vercel.app
 ✅ Backend live on Render: https://realmint-api.onrender.com
-✅ All features functional on Sepolia testnet
+✅ BNB-compatible contracts and wallet flow ready
 ✅ Ready for mainnet deployment
 
 ---
@@ -11,8 +11,8 @@
 ## Phase 1: Smart Contracts - Mainnet Deployment
 
 ### Prerequisites
-- [ ] Deployed contracts on Sepolia (reference addresses noted)
-- [ ] Sufficient ETH/BNB for mainnet gas fees
+- [ ] Deployed contracts on BSC testnet (reference addresses noted)
+- [ ] Sufficient BNB for mainnet gas fees
 - [ ] Private key for deployment (NOT in version control)
 
 ### Deployment Steps
@@ -28,7 +28,7 @@ networks: {
     accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     chainId: 1
   },
-  bscMainnet: {
+  bsc: {
     url: 'https://bsc-dataseed.binance.org',
     accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     chainId: 56
@@ -38,11 +38,11 @@ networks: {
 
 #### 2. Deploy Contracts
 ```bash
-# Ethereum Mainnet
-npx hardhat run scripts/deploy.js --network mainnet
+# BNB Chain Mainnet
+npx hardhat run scripts/deploy.js --network bsc
 
-# BSC Mainnet
-npx hardhat run scripts/deploy.js --network bscMainnet
+# BNB Chain Testnet
+npx hardhat run scripts/deploy.js --network bscTestnet
 ```
 
 #### 3. Note Contract Addresses
@@ -72,14 +72,12 @@ Go to **Render Dashboard** → `realmint-api` → **Environment**:
 
 ```
 ENVIRONMENT=production
-CHAIN_ID=1  # 1 for Ethereum, 56 for BSC
+CHAIN_ID=56  # 56 for BNB Chain, 97 for BNB testnet
 ATTESTATION_REGISTRY_ADDRESS=<mainnet-address>
 IDENTITY_REGISTRY_ADDRESS=<mainnet-address>
 CREDIT_SCORE_MANAGER_ADDRESS=<mainnet-address>
 REALMINT_LAUNCHPAD_ADDRESS=<mainnet-address>
-WEB3_PROVIDER_URL=https://eth.llamarpc.com
-AAVE_POOL_ADDRESS=0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9  # Ethereum mainnet
-AAVE_PRICE_ORACLE_ADDRESS=0xA50ba011c48153De246E5882039264E3F0e0867f  # Mainnet
+WEB3_PROVIDER_URL=https://bsc-dataseed.binance.org
 ALLOWED_ORIGINS=https://realmint-platform.vercel.app,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
 ```
 
@@ -97,24 +95,22 @@ ALLOWED_ORIGINS=https://realmint-platform.vercel.app,http://localhost:3000,http:
 ```bash
 VITE_API_BASE=https://realmint-api.onrender.com
 VITE_WALLETCONNECT_PROJECT_ID=<your-project-id>
-VITE_DEFAULT_CHAIN_ID=1  # 1 for Ethereum mainnet, 56 for BSC
-VITE_ENABLE_AAVE_DEMO=true
+VITE_DEFAULT_CHAIN_ID=56  # 56 for BNB Chain mainnet, 97 for testnet
 ```
 
 ### 2. Update `webapp/src/config.js` if Needed
 Verify mainnet RPC endpoints are correct:
 ```javascript
 const NETWORK_CONFIG = {
-  1: {
-    name: 'Ethereum Mainnet',
-    chainId: 1,
-    // Contract addresses
-    attestationRegistry: '0x...',  // Mainnet address
-  },
   56: {
     name: 'BNB Chain Mainnet',
     chainId: 56,
-    attestationRegistry: '0x...',  // BSC mainnet address
+    attestationRegistry: '0x...',  // BNB Chain mainnet address
+  },
+  97: {
+    name: 'BNB Chain Testnet',
+    chainId: 97,
+    attestationRegistry: '0x...',  // BNB Chain testnet address
   }
 }
 ```
@@ -125,7 +121,7 @@ const NETWORK_CONFIG = {
 ```
 VITE_API_BASE=https://realmint-api.onrender.com
 VITE_WALLETCONNECT_PROJECT_ID=<your-project-id>
-VITE_DEFAULT_CHAIN_ID=1
+VITE_DEFAULT_CHAIN_ID=56
 ```
 
 ### 4. Redeploy Frontend
@@ -144,10 +140,7 @@ git push origin main  # Or your production branch
 
 ### 1. Verify Smart Contracts
 ```bash
-# Check Etherscan (Ethereum)
-https://etherscan.io/address/<contract-address>
-
-# Check BscScan (BSC)
+# Check BscScan (BNB Chain)
 https://bscscan.com/address/<contract-address>
 
 # Verify source code on blockchain explorer
@@ -226,7 +219,7 @@ curl https://realmint-api.onrender.com/api/frontend-config
 ### Gradual Rollout Alternative
 - Deploy with feature flags to enable mainnet gradually
 - Monitor metrics before full launch
-- Keep Sepolia version accessible for testing
+- Keep BNB testnet version accessible for staging verification
 
 ---
 
@@ -248,7 +241,7 @@ curl https://realmint-api.onrender.com/api/frontend-config
 
 ### Frontend ✓
 - [ ] Environment variables set in Vercel
-- [ ] Default chain ID set to mainnet (1 or 56)
+- [ ] Default chain ID set to mainnet (56, with 97 for staging)
 - [ ] Contract addresses in config updated
 - [ ] API base URL correct
 - [ ] Build succeeds without errors
@@ -263,7 +256,7 @@ curl https://realmint-api.onrender.com/api/frontend-config
 
 ## Support Resources
 
-- **Etherscan API**: https://etherscan.io/apis
+- **BscScan API**: https://docs.bscscan.com
 - **BSC Explorer**: https://bscscan.com
 - **Vercel Docs**: https://vercel.com/docs
 - **Render Docs**: https://render.com/docs
@@ -274,7 +267,7 @@ curl https://realmint-api.onrender.com/api/frontend-config
 
 ## Next Steps
 
-1. **Deploy contracts** to Ethereum mainnet and/or BSC
+1. **Deploy contracts** to BNB Chain mainnet (and BNB testnet for staging)
 2. **Update backend** environment variables on Render
 3. **Update frontend** environment variables on Vercel
 4. **Test thoroughly** with real mainnet wallets

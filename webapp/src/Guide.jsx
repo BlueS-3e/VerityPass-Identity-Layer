@@ -5,7 +5,7 @@ import Footer from './components/Footer';
 
 function GuideCard({ icon, title, children, gradient = "from-blue-500/10 to-purple-500/10" }) {
   return (
-    <div className={`p-6 rounded-2xl bg-gradient-to-br ${gradient} border border-white/10 backdrop-blur-sm hover:scale-105 transition-transform duration-300`}>
+    <div className={`p-6 rounded-2xl bg-gradient-to-br ${gradient} border border-white/10 backdrop-blur-sm card-hover-lift`}>
       <div className="flex items-center gap-3 mb-4">
         <div className="text-2xl">{icon}</div>
         <h3 className="text-xl font-bold text-white">{title}</h3>
@@ -31,40 +31,61 @@ function StepItem({ number, title, description, icon }) {
 
 export default function Guide() {
   const quickLinks = [
-    { icon: "🚀", title: "Launchpad", description: "Start your project journey", href: "/launch" },
-    { icon: "📝", title: "Create Attestation", description: "Sign and verify claims", href: "/attestation" },
-    { icon: "🔗", title: "Connect Bank", description: "Link accounts securely", href: "/connect" },
+    { icon: "🏦", title: "Lending Desk", description: "Configure product listings", href: "/launch" },
+    { icon: "📝", title: "Create Attestation", description: "Sign borrower risk claims", href: "/attestation" },
+    { icon: "🔗", title: "Connect Bank", description: "Link account-based income signals", href: "/connect" },
     { icon: "📚", title: "Project Docs", description: "External documentation", href: "https://github.com/" }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-zinc-900 to-amber-950 relative overflow-hidden">
       {/* Background Elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-l from-blue-500/10 to-purple-600/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-r from-teal-400/10 to-cyan-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-l from-yellow-500/10 to-amber-600/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-r from-cyan-400/10 to-emerald-500/10 rounded-full blur-3xl" />
       
       <HeroGraphic />
       
-      <main className="relative max-w-6xl mx-auto py-16 px-4 z-10">
+      <main className="relative max-w-6xl mx-auto page-shell sm:py-12 lg:py-16 z-10">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10 sm:mb-12 reveal">
           <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm mb-6">
-            <span className="text-2xl">📚</span>
-            <span className="text-white font-semibold">Getting Started Guide</span>
+            <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-6 h-6" />
+            <span className="text-white font-semibold">BNB Lending Playbook</span>
           </div>
           
           <h1 className="text-5xl lg:text-6xl font-bold text-white mb-4">
             RealMint
-            <span className="bg-gradient-to-r from-teal-300 to-blue-400 bg-clip-text text-transparent"> Guides</span>
+            <span className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent"> Ops Guide</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Everything you need to know to launch projects and create verifiable attestations on RealMint.
+            Everything you need to launch realistic lending products and credit attestations on BNB Chain.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-12 reveal reveal-delay-1">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-8 reveal reveal-delay-2">
+            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Underwriting Pipeline</h3>
+                <span className="text-xs text-amber-300">BNB Chain Flow</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="text-xs text-gray-400">Identity + Bank Signals</div>
+                  <div className="h-2 mt-3 rounded bg-white/10 overflow-hidden"><div className="h-full w-4/5 bg-gradient-to-r from-cyan-400 to-emerald-400" /></div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="text-xs text-gray-400">Risk Model Evaluation</div>
+                  <div className="h-2 mt-3 rounded bg-white/10 overflow-hidden"><div className="h-full w-2/3 bg-gradient-to-r from-amber-400 to-yellow-300" /></div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="text-xs text-gray-400">Onchain Offer Publishing</div>
+                  <div className="h-2 mt-3 rounded bg-white/10 overflow-hidden"><div className="h-full w-3/4 bg-gradient-to-r from-sky-400 to-indigo-400" /></div>
+                </div>
+              </div>
+            </div>
+
             {/* Quick Start Guide */}
             <GuideCard 
               icon="⚡" 
@@ -74,26 +95,26 @@ export default function Guide() {
               <div className="space-y-3">
                 <StepItem
                   number="1"
-                  title="Connect Your Wallet"
-                  description="Click the connect button and choose your preferred wallet provider"
+                  title="Connect Treasury Wallet"
+                  description="Connect an operator wallet for product creation and publishing"
                   icon="🔗"
                 />
                 <StepItem
                   number="2"
                   title="Pay Listing Fee"
-                  description="Small fee covers processing and verification costs"
+                  description="Submit the BNB listing fee to activate underwriting workflows"
                   icon="💳"
                 />
                 <StepItem
                   number="3"
-                  title="Submit Project Details"
-                  description="Fill in your project information and upload optional documents"
+                  title="Submit Lending Details"
+                  description="Define terms, risk summary, and supporting borrower evidence"
                   icon="📄"
                 />
                 <StepItem
                   number="4"
-                  title="Admin Review & Verification"
-                  description="Our team reviews submissions and publishes verified attestations"
+                  title="Risk Review & Verification"
+                  description="Operations team reviews and publishes verified onchain attestations"
                   icon="✅"
                 />
               </div>
@@ -175,7 +196,7 @@ export default function Guide() {
           </div>
 
           {/* Quick Links Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 reveal reveal-delay-3">
             <div className="p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-white/10 backdrop-blur-sm">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <span>🚀</span>
@@ -210,15 +231,15 @@ export default function Guide() {
               <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                   <span>📖</span>
-                  <span>Check our documentation</span>
+                  <span>Read underwriting docs</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>🐛</span>
-                  <span>Report issues on GitHub</span>
+                  <span>Report integration issues</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>💡</span>
-                  <span>Join our community</span>
+                  <span>Join operator channels</span>
                 </div>
               </div>
             </div>
@@ -232,19 +253,19 @@ export default function Guide() {
               <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                   <span>⚡</span>
-                  <span>Instant setup</span>
+                  <span>Fast BNB settlement</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>🛡️</span>
-                  <span>Trustless verification</span>
+                  <span>Auditable risk controls</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>🌐</span>
-                  <span>Decentralized storage</span>
+                  <span>Onchain + IPFS evidence</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>💫</span>
-                  <span>No registration needed</span>
+                  <span>Bank + wallet onboarding</span>
                 </div>
               </div>
             </div>
@@ -252,11 +273,11 @@ export default function Guide() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center p-8 rounded-3xl bg-gradient-to-r from-teal-500/10 to-blue-500/10 border border-white/10 backdrop-blur-sm">
+        <div className="text-center p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-teal-500/10 to-blue-500/10 border border-white/10 backdrop-blur-sm reveal reveal-delay-4">
           <div className="text-4xl mb-4">🚀</div>
           <h3 className="text-2xl font-bold text-white mb-2">Ready to Get Started?</h3>
           <p className="text-gray-300 mb-6 max-w-md mx-auto">
-            Join thousands of builders creating verifiable attestations and launching trusted projects.
+            Start shipping lending-grade attestations and credit products with a production-minded workflow.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -271,7 +292,7 @@ export default function Guide() {
               className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/10 text-white font-bold border border-white/20 hover:bg-white/20 transition-colors"
             >
               <span>🎯</span>
-              Launch Project
+              Open Lending Desk
             </Link>
           </div>
         </div>

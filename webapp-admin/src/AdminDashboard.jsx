@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from 'react-router-dom';
 import { API_BASE } from './config';
 import RoleManager from './RoleManager';
@@ -8,22 +8,24 @@ import { useToast } from './components/Toast';
 import { 
   listAvailableProviders, 
   selectBestProvider, 
-  connectWallet as modernConnectWallet 
+  connectWallet as modernConnectWallet,
+  getDisplayWallets,
+  switchNetwork
 } from './utils/providerDetect';
 
 function StatCard({ title, value, color, icon }) {
   const colorClasses = {
-    blue: 'from-blue-500 to-blue-600',
-    green: 'from-green-500 to-green-600',
-    yellow: 'from-yellow-500 to-yellow-600',
-    purple: 'from-purple-500 to-purple-600'
+    blue: 'from-cyan-300 to-blue-400',
+    green: 'from-emerald-300 to-emerald-500',
+    yellow: 'from-amber-200 to-orange-300',
+    purple: 'from-rose-200 to-amber-300'
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-lg shadow-black/10 hover:border-cyan-200/40 transition-all">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-300">{title}</p>
+          <p className="text-xs font-semibold tracking-wider uppercase text-gray-400">{title}</p>
           <p className={`text-2xl font-bold bg-gradient-to-r ${colorClasses[color]} bg-clip-text text-transparent mt-1`}>
             {value}
           </p>
@@ -45,30 +47,57 @@ function AdminLoginCard({ authMethods, onWalletLogin, onOidcLogin, onPasswordLog
   useEffect(() => {
     const wallets = listAvailableProviders();
     setAvailableWallets(wallets);
-    
-    if (wallets.length > 0) {
-      selectBestProvider().then(wallet => {
-        setSelectedWallet(wallet);
-      });
+
+    // Prefer an immediately connectable injected wallet on desktop.
+    const injected = wallets.find((w) => Boolean(w?.provider && typeof w.provider.request === 'function'));
+    if (injected) {
+      setSelectedWallet(injected);
+      return;
     }
+
+    selectBestProvider().then((wallet) => {
+      if (!wallet) return;
+      setSelectedWallet(wallet);
+    });
   }, []);
 
+  const displayWallets = useMemo(() => getDisplayWallets(availableWallets), [availableWallets]);
+
+  const isConnectable = (wallet) => Boolean(wallet?.provider && typeof wallet.provider.request === 'function');
+  const fallbackWallet = useMemo(
+    () => displayWallets.find((wallet) => isConnectable(wallet)) || availableWallets.find((wallet) => isConnectable(wallet)),
+    [displayWallets, availableWallets]
+  );
+
   const handleWalletLogin = async () => {
-    if (!selectedWallet) return;
+    const activeWallet = selectedWallet || fallbackWallet;
+    if (!activeWallet) return;
+
+    // Keep UI in sync when selected wallet is non-connectable (e.g. SDK placeholder)
+    if (activeWallet && selectedWallet?.id !== activeWallet.id) {
+      setSelectedWallet(activeWallet);
+    }
+
     setLoading(true);
-    await onWalletLogin(selectedWallet.provider);
-    setLoading(false);
+    try {
+      await onWalletLogin(activeWallet);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const selectedWalletLabel = selectedWallet?.name || fallbackWallet?.name || 'Wallet';
+  const canConnectWallet = Boolean(selectedWallet || fallbackWallet);
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
+      <div className="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-cyan-200/20 shadow-2xl shadow-cyan-500/10">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-r from-cyan-300 to-amber-300 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-900">
             <span className="text-2xl">⚡</span>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Admin Access</h2>
-          <p className="text-gray-300">Choose your authentication method</p>
+          <h2 className="text-2xl font-bold text-white mb-2">BNB Ops Access</h2>
+          <p className="text-gray-300">Authenticate to manage BNB Chain risk operations securely</p>
         </div>
 
         <div className="space-y-4">
@@ -79,14 +108,14 @@ function AdminLoginCard({ authMethods, onWalletLogin, onOidcLogin, onPasswordLog
                 Connect Wallet
               </label>
               <div className="flex flex-wrap gap-2 mb-3">
-                {availableWallets.map((wallet) => (
+                {displayWallets.map((wallet) => (
                   <button
                     key={wallet.id}
                     onClick={() => setSelectedWallet(wallet)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
                       selectedWallet?.id === wallet.id
-                        ? 'bg-blue-500/20 border-blue-400 text-blue-300'
-                        : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20'
+                        ? 'bg-cyan-500/20 border-cyan-300 text-cyan-200'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:border-cyan-200/40'
                     }`}
                   >
                     {wallet.icon && (
@@ -96,17 +125,18 @@ function AdminLoginCard({ authMethods, onWalletLogin, onOidcLogin, onPasswordLog
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-gray-400">Network is auto-managed for admin login.</p>
               <button
                 onClick={handleWalletLogin}
-                disabled={!selectedWallet || loading}
-                className="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 rounded-xl py-4 font-semibold hover:from-yellow-300 hover:to-orange-300 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                disabled={!canConnectWallet || loading}
+                className="w-full bg-gradient-to-r from-amber-200 to-cyan-200 text-slate-900 rounded-xl py-4 font-semibold hover:from-amber-100 hover:to-cyan-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <span>🔐</span>
                 )}
-                Sign in with Wallet
+                Sign in with {selectedWalletLabel}
               </button>
             </div>
           )}
@@ -245,7 +275,7 @@ function OwnerVerification({ ownerAudit, onVerify, onRefresh, verifying }) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
           <span>🛡️</span>
-          Contract Owner Verification
+          BNB Contract Owner Verification
         </h3>
         <div className="flex gap-2">
           <button
@@ -270,7 +300,7 @@ function OwnerVerification({ ownerAudit, onVerify, onRefresh, verifying }) {
       </div>
 
       <p className="text-gray-300 text-sm mb-4">
-        Verify the on-chain contract owner and track verification history
+        Verify the BNB Chain contract owner and track verification history
       </p>
 
       <div className="space-y-3">
@@ -312,7 +342,7 @@ function OwnerVerification({ ownerAudit, onVerify, onRefresh, verifying }) {
 }
 
 export default function AdminDashboard() {
-  const [showPanels, setShowPanels] = useState(true);
+  // REMOVED: Dead toggle - all sections now always visible
   const [isAdmin, setIsAdmin] = useState(false);
   const [csrfToken, setCsrfToken] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -341,10 +371,104 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSiweLogin = async (provider) => {
+  const mapWalletError = (error) => {
+    const nested = error?.data?.originalError || error?.error || null;
+    const code = Number(nested?.code ?? error?.code);
+    const combinedMessage = `${nested?.message || ''} ${error?.message || ''}`.trim();
+    const msg = combinedMessage.toLowerCase();
+    const walletName = String(error?._walletName || '').toLowerCase();
+
+    if (!msg) return 'Could not connect wallet. Please try again.';
+
+    // Wallet/user-driven cancellations
+    if (
+      code === 4001 ||
+      msg.includes('user rejected') ||
+      msg.includes('user denied') ||
+      msg.includes('denied transaction signature') ||
+      msg.includes('denied message signature') ||
+      msg.includes('modal was closed') ||
+      msg.includes('closed without connecting') ||
+      msg.includes('walletconnect modal was closed')
+    ) {
+      if (walletName.includes('metamask') || walletName.includes('browser')) {
+        return 'MetaMask request was cancelled. Please approve the connection/sign request to continue.';
+      }
+      if (walletName.includes('walletconnect')) {
+        return 'WalletConnect connection was interrupted. Please retry and keep the wallet approval flow open until completion.';
+      }
+      return 'Wallet request was cancelled.';
+    }
+
+    if (code === -32002 || msg.includes('already pending')) {
+      return 'A wallet request is already pending. Please open MetaMask and complete it.';
+    }
+
+    if (msg.includes('project id')) {
+      return 'WalletConnect is not configured. Please contact support.';
+    }
+
+    if (msg.includes('timeout')) {
+      return 'Wallet connection timed out. Please open your wallet app and retry.';
+    }
+
+    if (msg.includes('unsupported network') || msg.includes('does not support')) {
+      return 'Connected wallet cannot switch networks automatically. Please switch network in your wallet and retry.';
+    }
+
+    if (msg.includes('nonce')) {
+      return 'Could not start secure sign-in. Please refresh and try again.';
+    }
+
+    if (msg.includes('not authorized') || msg.includes('unauthorized') || msg.includes('forbidden')) {
+      return 'Wallet connected, but this address is not authorized for admin access.';
+    }
+
+    if (msg.includes('chain') && msg.includes('switch')) {
+      return 'Network switch did not complete. Please switch network in MetaMask and retry.';
+    }
+
+    if (msg.includes('signature')) {
+      return 'Could not sign the login message. Please retry in MetaMask.';
+    }
+
+    return 'Wallet sign-in failed. Please retry.';
+  };
+
+  const handleSiweLogin = async (walletOrProvider) => {
     try {
-      const connection = await modernConnectWallet(provider);
+      const preferredAdminChainId = 56;
+      const connection = await modernConnectWallet(walletOrProvider, { chainId: preferredAdminChainId });
+      const provider = connection?.provider;
+      if (!provider || (typeof provider.request !== 'function' && typeof provider.send !== 'function')) {
+        throw new Error('No connected wallet provider available');
+      }
+
+      const rpcRequest = async (method, params = []) => {
+        if (typeof provider.request === 'function') {
+          return provider.request({ method, params });
+        }
+        if (typeof provider.send === 'function') {
+          return provider.send(method, params);
+        }
+        throw new Error('Provider does not support JSON-RPC requests');
+      };
+
       const address = connection.accounts[0];
+      let activeChainId = typeof connection.chainId === 'string'
+        ? parseInt(connection.chainId, 16)
+        : Number(connection.chainId);
+
+      if (activeChainId !== preferredAdminChainId) {
+        try {
+          await switchNetwork(provider, preferredAdminChainId);
+          const chainAfterSwitch = await rpcRequest('eth_chainId', []);
+          activeChainId = typeof chainAfterSwitch === 'string' ? parseInt(chainAfterSwitch, 16) : Number(chainAfterSwitch);
+        } catch (networkError) {
+          // Continue sign-in on the currently connected network rather than hard-failing.
+          addToast('Connected on a different network. Continuing sign-in on current chain.', { type: 'warning' });
+        }
+      }
       
       const nonceRes = await fetch(`${API_BASE}/api/admin/nonce`);
       if (!nonceRes.ok) throw new Error('Could not get nonce');
@@ -355,12 +479,15 @@ export default function AdminDashboard() {
 
       const domain = window.location.hostname;
       const origin = window.location.origin;
-      const message = `${domain} wants you to sign in with your Ethereum account:\n${address}\n\nURI: ${origin}\nVersion: 1\nChain ID: ${connection.chainId}\nNonce: ${nonce}\nIssued At: ${new Date().toISOString()}`;
+      const message = `${domain} wants you to sign in with your Ethereum account:\n${address}\n\nURI: ${origin}\nVersion: 1\nChain ID: ${activeChainId}\nNonce: ${nonce}\nIssued At: ${new Date().toISOString()}`;
 
-      const signature = await provider.request({ 
-        method: 'personal_sign', 
-        params: [message, address] 
-      });
+      let signature;
+      try {
+        signature = await rpcRequest('personal_sign', [message, address]);
+      } catch (primarySignError) {
+        // Some wallets expect personal_sign params in reverse order.
+        signature = await rpcRequest('personal_sign', [address, message]);
+      }
 
       const res = await fetch(`${API_BASE}/api/admin/siwe`, {
         method: 'POST',
@@ -380,11 +507,7 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('SIWE login failed:', error);
-      if (error?.message?.includes('rejected')) {
-        addToast('Signature request was rejected', { type: 'error' });
-      } else {
-        addToast(`Login failed: ${error.message}`, { type: 'error' });
-      }
+      addToast(mapWalletError({ ...error, _walletName: walletOrProvider?.name || walletOrProvider?.id || '' }), { type: 'error' });
     }
   };
 
@@ -460,10 +583,28 @@ export default function AdminDashboard() {
       .then((res) => res.json())
       .then((list) => {
         setProjects(list || []);
-        setFilteredProjects(list || []);
       })
       .catch(console.error);
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const query = search.trim().toLowerCase();
+      if (!query) {
+        setFilteredProjects(projects);
+        return;
+      }
+
+      setFilteredProjects(
+        projects.filter((p) =>
+          (p.project_name || '').toLowerCase().includes(query) ||
+          (p.description || '').toLowerCase().includes(query)
+        )
+      );
+    }, 180);
+
+    return () => clearTimeout(timer);
+  }, [search, projects]);
 
   const fetchOwnerAudit = async () => {
     try {
@@ -582,21 +723,13 @@ export default function AdminDashboard() {
   const rejectedCount = projects.filter(p => p.status === 'rejected').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_20%_10%,rgba(34,211,238,0.22),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(251,191,36,0.18),transparent_35%),linear-gradient(135deg,#0b1220_0%,#101827_55%,#172033_100%)]">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900/70 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setShowPanels(s => !s)}
-                className="p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div className="text-sm font-semibold text-blue-300">Admin Dashboard</div>
+              <div className="text-sm font-semibold text-cyan-200">BNB Risk Ops</div>
             </div>
             {isAdmin && (
               <button 
@@ -613,14 +746,14 @@ export default function AdminDashboard() {
       <div className={`pt-16 lg:pt-8 max-w-7xl mx-auto px-4 py-8 ${isAdmin ? 'pb-20 lg:pb-8' : ''}`}>
         {/* Header */}
         <div className="text-center mb-8 lg:mb-12">
-          <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-gradient-to-r from-cyan-300 to-amber-300 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-900 shadow-xl shadow-cyan-500/20">
             <span className="text-3xl">⚡</span>
           </div>
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-            Admin Dashboard
+            BNB Chain Risk Ops Console
           </h1>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            Manage projects, verify contracts, and oversee platform operations
+            Moderate submissions, verify BNB ownership, and operate protocol controls
           </p>
         </div>
 
@@ -636,16 +769,13 @@ export default function AdminDashboard() {
             {/* Admin Header Bar */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
               <div className="flex items-center gap-4">
-                <div className="text-xl font-bold text-white">RealMint Admin</div>
-                <div className="hidden lg:block text-sm text-gray-400">• Platform Management</div>
+                <div className="text-xl font-bold text-white">RealMint BNB Ops</div>
+                <div className="hidden lg:block text-sm text-gray-400">• Governance and risk controls</div>
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setShowPanels(s => !s)}
-                  className="px-4 py-2 bg-white/10 text-gray-300 rounded-xl hover:bg-white/20 transition-colors text-sm font-medium"
-                >
-                  {showPanels ? 'Hide Panels' : 'Show Panels'}
-                </button>
+                <div className="px-4 py-2 bg-emerald-500/15 text-emerald-200 border border-emerald-400/30 rounded-xl text-sm font-medium">
+                  Live Controls Enabled
+                </div>
                 <button
                   onClick={handleLogout}
                   className="px-6 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium"
@@ -656,31 +786,12 @@ export default function AdminDashboard() {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatCard
-                title="Total Projects"
-                value={projects.length}
-                color="blue"
-                icon="📊"
-              />
-              <StatCard
-                title="Pending"
-                value={pendingCount}
-                color="yellow"
-                icon="⏳"
-              />
-              <StatCard
-                title="Approved"
-                value={approvedCount}
-                color="green"
-                icon="✅"
-              />
-              <StatCard
-                title="Rejected"
-                value={rejectedCount}
-                color="purple"
-                icon="❌"
-              />
+            {/* Stats Overview - Compact */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+              <StatCard title="Total" value={projects.length} color="blue" icon="📊" />
+              <StatCard title="Pending" value={pendingCount} color="yellow" icon="⏳" />
+              <StatCard title="Approved" value={approvedCount} color="green" icon="✅" />
+              <StatCard title="Rejected" value={rejectedCount} color="purple" icon="❌" />
             </div>
 
             {/* Search Bar */}
@@ -688,17 +799,9 @@ export default function AdminDashboard() {
               <div className="relative">
                 <input
                   value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setFilteredProjects(
-                      projects.filter(p => 
-                        (p.project_name || '').toLowerCase().includes(e.target.value.toLowerCase()) ||
-                        (p.description || '').toLowerCase().includes(e.target.value.toLowerCase())
-                      )
-                    );
-                  }}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search projects by name or description..."
-                  className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
+                  className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-300 transition-colors"
                 />
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                   🔍
@@ -717,12 +820,10 @@ export default function AdminDashboard() {
             </div>
 
             {/* Management Panels */}
-            {showPanels && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <RoleManager />
-                <RoleAuditViewer />
-              </div>
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <RoleManager />
+              <RoleAuditViewer />
+            </div>
 
             {/* Lender Dashboard (full width) */}
             <div className="mb-8">
@@ -744,7 +845,6 @@ export default function AdminDashboard() {
                     <button
                       onClick={() => {
                         setSearch('');
-                        setFilteredProjects(projects);
                       }}
                       className="mt-4 px-4 py-2 bg-white/10 text-gray-300 rounded-xl hover:bg-white/20 transition-colors"
                     >

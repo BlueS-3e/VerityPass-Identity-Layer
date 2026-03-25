@@ -8,13 +8,33 @@ This document summarizes everything you need to know about RealMint's grant appl
 
 ## What is RealMint?
 
-**One Sentence:** Open-source decentralized identity and attestation infrastructure for Ethereum enabling under-collateralized lending.
+**One Sentence:** Open-source decentralized identity and attestation infrastructure enabling under-collateralized lending.
 
 **Problem:** 1.7B unbanked people can't access credit + DeFi lending requires 150% over-collateralization
 
 **Solution:** Privacy-preserving identity system + credit scoring oracle = 25-50% collateral ratios
 
 **Impact:** Financial inclusion + public good infrastructure (any protocol can use our identity layer)
+
+---
+
+## Strategy: Multi-Chain Positioning
+
+**Primary Focus:** 🔗 **BNB Chain (LIVE NOW)**
+- Testnet deployed: March 2026 ✅
+- Target: BNB Chain Builders Fund + BIA
+- Timeline: Apply immediately (rolling deadline)
+- Budget Ask: $60K
+- Expected decision: 2-4 weeks
+
+**Secondary Focus:** ⚡ **Ethereum Foundation (Coming Month 2)**
+- Testnet deployed: Sepolia (prior work)
+- Target: ESP (Ethereum Foundation)
+- Timeline: Apply in Month 2
+- Budget Ask: $40-60K
+- Expected decision: 2-3 months
+
+This dual-chain positioning maximizes funding probability while showing multi-ecosystem expertise.
 
 ---
 
@@ -60,15 +80,37 @@ This document summarizes everything you need to know about RealMint's grant appl
 
 ### Tailored Pitch Documents ✅ (All Complete)
 
-6. **ESP_PITCH.md** (Ethereum Foundation)
+#### 🔗 BNB Chain Programs (PRIORITY - Apply Now)
+
+6. **GRANT_PROPOSAL_BNB.md** (BNB Chain Positioning)
+   - Focus: Identity-based lending on BSC, financial inclusion for 1.7B unbanked
+   - Angle: "Yield Discovery & Risk Analytics" + "DeFi 2.0" alignment
+   - Deployment: BSC Testnet (Chain 97) live + ready for mainnet
+   - **Use for:** https://www.bnbchain.org/en/developers/developer-programs/builder-grant
+   - **Asking:** $60K
+   - **Timeline:** Submit immediately, decision 2-4 weeks
+   - **Key links:**
+     - AttestationRegistry: `0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0`
+     - RealMintLaunchpad: `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a`
+
+7. **GRANT_STRATEGY_BNB.md** (BNB Execution Plan)
+   - Phase 1 (Mar-Apr): Testnet validation + community feedback
+   - Phase 2 (Apr-May): Submit to Builders Fund + BIA + Gitcoin
+   - Phase 3 (May-Jun): Mainnet deployment + production launch
+   - **Use for:** Your roadmap + contact outreach template
+   - **Key:** Rolling deadline = apply now; decision likely by Apr 25
+
+#### ⚡ Ethereum Foundation Programs (Coming Month 2)
+
+8. **ESP_PITCH.md** (Ethereum Foundation)
    - Focus: Public good + innovation + financial inclusion
    - Angle: "Foundational infrastructure layer for Ethereum"
    - Audience: EF researchers + developers
    - **Use for:** https://esp.ethereum.foundation/
    - **Asking:** $40-60K
-   - **Timeline:** Submit Month 1, decision Month 3-4
+   - **Timeline:** Submit Month 2, decision Month 3-4
 
-7. **GITCOIN_PITCH.md** (Community Grants)
+9. **GITCOIN_PITCH.md** (Community Grants - Multi-chain)
    - Focus: Quadratic funding + community voting
    - Angle: "Public good you control"
    - Audience: Crypto community
@@ -89,16 +131,31 @@ This document summarizes everything you need to know about RealMint's grant appl
 
 ## How to Use This Package
 
-### For GitCoin Grants (START HERE)
+### For BNB Chain Builders Fund (START HERE - PRIORITY)
+
+**This is your fastest path to funding. Rolling deadline = apply now!**
+
+1. Open: **GRANT_PROPOSAL_BNB.md**
+2. Follow timeline in: **GRANT_STRATEGY_BNB.md**
+3. Prepare materials:
+   - Executive summary (copy opening from GRANT_PROPOSAL_BNB.md)
+   - Budget: **GRANT_BUDGET.csv**
+   - Testnet demo link + video
+   - Team credentials (GitHub + LinkedIn)
+4. Submit to: https://www.bnbchain.org/en/developers/developer-programs/builder-grant
+5. Expected decision: 2-4 weeks
+6. **Contact BNB team:** @BNBChainCore on Twitter + developers@bnbchain.org
+
+### For GitCoin Grants (BACKUP - Fast Turnaround)
 
 1. Open: **GITCOIN_PITCH.md**
 2. Reference: **FUNDING.md** (executive summary section)
-3. Link to: GitHub repo + Sepolia testnet
-4. Promote: Use Twitter/Discord template in **GRANT_STRATEGY.md**
+3. Link to: GitHub repo + BSC testnet contracts
+4. Promote: Use Twitter/Discord template in **GRANT_STRATEGY_BNB.md**
 5. Answer questions from: **CONTRIBUTING.md** (community asks about dev)
 6. Timeline: **2-week round** = Submit immediately
 
-### For Ethereum Foundation ESP
+### For Ethereum Foundation ESP (MONTH 2)
 
 1. Open: **ESP_PITCH.md**
 2. Reference: **FUNDING.md** (full document)
@@ -120,33 +177,52 @@ Use same approach as ESP:
 
 ## Application Checklist
 
-### Before Launching (This Week)
+### IMMEDIATE (This Week) - BNB PRIORITY
+
+- [ ] Finalize **GRANT_PROPOSAL_BNB.md** (template provided)
+- [ ] Create executive summary (1 page max, copy from proposal top)
+- [ ] Prepare demo video (3-5 min testnet walkthrough)
+- [ ] Submit to **BNB Builders Fund:** https://www.bnbchain.org/en/developers/developer-programs/builder-grant
+- [ ] Tweet announcement + @BNBChain (use template from GRANT_STRATEGY_BNB.md)
+- [ ] Email developers@bnbchain.org with link to proposal + testnet
+- [ ] Submit to **Gitcoin Grants** (faster backup)
+
+### Short Term (Week 2-3) - BNB Community Engagement
+
+- [ ] Reach out to 10-15 BNB validators + project leads (outreach template in GRANT_STRATEGY_BNB.md)
+- [ ] Request feedback calls (30 min each)
+- [ ] Document feedback + iterate on proposal
+- [ ] Monitor BNB Grants Twitter + Discord for decision status
+
+### Before Launching (If needed for Ethereum)
 
 - [x] Create FUNDING.md
 - [x] Create SECURITY.md
 - [x] Create CONTRIBUTING.md
 - [x] Create LICENSE (MIT)
-- [x] Create GRANT_STRATEGY.md
+- [x] Create GRANT_STRATEGY.md (Ethereum)
 - [x] Create ESP_PITCH.md
 - [x] Create GITCOIN_PITCH.md
 - [x] Create BUDGET_BREAKDOWN.csv
-- [ ] Make GitHub public
+- [ ] Make GitHub public (IMPORTANT for credibility)
 - [ ] Create Twitter account (@RealMintDeFi)
-- [ ] Create Discord server
-- [ ] Record 2-3 min demo video
+- [ ] Create Discord server (for community)
+- [ ] Record 2-3 min demo video (for BNB + ESP)
 - [ ] Get 5 people to review pitches
-- [ ] Prepare visual roadmap
+- [ ] Prepare visual roadmap (1-pager with milestones)
 
-### During Applications
+### During BNB Application Review (Weeks 2-4)
 
-- [ ] Submit GitCoin (Week 2)
-- [ ] Promote GitCoin (Weeks 2-3)
-- [ ] Submit ESP (Week 3)
-- [ ] Monitor feedback
-- [ ] Send progress updates
-- [ ] Submit Aave/Polygon (Week 5-6)
+- [ ] Monitor email for BNB feedback
+- [ ] Prepare technical call talking points
+- [ ] Have testnet ready for live demo
+- [ ] Gather community testimonials (validators, developers using testnet)
 
-### After Funding
+### After BNB Decision (Month 2)
+
+- [ ] If approved: Deploy to mainnet immediately
+- [ ] If rejected: Submit to BIA + Ethereum Foundation (backup strategy)
+- [ ] If approved: Send grant announcement to community
 
 - [ ] Thank all supporters publicly
 - [ ] Post spending transparency report

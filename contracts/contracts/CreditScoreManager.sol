@@ -13,9 +13,14 @@ contract CreditScoreManager {
     }
 
     mapping(address => Score) public scores;
+    
+    // ADDED: Score freshness validation to prevent stale data
+    uint256 public scoreMaxAgeSeconds = 30 days; // Default: scores older than 30 days are stale
 
     event OracleUpdated(address indexed oracle, bool allowed);
     event ScorePublished(address indexed subject, address indexed updater, bytes32 scoreHash, uint8 bucket, uint256 updatedAt);
+    // ADDED: Event for freshness threshold changes
+    event ScoreMaxAgeUpdated(uint256 newMaxAgeSeconds);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "only owner");
@@ -50,5 +55,28 @@ contract CreditScoreManager {
     function getScore(address _subject) external view returns (bytes32, uint8, uint256, address) {
         Score memory s = scores[_subject];
         return (s.scoreHash, s.bucket, s.updatedAt, s.updater);
+    }
+    
+    // ADDED: Validate score freshness before using
+    function getScoreFresh(address _subject) external view returns (bytes32, uint8, uint256, address) {
+        Score memory s = scores[_subject];
+        require(s.updatedAt > 0, "No score found");
+        // FIXED: Check score is not stale
+        require(block.timestamp - s.updatedAt <= scoreMaxAgeSeconds, "Score is stale");
+        return (s.scoreHash, s.bucket, s.updatedAt, s.updater);
+    }
+    
+    // ADDED: Admin can update max age threshold
+    function setScoreMaxAge(uint256 _maxAgeSeconds) external onlyOwner {
+        require(_maxAgeSeconds > 0, "Max age must be positive");
+        scoreMaxAgeSeconds = _maxAgeSeconds;
+        emit ScoreMaxAgeUpdated(_maxAgeSeconds);
+    }
+    
+    // ADDED: Check if score is currently valid without retrieving it
+    function isScoreFresh(address _subject) external view returns (bool) {
+        Score memory s = scores[_subject];
+        if (s.updatedAt == 0) return false;
+        return (block.timestamp - s.updatedAt <= scoreMaxAgeSeconds);
     }
 }

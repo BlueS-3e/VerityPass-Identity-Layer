@@ -3,33 +3,33 @@ import { API_BASE } from './config';
 
 function Stat({ title, value }) {
   return (
-    <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-      <div className="text-sm text-gray-300 font-medium">{title}</div>
-      <div className="text-2xl font-bold text-white mt-1">{value?.toLocaleString() || 0}</div>
+    <div className="bg-white/5 p-4 rounded-xl border border-cyan-200/20 backdrop-blur-md shadow-lg shadow-black/10">
+      <div className="text-xs uppercase tracking-wider text-gray-400 font-semibold">{title}</div>
+      <div className="text-2xl font-bold text-cyan-100 mt-1">{value?.toLocaleString() || 0}</div>
     </div>
   );
 }
 
 function FilterBar({ filters, onFilterChange, onReset }) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
+    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-6 p-4 bg-white/5 rounded-xl border border-cyan-200/20 backdrop-blur-md">
       <div className="flex flex-1 flex-col sm:flex-row gap-3">
         <input
           placeholder="Filter by issuer..."
           value={filters.issuer}
           onChange={(e) => onFilterChange('issuer', e.target.value)}
-          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-transparent"
         />
         <input
           placeholder="Filter by subject..."
           value={filters.subject}
           onChange={(e) => onFilterChange('subject', e.target.value)}
-          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-transparent"
         />
         <select
           value={filters.verified}
           onChange={(e) => onFilterChange('verified', e.target.value)}
-          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-transparent"
         >
           <option value="">All Status</option>
           <option value="true">Verified</option>
@@ -38,7 +38,7 @@ function FilterBar({ filters, onFilterChange, onReset }) {
       </div>
       <button
         onClick={onReset}
-        className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm text-white transition-colors duration-200"
+        className="px-4 py-2 bg-white/10 hover:bg-cyan-500/20 border border-white/20 rounded-lg text-sm text-white transition-colors duration-200"
       >
         Reset Filters
       </button>
@@ -56,8 +56,18 @@ function AttestationTable({
 }) {
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="space-y-2 py-2" aria-hidden="true">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="grid grid-cols-7 gap-3 p-3 rounded-lg border border-cyan-200/15 bg-white/5">
+            <div className="skeleton h-4 rounded" />
+            <div className="skeleton h-4 rounded" />
+            <div className="skeleton h-4 rounded" />
+            <div className="skeleton h-4 rounded" />
+            <div className="skeleton h-4 rounded" />
+            <div className="skeleton h-4 rounded" />
+            <div className="skeleton h-4 rounded" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -94,10 +104,11 @@ function AttestationTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5 bg-white/2">
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <tr
               key={item.id}
-              className="hover:bg-white/5 transition-colors duration-150 cursor-pointer"
+              className="hover:bg-white/5 transition-colors duration-150 cursor-pointer stagger-item"
+              style={{ animationDelay: `${Math.min(idx * 35, 280)}ms` }}
               onClick={() => onItemClick(item.id)}
             >
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -153,7 +164,7 @@ function DetailModal({ selected, loading, onClose, onExport }) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
         onClick={onClose}
       />
-      <div className="relative bg-gray-900 rounded-xl border border-white/10 shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="relative bg-gray-900 rounded-xl border border-cyan-200/20 shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-fade-in-up">
         <div className="flex justify-between items-center p-6 border-b border-white/10">
           <h4 className="text-xl font-semibold text-white">Attestation Details</h4>
           <button
@@ -167,33 +178,41 @@ function DetailModal({ selected, loading, onClose, onExport }) {
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-300"></div>
             </div>
           ) : selected.error ? (
-            <div className="text-red-400 text-center py-8">{selected.error}</div>
+            <div className="max-w-md mx-auto">
+              <div className="bg-red-500/15 border border-red-500/40 rounded-xl p-6 backdrop-blur-sm text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/20 border border-red-500/40 mb-4">
+                  <span className="text-2xl">❌</span>
+                </div>
+                <p className="text-red-300 font-medium text-sm">{selected.error}</p>
+                <p className="text-red-400/70 text-xs mt-2">Please try again or contact support</p>
+              </div>
+            </div>
           ) : (
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white/5 p-4 rounded-lg">
+                <div className="bg-white/5 p-4 rounded-lg border border-cyan-200/15">
                   <div className="text-sm text-gray-400">ID</div>
                   <div className="text-white font-mono text-sm">{selected.id}</div>
                 </div>
-                <div className="bg-white/5 p-4 rounded-lg">
+                <div className="bg-white/5 p-4 rounded-lg border border-cyan-200/15">
                   <div className="text-sm text-gray-400">Status</div>
                   <div className={selected.verified ? 'text-green-400' : 'text-yellow-400'}>
                     {selected.verified ? 'Verified' : 'Unverified'}
                   </div>
                 </div>
-                <div className="bg-white/5 p-4 rounded-lg">
+                <div className="bg-white/5 p-4 rounded-lg border border-cyan-200/15">
                   <div className="text-sm text-gray-400">Issuer</div>
                   <div className="text-white truncate">{selected.issuer}</div>
                 </div>
-                <div className="bg-white/5 p-4 rounded-lg">
+                <div className="bg-white/5 p-4 rounded-lg border border-cyan-200/15">
                   <div className="text-sm text-gray-400">Subject</div>
                   <div className="text-white truncate">{selected.subject}</div>
                 </div>
-                <div className="bg-white/5 p-4 rounded-lg">
+                <div className="bg-white/5 p-4 rounded-lg border border-cyan-200/15">
                   <div className="text-sm text-gray-400">Created</div>
                   <div className="text-white">
                     {selected.created_at
@@ -218,7 +237,7 @@ function DetailModal({ selected, loading, onClose, onExport }) {
                   <div className="space-y-3">
                     {(selected.assessments || [selected.last_assessment]).map((assessment, idx) => (
                       assessment && (
-                        <div key={idx} className="bg-white/5 p-4 rounded-lg">
+                        <div key={idx} className="bg-white/5 p-4 rounded-lg border border-cyan-200/15">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-3">
                               <span className="text-lg font-semibold text-white">
@@ -250,7 +269,7 @@ function DetailModal({ selected, loading, onClose, onExport }) {
               <div className="flex justify-end pt-4 border-t border-white/10">
                 <button
                   onClick={onExport}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium"
+                  className="px-6 py-2 bg-gradient-to-r from-amber-200 to-cyan-200 text-slate-900 rounded-lg transition-colors duration-200 font-semibold hover:from-amber-100 hover:to-cyan-100"
                 >
                   Export Attestation CSV
                 </button>
@@ -470,16 +489,16 @@ export default function LenderDashboard() {
   const totalPages = Math.ceil(total / perPage);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-4 sm:p-6">
+    <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-cyan-200/20 p-3 sm:p-6 shadow-xl shadow-cyan-500/5 animate-fade-in-up">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Lender Dashboard</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Lender Dashboard</h1>
           <p className="text-gray-400">Manage and monitor attestations</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Stat title="Total Attestations" value={summary?.total} />
           <Stat title="Verified" value={summary?.verified} />
           <Stat title="Unverified" value={summary?.unverified} />
@@ -487,13 +506,14 @@ export default function LenderDashboard() {
 
         {/* Recent Attestations */}
         {summary?.recent && summary.recent.length > 0 && (
-          <div className="mb-8 bg-white/5 rounded-xl border border-white/10 p-6">
+          <div className="mb-6 sm:mb-8 bg-white/5 rounded-xl border border-cyan-200/20 p-4 sm:p-6 animate-fade-in-up">
             <h3 className="text-lg font-semibold text-white mb-4">Recent Attestations</h3>
             <div className="space-y-3">
-              {summary.recent.map((recent) => (
+              {summary.recent.map((recent, idx) => (
                 <div
                   key={recent.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors duration-200"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/5 rounded-lg border border-cyan-200/20 hover:bg-cyan-500/10 transition-colors duration-200 stagger-item"
+                  style={{ animationDelay: `${Math.min(idx * 55, 300)}ms` }}
                 >
                   <div className="flex-1">
                     <div className="text-white font-medium mb-1">
@@ -515,7 +535,7 @@ export default function LenderDashboard() {
         )}
 
         {/* Main Content */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+        <div className="bg-white/5 rounded-xl border border-cyan-200/20 p-4 sm:p-6 animate-fade-in-up">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
             <h3 className="text-xl font-semibold text-white mb-4 lg:mb-0">
               All Attestations {total > 0 && `(${total.toLocaleString()})`}
@@ -524,13 +544,13 @@ export default function LenderDashboard() {
               <button
                 onClick={exportSelected}
                 disabled={selectedIds.length === 0}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 font-medium"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 font-medium"
               >
                 Export Selected ({selectedIds.length})
               </button>
               <button
                 onClick={() => exportData('/api/admin/attestations/export', 'attestations.csv')}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium"
+                className="px-4 py-2 bg-gradient-to-r from-amber-200 to-cyan-200 text-slate-900 rounded-lg transition-colors duration-200 font-semibold hover:from-amber-100 hover:to-cyan-100"
               >
                 Export All CSV
               </button>
@@ -564,14 +584,14 @@ export default function LenderDashboard() {
                 <button
                   onClick={() => fetchPage(Math.max(1, page - 1))}
                   disabled={page <= 1}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
+                  className="px-4 py-2 bg-white/10 hover:bg-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => fetchPage(page + 1)}
                   disabled={page >= totalPages}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
+                  className="px-4 py-2 bg-white/10 hover:bg-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
                 >
                   Next
                 </button>

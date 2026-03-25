@@ -39,21 +39,23 @@ function loadPlaidScript() {
 
 function StatusMessage({ type, children }) {
   const statusColors = {
-    success: 'bg-green-500/10 border-green-500/30 text-green-300',
-    error: 'bg-red-500/10 border-red-500/30 text-red-300',
-    warning: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-300',
-    info: 'bg-blue-500/10 border-blue-500/30 text-blue-300'
+    success: 'bg-green-500/15 border-green-500/40 text-green-300 shadow-lg shadow-green-500/10',
+    error: 'bg-red-500/15 border-red-500/40 text-red-300 shadow-lg shadow-red-500/10',
+    warning: 'bg-yellow-500/15 border-yellow-500/40 text-yellow-300 shadow-lg shadow-yellow-500/10',
+    info: 'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-lg shadow-blue-500/10'
+  };
+
+  const icons = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
   };
 
   return (
-    <div className={`p-3 rounded-xl border ${statusColors[type]} flex items-center gap-3`}>
-      <span className="text-lg">
-        {type === 'success' && '✅'}
-        {type === 'error' && '❌'}
-        {type === 'warning' && '⚠️'}
-        {type === 'info' && 'ℹ️'}
-      </span>
-      <div className="text-sm font-medium">{children}</div>
+    <div className={`p-4 rounded-xl border backdrop-blur-sm flex items-center gap-3 transition-all duration-200 ${statusColors[type] || statusColors.info}`}>
+      <span className="text-xl flex-shrink-0 animate-pulse">{icons[type]}</span>
+      <div className="text-sm font-medium flex-1">{children}</div>
     </div>
   );
 }

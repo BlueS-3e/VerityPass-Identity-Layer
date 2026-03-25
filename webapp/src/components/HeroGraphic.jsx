@@ -36,52 +36,58 @@ export default function HeroGraphic({ className = '', compactOnMobile = true }) 
   }, [collapsed]);
 
   return (
-  <div className={`pointer-events-none absolute inset-0 overflow-hidden -z-10 ${collapsed ? 'hero--collapsed' : ''} ${className}`} aria-hidden="true" role="img">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-600 via-sky-500 to-teal-700 opacity-60 animate-gradient-x" />
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden -z-10 ${collapsed ? 'hero--collapsed' : ''} ${className}`} aria-hidden="true" role="img">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950 via-zinc-900 to-amber-950 opacity-90" />
 
       <div className="absolute inset-0 pointer-events-none hero-vignette" aria-hidden="true" />
 
-  {/* decorative cloud blobs */}
-  <svg className="absolute -top-12 left-1/4 w-96 h-48 opacity-18 hidden md:block transform-gpu hero-cloud" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+      <svg className="absolute -top-10 right-8 w-[30rem] h-[18rem] opacity-35 hidden md:block" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
         <defs>
-          <linearGradient id="cloudG" x1="0%" x2="100%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#bbf7d0" stopOpacity="0.6" />
+          <linearGradient id="loanCard" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#fde68a" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.8" />
+          </linearGradient>
+          <linearGradient id="ledger" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#60a5fa" />
+            <stop offset="100%" stopColor="#34d399" />
           </linearGradient>
         </defs>
-        <g>
-          <ellipse cx="200" cy="80" rx="180" ry="60" fill="url(#cloudG)" />
-          <ellipse cx="420" cy="60" rx="140" ry="45" fill="url(#cloudG)" />
-        </g>
+
+        <rect x="180" y="58" width="320" height="210" rx="18" fill="url(#loanCard)" />
+        <rect x="205" y="92" width="160" height="14" rx="7" fill="#1f2937" fillOpacity="0.35" />
+        <rect x="205" y="118" width="220" height="10" rx="5" fill="#1f2937" fillOpacity="0.25" />
+        <rect x="205" y="136" width="180" height="10" rx="5" fill="#1f2937" fillOpacity="0.2" />
+        <rect x="205" y="176" width="55" height="62" rx="8" fill="#1f2937" fillOpacity="0.2" />
+        <rect x="270" y="162" width="55" height="76" rx="8" fill="#1f2937" fillOpacity="0.3" />
+        <rect x="335" y="146" width="55" height="92" rx="8" fill="#1f2937" fillOpacity="0.42" />
+        <path d="M410 226 C440 200 456 198 482 176" stroke="url(#ledger)" strokeWidth="5" strokeLinecap="round" fill="none" />
+        <circle cx="482" cy="176" r="8" fill="#34d399" />
       </svg>
 
-  {/* subtle floating dots — decorative only */}
+      <svg className="absolute left-10 bottom-10 w-[26rem] h-[18rem] opacity-30 hidden md:block" viewBox="0 0 640 420" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+        <defs>
+          <linearGradient id="bankFace" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#e5e7eb" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#9ca3af" stopOpacity="0.65" />
+          </linearGradient>
+        </defs>
+        <polygon points="120,110 320,40 520,110" fill="#fbbf24" fillOpacity="0.7" />
+        <rect x="130" y="110" width="380" height="30" rx="4" fill="#f3f4f6" fillOpacity="0.8" />
+        <rect x="150" y="140" width="340" height="170" rx="8" fill="url(#bankFace)" />
+        <rect x="200" y="170" width="34" height="110" rx="6" fill="#374151" fillOpacity="0.75" />
+        <rect x="250" y="170" width="34" height="110" rx="6" fill="#374151" fillOpacity="0.75" />
+        <rect x="300" y="170" width="34" height="110" rx="6" fill="#374151" fillOpacity="0.75" />
+        <rect x="350" y="170" width="34" height="110" rx="6" fill="#374151" fillOpacity="0.75" />
+        <rect x="400" y="170" width="34" height="110" rx="6" fill="#374151" fillOpacity="0.75" />
+        <rect x="120" y="320" width="400" height="18" rx="4" fill="#fbbf24" fillOpacity="0.65" />
+      </svg>
+
       <div className="floating-dots" aria-hidden="true">
         <span className="floating-dot dot-1" />
         <span className="floating-dot dot-2" />
         <span className="floating-dot dot-3" />
         <span className="floating-dot dot-4" />
         <span className="floating-dot dot-5" />
-        <span className="floating-dot dot-6" />
-        <span className="floating-dot dot-7" />
-        <span className="floating-dot dot-8" />
-      </div>
-
-  {/* animated waves at the bottom */}
-  <div className="absolute bottom-0 left-0 w-full overflow-hidden pointer-events-none h-32 sm:h-40 md:h-48 wave-container">
-        <svg className="block w-[200%] h-full wave wave--one" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
-          <defs>
-            <linearGradient id="seaG" x1="0%" x2="100%">
-              <stop offset="0%" stopColor="#0ea5a4" />
-              <stop offset="100%" stopColor="#0369a1" />
-            </linearGradient>
-          </defs>
-          <path fill="url(#seaG)" fillOpacity="0.95" d="M0,160 C360,200 720,120 1440,160 L1440,320 L0,320 Z" />
-        </svg>
-
-        <svg className="block w-[200%] h-full wave wave--two opacity-80" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice" role="presentation" aria-hidden="true">
-          <path fill="#0369a1" fillOpacity="0.6" d="M0,140 C360,100 720,220 1440,140 L1440,320 L0,320 Z" />
-        </svg>
       </div>
     </div>
   );

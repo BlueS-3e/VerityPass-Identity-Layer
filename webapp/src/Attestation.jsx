@@ -105,6 +105,7 @@ export default function Attestation() {
   const [analyzingCredit, setAnalyzingCredit] = useState(false);
   const [bankDataSource, setBankDataSource] = useState('unknown');
   const [identityBound, setIdentityBound] = useState(false);
+  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
 
   // Detect available wallets
   useEffect(() => {
@@ -300,11 +301,11 @@ export default function Attestation() {
               if (!jb.bound) {
                 console.warn('Autostart suppressed: draft is anonymous and session not bound');
               } else {
-                await connectWallet();
+                await connectWallet({ silent: true });
                 setTimeout(() => handleSignAndPin(), 400);
               }
             } else {
-              await connectWallet();
+              await connectWallet({ silent: true });
               setTimeout(() => handleSignAndPin(), 400);
             }
           } catch (e) {
@@ -319,7 +320,7 @@ export default function Attestation() {
     fetchDraft();
   }, [selectedWallet]);
 
-  const connectWallet = async () => {
+  const connectWallet = async ({ silent = false } = {}) => {
     if (!selectedWallet) {
       console.warn('connectWallet called without selectedWallet');
       return null;
@@ -340,7 +341,9 @@ export default function Attestation() {
       } catch (e) {}
       
       if (!selectedWallet.provider) {
-        addToast('Selected wallet has no provider. Please reconnect on the Connect page.', { type: 'error' });
+        if (!silent) {
+          addToast('Selected wallet has no provider. Please reconnect on the Connect page.', { type: 'error' });
+        }
         return null;
       }
     }
@@ -357,17 +360,21 @@ export default function Attestation() {
         try {
           await switchNetwork(selectedWallet.provider, expectedChain.chainId);
           networkSwitched = true;
-          addToast(`✅ Switched to ${expectedChain.name}`, { type: 'success' });
+          if (!silent) {
+            addToast(`✅ Switched to ${expectedChain.name}`, { type: 'success' });
+          }
         } catch (switchError) {
           console.warn('Network switch failed:', switchError);
           const errorMsg = switchError?.message || String(switchError);
           
           // Check if it's a Phantom limitation
           if (errorMsg.includes('Phantom') || errorMsg.includes('limited EVM')) {
-            addToast(
-              `❌ ${selectedWallet.name} doesn't support this network. Please use MetaMask, Coinbase Wallet, or another EVM wallet.`,
-              { type: 'error' }
-            );
+            if (!silent) {
+              addToast(
+                `❌ ${selectedWallet.name} doesn't support this network. Please use MetaMask, Coinbase Wallet, or another EVM wallet.`,
+                { type: 'error' }
+              );
+            }
             return null;
           }
           
@@ -376,15 +383,19 @@ export default function Attestation() {
           
           // Provide helpful error message based on wallet capabilities
           if (errorMsg.includes('does not support') || errorMsg.includes('not connected')) {
-            addToast(
-              `⚠️ ${selectedWallet.name} is connected to ${wrongNetworkName}. Please switch to ${expectedChain.name} manually in your wallet.`,
-              { type: 'warning' }
-            );
+            if (!silent) {
+              addToast(
+                `⚠️ ${selectedWallet.name} is connected to ${wrongNetworkName}. Please switch to ${expectedChain.name} manually in your wallet.`,
+                { type: 'warning' }
+              );
+            }
           } else {
-            addToast(
-              `⚠️ Please switch to ${expectedChain.name} in your wallet to continue.`,
-              { type: 'warning' }
-            );
+            if (!silent) {
+              addToast(
+                `⚠️ Please switch to ${expectedChain.name} in your wallet to continue.`,
+                { type: 'warning' }
+              );
+            }
           }
           
           // Still set account/network so user can manually switch
@@ -402,17 +413,21 @@ export default function Attestation() {
       
       // Only show success if on correct network or successfully switched
       if (!expectedChain || connection.chainId === expectedChain.chainId || networkSwitched) {
-        addToast('🎉 Wallet connected successfully', { type: 'success' });
+        if (!silent) {
+          addToast('🎉 Wallet connected successfully', { type: 'success' });
+        }
       }
 
       return connection.accounts[0];
     } catch (error) {
       console.error('Wallet connection failed:', error);
       const errorMsg = error?.message || String(error);
-      if (/user rejected/i.test(errorMsg) || /user denied/i.test(errorMsg)) {
-        addToast('❌ Connection cancelled by user', { type: 'info' });
-      } else {
-        addToast(`❌ ${errorMsg}`, { type: 'error' });
+      if (!silent) {
+        if (/user rejected/i.test(errorMsg) || /user denied/i.test(errorMsg)) {
+          addToast('❌ Connection cancelled by user', { type: 'info' });
+        } else {
+          addToast(`❌ ${errorMsg}`, { type: 'error' });
+        }
       }
       return null;
     }
@@ -429,7 +444,7 @@ export default function Attestation() {
     sessionStorage.removeItem('realmint:auto_connect');
     
     console.debug('[Session] Auto-connecting wallet from session...');
-    connectWallet();
+    connectWallet({ silent: true });
   }, [selectedWallet]);
 
   useEffect(() => {
@@ -729,10 +744,10 @@ export default function Attestation() {
   const expectedName = expectedCfg.name || `Chain ${DEFAULT_CHAIN_ID}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-amber-950 to-zinc-900 page-shell sm:py-8 lg:py-10">
       {/* Background Elements */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-r from-teal-400/10 to-blue-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-yellow-500/20 to-amber-600/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-r from-orange-400/10 to-yellow-500/10 rounded-full blur-3xl" />
 
       <div className="relative max-w-6xl mx-auto">
         <NetworkBanner 
@@ -742,7 +757,18 @@ export default function Attestation() {
           provider={selectedWallet?.provider} 
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-8">
+        {(network === 56 || network === 97 || DEFAULT_CHAIN_ID === 56 || DEFAULT_CHAIN_ID === 97) && (
+          <div className="mt-4 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30 reveal">
+            <div className="flex items-center gap-2">
+              <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-5 h-5" />
+              <span className="text-sm text-yellow-200">
+                Built for BNB Chain: lower transaction fees and faster attestation settlement.
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 mt-8 reveal reveal-delay-1">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-8">
             {/* Header */}
@@ -750,10 +776,10 @@ export default function Attestation() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-4xl font-bold text-white mb-2">
-                    📝 Create Attestation
+                    Borrower Attestation Workspace
                   </h1>
                   <p className="text-gray-300 text-lg">
-                    Sign verifiable claims, pin to IPFS, and optionally publish on-chain
+                    Sign verifiable claims, pin to IPFS, and publish on BNB Chain
                   </p>
                 </div>
                 <div className="hidden lg:block">
@@ -792,7 +818,7 @@ export default function Attestation() {
               <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <div className="flex items-center gap-2 text-blue-200 text-sm">
                   <span>💡</span>
-                  <span>Wallet connected from previous step. Ready to sign!</span>
+                  <span>Wallet session is active. You can proceed with underwriting attestations.</span>
                 </div>
               </div>
             </div>
@@ -810,9 +836,9 @@ export default function Attestation() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl mt-1">💡</span>
                     <div>
-                      <div className="font-semibold text-blue-200 mb-2">No bank data linked yet?</div>
+                      <div className="font-semibold text-blue-200 mb-2">No account signal linked yet?</div>
                       <div className="text-blue-100 text-sm mb-3">
-                        Go back to ConnectPlaid to link your bank account. Your data will automatically appear here.
+                        Go back to ConnectPlaid to link bank data. Verified signals will auto-populate this underwriting form.
                       </div>
                       <a 
                         href="/connect"
@@ -825,6 +851,27 @@ export default function Attestation() {
                 </div>
               )}
 
+              {draftInfo && (
+                <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-emerald-200 font-semibold mb-1">Draft loaded from bank-linked flow</div>
+                      <div className="text-emerald-100 text-sm">
+                        Schema and CID were prefilled to keep this step fast. Use advanced editor only if you need overrides.
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedFields(v => !v)}
+                      className="px-3 py-2 text-xs font-semibold rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                    >
+                      {showAdvancedFields ? 'Hide advanced editor' : 'Edit advanced fields'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {(!draftInfo || showAdvancedFields) && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Only show schema if it's NOT from a draft, or if user wants to override */}
                 {!draftInfo?.schema_hash && (
@@ -931,7 +978,26 @@ export default function Attestation() {
                     </div>
                   )}
                 </div>
+
               </div>
+              )}
+
+                {draftInfo && !showAdvancedFields && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                      <div className="text-xs text-gray-400 mb-1">Schema</div>
+                      <div className="text-sm text-white font-mono break-all">{draftInfo.schema_hash || schema}</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                      <div className="text-xs text-gray-400 mb-1">Valid Until</div>
+                      <div className="text-sm text-white">{new Date(expiresAt * 1000).toLocaleString()}</div>
+                    </div>
+                    <div className="lg:col-span-2 p-4 rounded-xl bg-white/5 border border-white/10">
+                      <div className="text-xs text-gray-400 mb-1">Data CID</div>
+                      <div className="text-sm text-white font-mono break-all">{draftInfo.data_cid || dataCID}</div>
+                    </div>
+                  </div>
+                )}
 
               {/* Action Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
@@ -989,7 +1055,7 @@ export default function Attestation() {
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <span>💳</span>
-                Credit Assessment
+                Lending Assessment
               </h2>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1021,7 +1087,7 @@ export default function Attestation() {
 
                   {eligibleLoans.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">🚀 Eligible Loan Offers</h3>
+                      <h3 className="text-lg font-semibold text-white mb-4">Eligible Loan Offers</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {eligibleLoans.map(loan => (
                           <LoanCard key={loan.id} loan={loan} onBorrow={takeLoan} />
@@ -1034,20 +1100,20 @@ export default function Attestation() {
                 <div className="space-y-4">
                   <FeatureCard
                     icon="🔍"
-                    title="Instant Analysis"
-                    description="Get your credit score and loan eligibility in seconds"
+                    title="Risk Analysis"
+                    description="Generate score, confidence, and offer tiers from verified signals"
                     gradient="from-blue-500/10 to-cyan-500/10"
                   />
                   <FeatureCard
                     icon="🛡️"
-                    title="Secure & Private"
-                    description="Your data remains encrypted and private"
+                    title="Policy Aligned"
+                    description="Attestations are traceable for governance and compliance checks"
                     gradient="from-green-500/10 to-emerald-500/10"
                   />
                   <FeatureCard
                     icon="⚡"
-                    title="Fast Funding"
-                    description="Get approved and funded within 24 hours"
+                    title="Fast Settlement"
+                    description="Publish outcomes with low-fee BNB Chain confirmations"
                     gradient="from-purple-500/10 to-pink-500/10"
                   />
                 </div>
@@ -1090,6 +1156,21 @@ export default function Attestation() {
                   </div>
                 </div>
               )}
+
+              {pin && (
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                  <div className="text-sm text-yellow-200 font-semibold mb-1">BNB Credit Score Ready</div>
+                  <div className="text-xs text-yellow-100 mb-3">
+                    Your attestation is pinned. Credit scoring signals are now ready for evaluation.
+                  </div>
+                  <button
+                    onClick={analyzeCreditworthiness}
+                    className="w-full px-3 py-2 bg-yellow-500 text-black rounded-lg text-sm font-medium hover:bg-yellow-400 transition-colors"
+                  >
+                    Analyze Score
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* On-chain Actions */}
@@ -1099,26 +1180,31 @@ export default function Attestation() {
                   <span>⛓️</span>
                   On-chain Actions
                 </h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-2">Contract Address</label>
-                    <input 
-                      value={contractAddress || ''} 
-                      onChange={e => setContractAddress(e.target.value)} 
-                      placeholder="0x..." 
-                      className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
-                    />
+
+                <details className="group">
+                  <summary className="cursor-pointer text-sm text-gray-300 hover:text-white transition-colors">
+                    Developer publish controls
+                  </summary>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <label className="block text-sm text-gray-300 mb-2">Contract Address</label>
+                      <input 
+                        value={contractAddress || ''} 
+                        onChange={e => setContractAddress(e.target.value)} 
+                        placeholder="0x..." 
+                        className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
+                      />
+                    </div>
+                    
+                    <button 
+                      onClick={handleSubmitOnChain}
+                      disabled={!contractAddress}
+                      className="w-full p-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-medium disabled:opacity-50 hover:shadow-lg transition-all"
+                    >
+                      🚀 Submit On-chain
+                    </button>
                   </div>
-                  
-                  <button 
-                    onClick={handleSubmitOnChain}
-                    disabled={!contractAddress}
-                    className="w-full p-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-medium disabled:opacity-50 hover:shadow-lg transition-all"
-                  >
-                    🚀 Submit On-chain
-                  </button>
-                </div>
+                </details>
               </div>
             )}
 

@@ -1,21 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import PlaidLink from './components/PlaidLink';
+import WalletPicker from './components/WalletPicker';
 import { getSignerAddress } from './utils/web3';
 import PrimaryCTA from './components/PrimaryCTA';
-import { createWalletConnectSession, initWeb3Modal } from './utils/providerDetect'; // Added initWeb3Modal
 import { useToast } from './components/Toast';
+import { useWalletConnection } from './hooks/useWalletConnection';
 import { NETWORK_CONFIG, DEFAULT_CHAIN_ID } from './config';
-import { 
-  listAvailableProviders, 
-  selectBestProvider, 
-  connectWallet as modernConnectWallet,
-  switchNetwork,
-  setupProviderListeners,
-  preloadWalletConnect,
-  // Ensure these are imported:
-  persistPreferredProvider, 
-  loadPreferredProvider
-} from './utils/providerDetect';
+import { setupProviderListeners } from './utils/providerDetect';
 import apiClient from './utils/apiClient';
 import {
   TX_STATE,
@@ -27,11 +18,10 @@ import {
   clearSigningState
 } from './utils/txStateManager';
 import {
-  saveWalletSession,
-  getWalletSession,
   clearWalletSession,
   extendWalletSession
 } from './utils/walletSessionManager';
+import { isMobileDevice } from './utils/deviceDetect';
 
 function StepIndicator({ currentStep, steps }) {
   return (
@@ -40,14 +30,14 @@ function StepIndicator({ currentStep, steps }) {
         <React.Fragment key={step}>
           <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
             index <= currentStep 
-              ? 'bg-indigo-500 border-indigo-500 text-white' 
+              ? 'bg-amber-500 border-amber-500 text-black' 
               : 'bg-white/5 border-white/20 text-gray-400'
           }`}>
             {index < currentStep ? '✓' : index + 1}
           </div>
           {index < steps.length - 1 && (
             <div className={`w-12 h-0.5 mx-2 ${
-              index < currentStep ? 'bg-indigo-500' : 'bg-white/20'
+              index < currentStep ? 'bg-amber-500' : 'bg-white/20'
             }`} />
           )}
         </React.Fragment>
@@ -69,77 +59,54 @@ function FeatureCard({ icon, title, description }) {
 }
 
 export default function ConnectPlaid() {
-  const [owner, setOwner] = useState(null);
   const [loadingAddr, setLoadingAddr] = useState(true);
   const [identityBound, setIdentityBound] = useState(false);
   const [attestationStatus, setAttestationStatus] = useState(null);
   const [allowAnonFlow, setAllowAnonFlow] = useState(false);
-  const [availableWallets, setAvailableWallets] = useState([]);
-  const [selectedWallet, setSelectedWallet] = useState(null);
-  const [connecting, setConnecting] = useState(false);
   const [signing, setSigning] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const { addToast } = useToast();
+  
+  // Use modern wallet connection hook
+  const {
+    wallets,
+    selectedWallet,
+    address: owner,
+    connecting,
+    error: walletError,
+    initializeWallets,
+    selectWallet,
+    connect: doConnectWallet,
+    disconnect: disconnectWallet,
+    clearError: clearWalletError
+  } = useWalletConnection();
 
   const steps = ['Connect Wallet', 'Verify Identity', 'Link Bank'];
-  const walletConnectRef = useRef(false); // Track if WalletConnect is being used
 
-  // Initialize Web3Modal on component mount
-  useEffect(() => {
-    // WalletConnect Project ID from Vite env
-    const walletConnectProjectId = (import.meta?.env?.VITE_WALLETCONNECT_PROJECT_ID) || 'YOUR_PROJECT_ID_HERE';
-    
-    if (walletConnectProjectId && walletConnectProjectId !== 'YOUR_PROJECT_ID_HERE') {
-      initWeb3Modal(walletConnectProjectId).catch(console.error);
-    }
-  }, []);
+  // Format and display wallets with priority
+  const displayWallets = useMemo(() => {
+    if (!wallets || !Array.isArray(wallets)) return [];
+    const priority = ['MetaMask', 'Coinbase Wallet', 'Rabby Wallet', 'Brave Wallet', 'OKX Wallet'];
+    const wc = wallets.find(w => w?.id === 'walletconnect');
+    const injectedWallets = wallets.filter(w => w?.id !== 'walletconnect' && w?.provider);
+    const prioritized = priority
+      .map(name => injectedWallets.find(w => w?.name === name))
+      .filter(Boolean);
+    const result = [];
+    if (wc) result.push(wc);
+    result.push(...prioritized.slice(0, 3));
+    return result.length ? result : wallets;
+  }, [wallets]);
 
-  // Modern wallet detection
-  useEffect(() => {
-    const wallets = listAvailableProviders();
-    setAvailableWallets(wallets);
-    
-    // Try to restore previously persisted selection
-    try {
-      const persisted = loadPreferredProvider();
-      if (persisted) {
-        const found = wallets.find(w => w.id === persisted.id || w.name === persisted.name);
-        if (found) {
-          setSelectedWallet(found);
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to load preferred provider:', e);
-    }
-
-    if (wallets.length > 0) {
-      selectBestProvider().then(wallet => {
-        setSelectedWallet(wallet);
-      });
-    }
-  }, []);
-
+  // Handle wallet selection
   const handleSelectWallet = (wallet) => {
-    setSelectedWallet(wallet);
-    try { 
-      persistPreferredProvider(wallet); 
-    } catch (e) {
-      console.warn('Failed to persist provider:', e);
-    }
-    
-    // Pre-load WalletConnect code when user selects it to improve latency
-    if (wallet?.id === 'walletconnect') {
-      try { 
-        preloadWalletConnect(); 
-        walletConnectRef.current = true;
-      } catch (e) {
-        console.warn('Failed to preload WalletConnect:', e);
-      }
-    } else {
-      walletConnectRef.current = false;
-    }
+    selectWallet(wallet);
   };
+
+  // Initialize wallets on mount
+  useEffect(() => {
+    initializeWallets();
+  }, [initializeWallets]);
 
   // Load signer address and setup wallet listeners
   useEffect(() => {
@@ -148,13 +115,11 @@ export default function ConnectPlaid() {
 
     const loadAddress = async () => {
       try {
-        const address = await getSignerAddress();
-        if (mounted) setOwner(address);
-        if (address) setCurrentStep(1);
+        // Address comes from the hook now, not from getSignerAddress
+        // Just mark address as loaded
+        setLoadingAddr(false);
       } catch (e) {
-        if (mounted) setOwner(null);
-      } finally {
-        if (mounted) setLoadingAddr(false);
+        setLoadingAddr(false);
       }
     };
 
@@ -165,15 +130,15 @@ export default function ConnectPlaid() {
     if (selectedWallet?.provider && selectedWallet.id !== 'walletconnect') {
       cleanup = setupProviderListeners(selectedWallet.provider, {
         onAccountsChanged: (accounts) => {
-          setOwner(accounts[0] || null);
           if (!accounts[0]) {
+            disconnectWallet();
             addToast('🔌 Wallet disconnected', { type: 'warning' });
             setIdentityBound(false);
             setCurrentStep(0);
           }
         },
         onDisconnect: () => {
-          setOwner(null);
+          disconnectWallet();
           setIdentityBound(false);
           setCurrentStep(0);
           addToast('🔌 Wallet disconnected', { type: 'warning' });
@@ -185,7 +150,7 @@ export default function ConnectPlaid() {
       mounted = false;
       if (cleanup) cleanup();
     };
-  }, [selectedWallet, addToast]);
+  }, [selectedWallet, disconnectWallet, addToast]);
 
   // Check identity binding status
   useEffect(() => {
@@ -213,148 +178,25 @@ export default function ConnectPlaid() {
   }, [owner]);
 
   const connectWallet = async () => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    if (isMobile) {
-      setConnecting(true);
-      walletConnectRef.current = true;
-      try {
-        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID);
-        if (!result) throw new Error('WalletConnect session returned no result');
-        const { provider, address, chainId } = result;
-        setOwner(address);
-        setSelectedWallet(prev => ({ ...(prev || {}), provider, id: 'walletconnect', name: 'WalletConnect' }));
-        setCurrentStep(1);
-        saveWalletSession({ id: 'walletconnect', name: 'WalletConnect', provider }, address, chainId || DEFAULT_CHAIN_ID);
-        addToast('🎉 Wallet connected successfully', { type: 'success' });
-      } catch (e) {
-        console.error('WalletConnect session failed:', e);
-        addToast(e.message?.includes('timeout') ? '⏰ Connection timeout - please try again' : `❌ ${e.message || 'WalletConnect connection failed'}`, { type: 'error' });
-        walletConnectRef.current = false;
-      } finally {
-        setConnecting(false);
-      }
-      return;
-    }
-
     if (!selectedWallet) {
       addToast('👛 Please select a wallet first', { type: 'error' });
       return;
     }
-    
-    // WalletConnect: handle first regardless of provider presence
-    if (selectedWallet.id === 'walletconnect') {
-      setConnecting(true);
-      walletConnectRef.current = true;
-      
-      try {
-        // Web3Modal v2 opens its own modal and handles the connection flow
-        console.log('Starting WalletConnect session...');
-        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID); // Pass the chain ID
-        
-        if (!result) {
-          throw new Error('WalletConnect session returned no result');
-        }
-        
-        // result from Web3Modal v2 is { provider, address, chainId }
-        const { provider, address, chainId } = result;
-        
-        console.log('WalletConnect connected:', { address, chainId });
-        
-        setOwner(address);
-        setSelectedWallet(prev => ({ 
-          ...(prev || {}), 
-          provider,
-          id: 'walletconnect',
-          name: 'WalletConnect'
-        }));
-        setCurrentStep(1);
-        
-        // Save wallet session for Attestation page
-        saveWalletSession({
-          id: 'walletconnect',
-          name: 'WalletConnect',
-          provider
-        }, address, chainId || DEFAULT_CHAIN_ID);
-        
-        addToast('🎉 Wallet connected successfully', { type: 'success' });
-        
-      } catch (e) {
-        console.error('WalletConnect session failed:', e);
-        addToast(
-          e.message.includes('timeout') 
-            ? '⏰ Connection timeout - please try again' 
-            : `❌ ${e.message || 'WalletConnect connection failed'}`,
-          { type: 'error' }
-        );
-        walletConnectRef.current = false;
-      } finally {
-        setConnecting(false);
-      }
-      return;
-    }
 
-    // If selected wallet doesn't expose a provider (e.g., SDK/install-only), handle gracefully
-    if (!selectedWallet.provider) {
-      addToast('🔍 Selected wallet has no direct provider. Please choose a different wallet or use WalletConnect.', { type: 'error' });
-      return;
-    }
+    clearWalletError();
+    const result = await doConnectWallet(selectedWallet, { 
+      fetchBalance: false,
+      autoSwitchNetwork: true 
+    });
 
-    setConnecting(true);
-    walletConnectRef.current = false;
-    
-    try {
-      const connection = await modernConnectWallet(selectedWallet.provider);
-      
-      if (!connection || !connection.accounts || connection.accounts.length === 0) {
-        throw new Error('Connection failed: no accounts returned');
-      }
-      
-      const expectedChain = NETWORK_CONFIG[DEFAULT_CHAIN_ID];
-      let networkSwitched = false;
-      
-      if (expectedChain && connection.chainId !== expectedChain.chainId) {
-        try {
-          await switchNetwork(selectedWallet.provider, expectedChain.chainId);
-          networkSwitched = true;
-          addToast(`✅ Switched to ${expectedChain.name}`, { type: 'success' });
-        } catch (switchError) {
-          console.warn('Network switch failed:', switchError);
-          const wrongNetwork = NETWORK_CONFIG[connection.chainId];
-          const wrongNetworkName = wrongNetwork?.name || `Chain ${connection.chainId}`;
-          addToast(
-            `⚠️ Connected to ${wrongNetworkName}. Please switch to ${expectedChain.name} manually in your wallet.`,
-            { type: 'warning' }
-          );
-          setOwner(connection.accounts[0]);
-          
-          // Save wallet session even if network switch failed
-          saveWalletSession(selectedWallet, connection.accounts[0], connection.chainId);
-          
-          setCurrentStep(1);
-          return;
-        }
-      }
-      
-      setOwner(connection.accounts[0]);
+    if (result?.address) {
+      addToast('🎉 Wallet connected successfully', { type: 'success' });
       setCurrentStep(1);
-      
-      // Save wallet session for Attestation page
-      saveWalletSession(selectedWallet, connection.accounts[0], expectedChain?.chainId || connection.chainId);
-      
-      // Only show success if on correct network or successfully switched
-      if (!expectedChain || connection.chainId === expectedChain.chainId || networkSwitched) {
-        addToast('🎉 Wallet connected successfully', { type: 'success' });
-      }
-    } catch (error) {
-      console.error('Wallet connection failed:', error);
-      addToast(
-        error.message?.includes('rejected') 
-          ? '❌ Connection rejected by user' 
-          : `❌ ${error?.message || 'Wallet connection failed'}`,
-        { type: 'error' }
-      );
-    } finally {
-      setConnecting(false);
+      extendWalletSession();
+    } else {
+      // If connection failed, show the error from the hook
+      const errorMsg = walletError || 'Failed to connect wallet';
+      addToast(`❌ ${errorMsg}`, { type: 'error' });
     }
   };
 
@@ -381,25 +223,11 @@ export default function ConnectPlaid() {
       const nonce = nonceData?.nonce;
       if (!nonce) throw new Error('Invalid nonce received');
 
-      // For WalletConnect, we need to get the signer differently
-      let signature;
-      
-      if (selectedWallet.id === 'walletconnect' && walletConnectRef.current) {
-        // WalletConnect specific signing
-        const result = await createWalletConnectSession(DEFAULT_CHAIN_ID);
-        if (result.provider) {
-          signature = await result.provider.request({
-            method: 'personal_sign',
-            params: [nonce, owner]
-          });
-        }
-      } else {
-        // Standard provider signing
-        signature = await selectedWallet.provider.request({
-          method: 'personal_sign',
-          params: [nonce, owner]
-        });
-      }
+      // Use the selected wallet's provider to sign
+      const signature = await selectedWallet.provider.request({
+        method: 'personal_sign',
+        params: [nonce, owner]
+      });
 
       if (!signature) {
         throw new Error('Failed to get signature');
@@ -505,30 +333,32 @@ export default function ConnectPlaid() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-zinc-900 to-amber-950 page-shell sm:py-8 lg:py-10">
       {/* Background Elements */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-l from-green-500/10 to-teal-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-yellow-500/20 to-amber-600/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-l from-cyan-500/10 to-emerald-500/10 rounded-full blur-3xl" />
 
       <div className="relative max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl mb-6 shadow-2xl">
-            <span className="text-3xl">🔗</span>
+        <div className="text-center mb-8 reveal">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-3xl mb-6 shadow-2xl">
+            <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-9 h-9" />
           </div>
           
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-            Connect Bank Account
+            Connect Banking Identity
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Securely link your bank to verify income and unlock financial opportunities
+            Link bank-grade data to power realistic credit evaluation and lending decisions on BNB Chain.
           </p>
         </div>
 
         {/* Step Indicator */}
-        <StepIndicator currentStep={currentStep} steps={steps} />
+        <div className="reveal reveal-delay-1">
+          <StepIndicator currentStep={currentStep} steps={steps} />
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 reveal reveal-delay-2">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Wallet Connection */}
@@ -541,13 +371,13 @@ export default function ConnectPlaid() {
               </div>
 
               <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                {availableWallets.map((wallet) => (
+                {displayWallets.map((wallet) => (
                   <button
                     key={wallet.id}
                     onClick={() => handleSelectWallet(wallet)}
                     className={`p-4 rounded-xl border transition-all ${
                       selectedWallet?.id === wallet.id
-                        ? 'bg-indigo-500/20 border-indigo-400 text-white shadow-lg'
+                        ? 'bg-amber-500/20 border-amber-400 text-white shadow-lg'
                         : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20'
                     }`}
                     disabled={connecting && selectedWallet?.id === wallet.id}
@@ -585,6 +415,18 @@ export default function ConnectPlaid() {
               </div>
               
 
+              {walletError && (
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl flex-shrink-0">⚠️</span>
+                    <div>
+                      <div className="text-white font-semibold mb-1">Wallet Not Supported</div>
+                      <div className="text-red-300 text-sm">{walletError}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
                 <div className="flex-1">
                   <div className="text-sm text-gray-400 mb-1">Connected Address</div>
@@ -604,7 +446,7 @@ export default function ConnectPlaid() {
                 <button
                   onClick={connectWallet}
                   disabled={!selectedWallet || connecting}
-                  className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-medium disabled:opacity-50 hover:shadow-lg transition-all flex items-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-xl font-medium disabled:opacity-50 hover:shadow-lg transition-all flex items-center gap-2"
                 >
                   {connecting ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -625,7 +467,7 @@ export default function ConnectPlaid() {
                 </h2>
 
                 {!identityBound && !allowAnonFlow ? (
-                  <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-500/20 p-6">
+                  <div className="bg-gradient-to-br from-amber-500/10 to-cyan-500/10 rounded-xl border border-amber-500/20 p-6">
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-white mb-2">
@@ -639,7 +481,7 @@ export default function ConnectPlaid() {
                           <button
                             onClick={signToBind}
                             disabled={signing}
-                            className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
+                            className="px-6 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                           >
                             {signing ? (
                               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -692,7 +534,7 @@ export default function ConnectPlaid() {
                 </h2>
 
                 <div className="space-y-4">
-                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                  <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-2xl">🔒</span>
                       <div>
@@ -710,13 +552,23 @@ export default function ConnectPlaid() {
                     ownerAddr={allowAnonFlow ? null : owner} 
                     onSuccess={onPlaidSuccess} 
                   />
+
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                    <div className="text-sm font-semibold text-white mb-3">Credit Signal Preview</div>
+                    <div className="space-y-2">
+                      <div className="h-2 rounded bg-white/10 overflow-hidden"><div className="h-full w-3/4 bg-gradient-to-r from-emerald-400 to-cyan-400" /></div>
+                      <div className="h-2 rounded bg-white/10 overflow-hidden"><div className="h-full w-2/3 bg-gradient-to-r from-amber-400 to-yellow-300" /></div>
+                      <div className="h-2 rounded bg-white/10 overflow-hidden"><div className="h-full w-4/5 bg-gradient-to-r from-sky-400 to-indigo-400" /></div>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-3">Income stability, account age, and repayment signals feed your lending profile.</div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 reveal reveal-delay-3">
             {/* Benefits */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -725,14 +577,14 @@ export default function ConnectPlaid() {
               </h3>
               <div className="space-y-3">
                 <FeatureCard
-                  icon="💳"
+                  icon="📊"
                   title="Credit Analysis"
-                  description="Get instant credit scores and loan eligibility"
+                  description="Model repayment capacity from bank and wallet history"
                 />
                 <FeatureCard
-                  icon="🚀"
+                  icon="💸"
                   title="Better Rates"
-                  description="Access preferential lending rates with verified income"
+                  description="Unlock lower collateral requirements with stronger signals"
                 />
                 <FeatureCard
                   icon="🛡️"
@@ -740,15 +592,15 @@ export default function ConnectPlaid() {
                   description="Your data is encrypted and never stored"
                 />
                 <FeatureCard
-                  icon="⚡"
+                  icon="🏦"
                   title="Instant Verification"
-                  description="Quick approval process with real-time analysis"
+                  description="Bridge traditional account data into BNB lending workflows"
                 />
               </div>
             </div>
 
             {/* Support */}
-            <div className="bg-gradient-to-br from-green-500/10 to-teal-500/10 rounded-2xl border border-green-500/20 p-6">
+            <div className="bg-gradient-to-br from-amber-500/10 to-yellow-500/10 rounded-2xl border border-amber-500/20 p-6">
               <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                 <span>💬</span>
                 Need Help?
@@ -756,15 +608,15 @@ export default function ConnectPlaid() {
               <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                   <span>📖</span>
-                  <span>Check our documentation</span>
+                  <span>Lending setup checklist</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>🔧</span>
-                  <span>Contact support</span>
+                  <span>Risk operations support</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>💡</span>
-                  <span>View FAQs</span>
+                  <span>Underwriting FAQs</span>
                 </div>
               </div>
             </div>

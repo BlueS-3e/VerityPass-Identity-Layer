@@ -1,10 +1,30 @@
 import { defineConfig } from 'vite';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // Explicitly disable auto-open in the dev server and ensure host is enabled.
 // This avoids attempts to open the system browser (which on some Wayland/QT
 // setups triggers the QSocketNotifier error). We keep the config minimal so it
 // won't interfere with the project's existing build settings.
 export default defineConfig({
+  plugins: [
+    nodePolyfills({
+      include: ['buffer', 'process', 'util', 'stream', 'events', 'crypto', 'vm']
+    })
+  ],
+  define: {
+    global: 'globalThis'
+  },
+  resolve: {
+    alias: {
+      util: 'util/',
+      process: 'process/browser',
+      buffer: 'buffer/',
+      vm: 'vm-browserify'
+    }
+  },
+  optimizeDeps: {
+    include: ['process', 'buffer', 'util']
+  },
   server: {
     host: true,
     open: false,

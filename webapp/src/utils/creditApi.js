@@ -5,5 +5,5 @@ import apiClient from './apiClient';
  * payload should be { draft: {...}, bank_meta: {...}, onchain: {...} }
  */
 export default async function assessCredit(payload) {
-  return apiClient.apiPost('/credit/assess', payload || {});
+  return apiClient.apiPost('/api/credit/assess', payload || {});
 }

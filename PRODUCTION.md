@@ -140,7 +140,7 @@ curl https://admin.your-domain.com
 |----------|---------|-------|
 | `VITE_ANALYTICS_KEY` | Webapp | Analytics service key |
 | `ETHERSCAN_API_KEY` | API | For contract verification |
-| `LOG_LEVEL` | API | `INFO` or `DEBUG` |
+| `LOG_LEVEL` | API | `INFO` or `TRACE` |
 
 ---
 

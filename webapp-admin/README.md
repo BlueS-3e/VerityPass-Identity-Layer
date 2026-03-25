@@ -1,8 +1,10 @@
 webapp-admin
 
-Minimal admin frontend scaffold. This lightweight Vite app imports the project's admin entry
-component located at `webapp/src/admin/AdminEntry.jsx` so you can build and host the admin UI
-separately (e.g. admin.example.com).
+Dedicated operations console for RealMint. This lightweight Vite app provides
+admin-only controls for BNB-focused production workflows: role management,
+audit trails, project moderation, and contract owner verification.
+
+Note: this app is self-contained and boots from `webapp-admin/src/main.jsx`.
 
 Quick start (from project root):
 
@@ -57,6 +59,13 @@ Notes:
 - The dev server runs on port 5173 by default; use `--port` or the `preview` script to change.
 - In production, build with `npm run build` and serve the generated `dist/` directory on a
   separate subdomain. Configure CORS (ALLOWED_ORIGINS) and `FRONTEND_ORIGIN` accordingly.
+
+BNB-first positioning guidance:
+- Keep this app as a restricted operations surface, not a public marketing UI.
+- Use it to demonstrate grant-critical controls: issuer governance, role auditability,
+  and on-chain owner checks.
+- Pair this with BNB Chain deployment evidence (BscScan links, chain id 56/97 config,
+  and verifiable admin runbooks).
 
 Example nginx snippet for hosting the admin frontend on a separate subdomain (admin.example.com)
 and proxying API requests to the backend API running on localhost:8000. Adjust TLS and upstream

@@ -37,6 +37,7 @@ contract AttestationRegistry {
 
     /// @notice Publish an attestation using an off-chain EIP-712 typed signature from the issuer
     /// @dev The issuer signs the typed data for the Attestation struct (with dataCID hashed as bytes32)
+    /// @dev Only the actual issuer (msg.sender) can publish attestations to prevent signature hijacking
     function publishAttestationTyped(address subject, bytes32 schemaHash, string calldata dataCID, uint256 expiresAt, bytes calldata signature) external returns (uint256) {
         // inline struct hash to reduce stack usage
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator(), keccak256(abi.encode(
@@ -46,13 +47,11 @@ contract AttestationRegistry {
             keccak256(bytes(dataCID)),
             expiresAt
         ))));
-        // Prefer the prefixed (eth_sign / signMessage) recovery, but fall back to raw EIP-712 recovery if not present.
-        bytes32 pref = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", digest));
-        address issuer = recoverSigner(pref, signature);
-        if (issuer == address(0)) {
-            issuer = recoverSigner(digest, signature);
-        }
+        // Use only EIP-712 recovery (strict mode) for security
+        address issuer = recoverSigner(digest, signature);
         require(issuer != address(0), "Invalid signature");
+        // CRITICAL FIX: Verify sender is the issuer (prevents signature hijacking)
+        require(msg.sender == issuer, "Sender not authorized as issuer");
 
         uint256 id = nextAttestationId++;
         attestations[id] = Attestation({
@@ -83,12 +82,15 @@ contract AttestationRegistry {
 
     /// @notice Publish an attestation using an off-chain signature from the issuer
     /// @dev The issuer signs keccak256(abi.encode(subject, schemaHash, dataCID, expiresAt, address(this))) and the signature is an Ethereum Signed Message
+    /// @dev CRITICAL FIX: Only the actual issuer (msg.sender) can publish attestations
     function publishAttestationSigned(address subject, bytes32 schemaHash, string calldata dataCID, uint256 expiresAt, bytes calldata signature) external returns (uint256) {
         bytes32 hash = keccak256(abi.encode(subject, schemaHash, dataCID, expiresAt, address(this)));
         // recreate the prefixed hash that eth_sign / signMessage creates
         bytes32 prefixed = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
         address issuer = recoverSigner(prefixed, signature);
         require(issuer != address(0), "Invalid signature");
+        // CRITICAL FIX: Verify sender is the issuer (prevents signature hijacking)
+        require(msg.sender == issuer, "Sender not authorized as issuer");
 
         uint256 id = nextAttestationId++;
         attestations[id] = Attestation({

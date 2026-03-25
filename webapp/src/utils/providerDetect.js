@@ -7,22 +7,180 @@ export { initWeb3Modal } from './walletConnectV2';
 // The provider will be dynamically imported at runtime when needed and a small
 // `global` shim is applied for libraries that expect Node-style globals in the browser.
 
+let eip6963Initialized = false;
+const eip6963ProviderMap = new Map();
+
+// Wallets that are considered reliable for this dApp's core operations
+// (connect, chain check/switch, personal_sign, and tx submission).
+const OPERATIONAL_INJECTED_WALLETS = new Set([
+  'MetaMask',
+  'Coinbase Wallet',
+  'Rabby Wallet',
+  'Brave Wallet',
+  'OKX Wallet'
+]);
+
+const NON_OPERATIONAL_WALLET_REASON = {
+  'Phantom': 'Phantom has limited/inconsistent EVM behavior for this dApp. Please use WalletConnect or an EVM-first wallet (MetaMask, Coinbase, Rabby, Brave, OKX).',
+  'Trust Wallet': 'Trust Wallet injected provider is not fully reliable for this dApp flow. Please use WalletConnect or an EVM-first wallet (MetaMask, Coinbase, Rabby, Brave, OKX).'
+};
+
+function eip6963Key(detail = {}) {
+  const info = detail.info || {};
+  return info.uuid || info.rdns || info.name || `provider-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function registerEIP6963(detail) {
+  if (!detail?.provider || !detail?.info) return;
+  eip6963ProviderMap.set(eip6963Key(detail), detail);
+}
+
+function walletPriority(entry) {
+  const id = String(entry?.id || '').toLowerCase();
+  const name = String(entry?.name || '').toLowerCase();
+  const rdns = String(entry?.rdns || '').toLowerCase();
+  const combined = `${id} ${name} ${rdns}`;
+
+  if (combined.includes('walletconnect')) return 0;
+  if (combined.includes('metamask')) return 10;
+  if (combined.includes('coinbase')) return 20;
+  if (combined.includes('rabby')) return 30;
+  if (combined.includes('brave')) return 40;
+  if (combined.includes('okx')) return 50;
+  if (combined.includes('trust')) return 60;
+  if (combined.includes('phantom')) return 90;
+  return 70;
+}
+
+function sortProvidersStable(providers = []) {
+  return [...providers].sort((a, b) => {
+    const prioDiff = walletPriority(a) - walletPriority(b);
+    if (prioDiff !== 0) return prioDiff;
+    return String(a?.name || a?.id || '').localeCompare(String(b?.name || b?.id || ''));
+  });
+}
+
+function walletKeyFromEntry(entry) {
+  const id = String(entry?.id || '').toLowerCase();
+  const name = String(entry?.name || '').toLowerCase();
+  const rdns = String(entry?.rdns || '').toLowerCase();
+  return `${id} ${name} ${rdns}`;
+}
+
+function isMetaMaskLike(provider) {
+  if (!provider) return false;
+  return Boolean(
+    provider.isMetaMask &&
+    !provider.isCoinbaseWallet &&
+    !provider.isTrust &&
+    !provider.isRabby &&
+    !provider.isBraveWallet &&
+    !provider.isPhantom
+  );
+}
+
+function providerMatchesWalletKey(provider, key) {
+  if (!provider || !key) return false;
+
+  if (key.includes('metamask')) return isMetaMaskLike(provider);
+  if (key.includes('trust')) return Boolean(provider.isTrust);
+  if (key.includes('phantom')) return Boolean(provider.isPhantom);
+  if (key.includes('coinbase')) return Boolean(provider.isCoinbaseWallet);
+  if (key.includes('rabby')) return Boolean(provider.isRabby);
+  if (key.includes('brave')) return Boolean(provider.isBraveWallet);
+  if (key.includes('okx')) return Boolean(provider.isOKXWallet);
+
+  return false;
+}
+
+function resolveInjectedProviderForEntry(entry) {
+  if (typeof window === 'undefined' || !entry || entry.id === 'walletconnect') return entry;
+
+  const key = walletKeyFromEntry(entry);
+  const eth = window.ethereum;
+  const candidates = Array.isArray(eth?.providers)
+    ? eth.providers
+    : (eth ? [eth] : []);
+
+  let matched = candidates.find((p) => providerMatchesWalletKey(p, key));
+
+  // Phantom commonly exposes its EVM provider on window.phantom.ethereum.
+  if (!matched && key.includes('phantom') && window.phantom?.ethereum) {
+    matched = window.phantom.ethereum;
+  }
+
+  if (!matched) return entry;
+
+  if (entry.provider === matched) return entry;
+
+  return {
+    ...entry,
+    provider: matched,
+    name: detectProviderName(matched) || entry.name,
+    icon: getProviderIcon(matched) || entry.icon
+  };
+}
+
+function getWalletConnectProjectId() {
+  if (typeof import.meta === 'undefined' || !import.meta?.env) return '';
+  return import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
+}
+
+function createRpcRequester(provider) {
+  return async (method, params = []) => {
+    if (!provider) throw new Error('Provider unavailable');
+
+    if (typeof provider.request === 'function') {
+      try {
+        return await provider.request({ method, params });
+      } catch (firstError) {
+        // Some legacy providers expose request(method, params)
+        return provider.request(method, params);
+      }
+    }
+
+    if (typeof provider.sendAsync === 'function') {
+      return new Promise((resolve, reject) => {
+        provider.sendAsync(
+          { jsonrpc: '2.0', id: Date.now(), method, params },
+          (err, res) => {
+            if (err) return reject(err);
+            if (res?.error) return reject(res.error);
+            resolve(res?.result ?? res);
+          }
+        );
+      });
+    }
+
+    if (typeof provider.send === 'function') {
+      const response = await provider.send({ jsonrpc: '2.0', id: Date.now(), method, params });
+      if (response && typeof response === 'object' && 'result' in response) {
+        return response.result;
+      }
+      return response;
+    }
+
+    throw new Error('Provider does not support JSON-RPC requests');
+  };
+}
+
 // EIP-6963 Provider Detection
 export function detectEIP6963Providers() {
   if (typeof window === 'undefined') return [];
-  
-  const providers = [];
-  
-  const handleProviderAnnouncement = (event) => {
-    providers.push(event.detail);
-  };
 
-  if (window.addEventListener) {
-    window.addEventListener('eip6963:announceProvider', handleProviderAnnouncement);
+  if (!eip6963Initialized && window.addEventListener) {
+    window.addEventListener('eip6963:announceProvider', (event) => {
+      registerEIP6963(event?.detail);
+    });
+    eip6963Initialized = true;
+  }
+
+  if (window.dispatchEvent) {
+    // Request late announcers each time. Registration is cached and deduped.
     window.dispatchEvent(new Event('eip6963:requestProvider'));
   }
-  
-  return providers;
+
+  return Array.from(eip6963ProviderMap.values());
 }
 
 // Enhanced provider detection with EIP-6963 support
@@ -52,8 +210,8 @@ export function listAvailableProviders() {
   const sdkProviders = detectSDKProviders();
   providers.push(...sdkProviders);
 
-  // Deduplicate providers
-  return deduplicateProviders(providers);
+  // Deduplicate providers and keep deterministic ordering across wallets.
+  return sortProvidersStable(deduplicateProviders(providers));
 }
 
 // Backwards-compatible alias
@@ -64,6 +222,27 @@ export function normalizeProviderEntry(entry) {
   if (!entry) return null;
   if (typeof entry.request === 'function') return entry;
   if (entry.provider && typeof entry.provider.request === 'function') return entry.provider;
+
+  const provider = entry.provider || entry;
+  if (provider && (typeof provider.send === 'function' || typeof provider.sendAsync === 'function')) {
+    const rpcRequest = createRpcRequester(provider);
+    return {
+      ...provider,
+      request: (input, legacyParams = []) => {
+        // Support both request({ method, params }) and request(method, params)
+        // because some wallet SDKs and adapters still use the legacy signature.
+        if (typeof input === 'string') {
+          return rpcRequest(input, legacyParams);
+        }
+
+        const method = input?.method;
+        const params = Array.isArray(input?.params) ? input.params : legacyParams;
+        return rpcRequest(method, params);
+      },
+      __rawProvider: provider
+    };
+  }
+
   return null;
 }
 
@@ -78,6 +257,7 @@ export function chooseInjectedProvider(userPreference = null) {
 
 // Legacy provider detection
 function detectLegacyProviders() {
+  if (typeof window === 'undefined') return [];
   const providers = [];
   const { ethereum } = window;
   
@@ -96,6 +276,7 @@ function detectLegacyProviders() {
 
 // SDK-based providers detection
 function detectSDKProviders() {
+  if (typeof window === 'undefined') return [];
   const providers = [];
   
   // WalletConnect
@@ -160,13 +341,14 @@ export function detectProviderName(provider) {
   if (!provider) return 'Injected Wallet';
   
   const providerFlags = [
-    { flag: 'isMetaMask', name: 'MetaMask' },
     { flag: 'isCoinbaseWallet', name: 'Coinbase Wallet' },
     { flag: 'isTrust', name: 'Trust Wallet' },
-    { flag: 'isBraveWallet', name: 'Brave Wallet' },
-    { flag: 'isOpera', name: 'Opera Wallet' },
     { flag: 'isRabby', name: 'Rabby Wallet' },
+    { flag: 'isBraveWallet', name: 'Brave Wallet' },
     { flag: 'isOKXWallet', name: 'OKX Wallet' },
+    { flag: 'isPhantom', name: 'Phantom' },
+    { flag: 'isMetaMask', name: 'MetaMask' },
+    { flag: 'isOpera', name: 'Opera Wallet' },
     { flag: 'isZerion', name: 'Zerion' },
     { flag: 'isFrame', name: 'Frame' },
     { flag: 'isTorus', name: 'Torus' }
@@ -188,7 +370,8 @@ export function detectProviderName(provider) {
       { pattern: 'trust', name: 'Trust Wallet' },
       { pattern: 'brave', name: 'Brave Wallet' },
       { pattern: 'rabby', name: 'Rabby Wallet' },
-      { pattern: 'okx', name: 'OKX Wallet' }
+      { pattern: 'okx', name: 'OKX Wallet' },
+      { pattern: 'phantom', name: 'Phantom' }
     ];
     
     for (const { pattern, name } of patterns) {
@@ -223,9 +406,36 @@ export function getProviderIcon(provider) {
   return iconMap[name] || null;
 }
 
+export function getUnsupportedWalletReason(entry) {
+  if (!entry) return null;
+  const provider = entry.provider || entry;
+  const name = entry.name || detectProviderName(provider);
+  return NON_OPERATIONAL_WALLET_REASON[name] || null;
+}
+
+function isOperationalWalletEntry(entry) {
+  if (!entry) return false;
+  if (entry.id === 'walletconnect' || entry.type === 'sdk') return true;
+  if (!entry.provider) return false;
+
+  const name = entry.name || detectProviderName(entry.provider);
+  if (NON_OPERATIONAL_WALLET_REASON[name]) return false;
+  return OPERATIONAL_INJECTED_WALLETS.has(name);
+}
+
+export function getOperationalWallets(entries = []) {
+  const list = Array.isArray(entries) ? entries : [];
+  const filtered = list.filter(isOperationalWalletEntry);
+  if (filtered.length > 0) return filtered;
+
+  // Always keep WalletConnect as universal fallback.
+  return list.filter((entry) => entry?.id === 'walletconnect' || entry?.type === 'sdk');
+}
+
 // Modern provider selection with user preference
 export async function selectBestProvider(userPreference = null) {
-  const providers = listAvailableProviders();
+  const allProviders = listAvailableProviders();
+  const providers = getOperationalWallets(allProviders);
   
   if (providers.length === 0) {
     return await createFallbackProvider();
@@ -236,7 +446,17 @@ export async function selectBestProvider(userPreference = null) {
     const preferred = providers.find(p => 
       p.id === userPreference || p.name === userPreference
     );
-    if (preferred) return preferred;
+    if (preferred) return resolveInjectedProviderForEntry(preferred);
+
+    // If the user's preferred wallet exists but is non-operational, gracefully
+    // fall back to WalletConnect.
+    const preferredAny = allProviders.find(p =>
+      p.id === userPreference || p.name === userPreference
+    );
+    if (preferredAny && getUnsupportedWalletReason(preferredAny)) {
+      const walletConnect = providers.find((p) => p.id === 'walletconnect' || p.type === 'sdk');
+      if (walletConnect) return walletConnect;
+    }
   }
   
   // Priority-based auto-selection
@@ -246,16 +466,16 @@ export async function selectBestProvider(userPreference = null) {
     'Rabby Wallet',
     'Brave Wallet',
     'OKX Wallet',
-    'Phantom'
+    'walletconnect'
   ];
   
   for (const name of priorityList) {
     const provider = providers.find(p => p.name === name);
-    if (provider) return provider;
+    if (provider) return resolveInjectedProviderForEntry(provider);
   }
   
   // Fallback to first available
-  return providers[0];
+  return resolveInjectedProviderForEntry(providers[0]);
 }
 
 // Persistence helpers: remember user's chosen wallet (only store small serializable bits)
@@ -289,12 +509,17 @@ export function loadPreferredProvider() {
 
 // Network switching utility
 export async function switchNetwork(provider, chainId) {
-  if (!provider?.request) {
+  const normalizedProvider = normalizeProviderEntry(provider);
+  const activeProvider = normalizedProvider || provider;
+
+  if (!activeProvider) {
     throw new Error('Provider does not support network switching');
   }
+
+  const rpcRequest = createRpcRequester(activeProvider);
   
   // Detect if this is Phantom wallet
-  const isPhantom = provider.isPhantom === true;
+  const isPhantom = activeProvider.isPhantom === true;
   
   // Handle both numeric and hex chain IDs
   let hexChainId;
@@ -306,10 +531,7 @@ export async function switchNetwork(provider, chainId) {
   }
   
   try {
-    await provider.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: hexChainId }],
-    });
+    await rpcRequest('wallet_switchEthereumChain', [{ chainId: hexChainId }]);
   } catch (switchError) {
     // 4902 = Chain not added to wallet
     if (switchError.code === 4902) {
@@ -341,16 +563,21 @@ export async function switchNetwork(provider, chainId) {
 
 // Add network configuration
 export async function addNetwork(provider, chainId) {
+  const normalizedProvider = normalizeProviderEntry(provider);
+  const activeProvider = normalizedProvider || provider;
+
+  if (!activeProvider) {
+    throw new Error('Provider does not support network configuration');
+  }
+
+  const rpcRequest = createRpcRequester(activeProvider);
   const networkConfig = getNetworkConfig(chainId);
   
   if (!networkConfig) {
     throw new Error(`Unsupported network: ${chainId}`);
   }
   
-  await provider.request({
-    method: 'wallet_addEthereumChain',
-    params: [networkConfig],
-  });
+  await rpcRequest('wallet_addEthereumChain', [networkConfig]);
 }
 
 // Common network configurations
@@ -430,7 +657,7 @@ export async function preloadWalletConnect() {
   if (typeof window === 'undefined') return null;
   
   // Get project ID from environment variables
-  const projectId = import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID;
+  const projectId = getWalletConnectProjectId();
   
   console.log('[providerDetect] Preloading WalletConnect with project ID:', 
     projectId ? `${projectId.substring(0, 10)}...` : 'NOT SET');
@@ -453,7 +680,7 @@ export async function preloadWalletConnect() {
 export async function createWalletConnectInstance(chainId = 1) {
   if (typeof window === 'undefined') throw new Error('No window');
   
-  const projectId = import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID;
+  const projectId = getWalletConnectProjectId();
   
   console.log('[providerDetect] Creating WalletConnect instance. Project ID:', 
     projectId ? `${projectId.substring(0, 10)}...` : 'NOT SET');
@@ -503,8 +730,15 @@ export async function connectWallet(providerOrEntry, options = {}) {
 
   // If a provider entry object was passed
   if (providerOrEntry && providerOrEntry.id && !providerOrEntry.request) {
+    const resolvedEntry = resolveInjectedProviderForEntry(providerOrEntry);
+
+    const unsupportedReason = getUnsupportedWalletReason(resolvedEntry);
+    if (unsupportedReason && resolvedEntry.id !== 'walletconnect') {
+      throw new Error(unsupportedReason);
+    }
+
     // SDK-based WalletConnect using Web3Modal v2
-    if (providerOrEntry.id === 'walletconnect' || providerOrEntry.type === 'sdk') {
+    if (resolvedEntry.id === 'walletconnect' || resolvedEntry.type === 'sdk') {
       try {
         console.log('[providerDetect] Connecting with WalletConnect...');
         const wcResult = await createWalletConnectInstance(options.chainId || 1);
@@ -526,19 +760,25 @@ export async function connectWallet(providerOrEntry, options = {}) {
         console.error('[providerDetect] Failed to create WalletConnect instance:', e);
         throw e;
       }
-    } else if (providerOrEntry.provider) {
-      provider = providerOrEntry.provider;
+    } else if (resolvedEntry.provider) {
+      provider = resolvedEntry.provider;
     }
   }
+
+  const normalizedProvider = normalizeProviderEntry(provider);
+  const rawProvider = provider?.provider || provider;
+  provider = normalizedProvider || provider;
 
   if (!provider || typeof provider.request !== 'function') {
     throw new Error('Provider not available or does not support EIP-1193');
   }
 
+  const rpcRequest = createRpcRequester(provider);
+
   try {
     const [accounts, chainId] = await Promise.all([
-      provider.request({ method: 'eth_requestAccounts', params: [] }),
-      provider.request({ method: 'eth_chainId', params: [] })
+      rpcRequest('eth_requestAccounts', []),
+      rpcRequest('eth_chainId', [])
     ]);
 
     // Normalize chainId to numeric format for consistency
@@ -551,6 +791,20 @@ export async function connectWallet(providerOrEntry, options = {}) {
       address: accounts[0] // Additional field for convenience
     };
   } catch (error) {
+    const msg = String(error?.message || '').toLowerCase();
+    const nestedMethod = String(error?.data?.method || '').toLowerCase();
+    const code = Number(error?.code);
+    const walletName = detectProviderName(rawProvider).toLowerCase();
+
+    if (walletName.includes('phantom') && (msg.includes('unsupported') || msg.includes('origin not allowed') || msg.includes('public_requestaccounts'))) {
+      throw new Error('Phantom EVM provider rejected this request. Please use MetaMask/Trust Wallet or connect via WalletConnect for this site.');
+    }
+
+    // Some injected non-EVM extensions throw this pattern when asked for EVM accounts.
+    if (code === -32603 && (nestedMethod.includes('public_requestaccounts') || msg.includes('origin not allowed'))) {
+      throw new Error('Wallet origin is not allowed by the selected extension. Please use MetaMask/WalletConnect or disable non-EVM wallet extensions for this site.');
+    }
+
     console.error('[providerDetect] Wallet connection failed:', error);
     throw error;
   }

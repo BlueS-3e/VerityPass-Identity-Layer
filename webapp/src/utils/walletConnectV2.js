@@ -4,11 +4,19 @@
  */
 
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers';
-import { BrowserProvider } from 'ethers';
 
 let web3Modal = null;
 let modalProvider = null;
 let currentAccount = null;
+
+function parseChainId(chainId) {
+  if (chainId === undefined || chainId === null) return null;
+  if (typeof chainId === 'number') return chainId;
+  if (typeof chainId === 'string') {
+    return chainId.startsWith('0x') ? parseInt(chainId, 16) : parseInt(chainId, 10);
+  }
+  return null;
+}
 
 /**
  * Initialize Web3Modal (call once on app load)
@@ -20,6 +28,10 @@ export async function initWeb3Modal(projectId, options = {}) {
     console.log('[AppKit] Already initialized');
     return web3Modal;
   }
+
+  if (!projectId) {
+    throw new Error('WalletConnect projectId is required. Set VITE_WALLETCONNECT_PROJECT_ID.');
+  }
   
   console.log('[AppKit] Initializing with Project ID:', projectId?.substring(0, 10) + '...');
   
@@ -27,6 +39,7 @@ export async function initWeb3Modal(projectId, options = {}) {
     chains = [
       { chainId: 1, name: 'Ethereum', currency: 'ETH', explorerUrl: 'https://etherscan.io', rpcUrl: 'https://eth.llamarpc.com' },
       { chainId: 56, name: 'BSC', currency: 'BNB', explorerUrl: 'https://bscscan.com', rpcUrl: 'https://bsc-dataseed.binance.org' },
+      { chainId: 97, name: 'BSC Testnet', currency: 'tBNB', explorerUrl: 'https://testnet.bscscan.com', rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545' },
       { chainId: 137, name: 'Polygon', currency: 'MATIC', explorerUrl: 'https://polygonscan.com', rpcUrl: 'https://polygon-rpc.com' },
       { chainId: 42161, name: 'Arbitrum', currency: 'ETH', explorerUrl: 'https://arbiscan.io', rpcUrl: 'https://arb1.arbitrum.io/rpc' },
       { chainId: 11155111, name: 'Sepolia', currency: 'ETH', explorerUrl: 'https://sepolia.etherscan.io', rpcUrl: 'https://sepolia.infura.io/v3/' }
@@ -76,10 +89,99 @@ export async function connectWithWalletConnect() {
   return new Promise((resolve, reject) => {
     let resolved = false;
     let unsubscribe = null;
-    let modalOpened = false;
+    let modalSeenOpen = false;
+    let sawFreshConnectionSignal = false;
+    let closeGraceTimer = null;
+
+    const initialProvider = (() => {
+      try {
+        return web3Modal.getWalletProvider();
+      } catch (e) {
+        return null;
+      }
+    })();
+
+    let initialAddress = null;
 
     const cleanup = () => {
       unsubscribe?.();
+      if (closeGraceTimer) {
+        clearTimeout(closeGraceTimer);
+        closeGraceTimer = null;
+      }
+    };
+
+    const isPageBackgrounded = () => (
+      typeof document !== 'undefined' && document.visibilityState === 'hidden'
+    );
+
+    const isLikelyMobile = () => {
+      if (typeof navigator === 'undefined') return false;
+      const ua = String(navigator.userAgent || '').toLowerCase();
+      return /android|iphone|ipad|ipod|iemobile|opera mini|mobile/.test(ua);
+    };
+
+    const tryResolveFromProvider = async () => {
+      if (resolved) return false;
+
+      // Do not resolve before the user has actually entered the modal flow.
+      if (!modalSeenOpen) return false;
+
+      let provider = null;
+      try {
+        provider = web3Modal.getWalletProvider();
+      } catch (e) {
+        provider = null;
+      }
+
+      if (!provider || typeof provider.request !== 'function') {
+        return false;
+      }
+
+      let accounts = [];
+      let chainIdRaw = null;
+      try {
+        accounts = await provider.request({ method: 'eth_accounts', params: [] });
+      } catch (e) {
+        accounts = [];
+      }
+
+      if (!Array.isArray(accounts) || accounts.length === 0) {
+        return false;
+      }
+
+      try {
+        chainIdRaw = await provider.request({ method: 'eth_chainId', params: [] });
+      } catch (e) {
+        chainIdRaw = null;
+      }
+
+      const chainId = parseChainId(chainIdRaw) || 1;
+
+      const address = accounts[0];
+
+      const providerChanged = provider !== initialProvider;
+      const accountChanged = !initialAddress || String(initialAddress).toLowerCase() !== String(address).toLowerCase();
+
+      // Prevent stale pre-existing provider/account state from resolving immediately.
+      if (!sawFreshConnectionSignal && !providerChanged && !accountChanged) {
+        return false;
+      }
+
+      resolved = true;
+      clearTimeout(timeout);
+      cleanup();
+
+      currentAccount = address;
+      modalProvider = provider;
+
+      console.log('[AppKit] Connected successfully (provider probe):', {
+        address,
+        chainId
+      });
+
+      resolve({ provider, address, chainId });
+      return true;
     };
 
     const timeout = setTimeout(() => {
@@ -101,66 +203,80 @@ export async function connectWithWalletConnect() {
         selectedNetworkId: newState.selectedNetworkId
       });
 
-      // When a wallet is connected (address is set), create and return provider
-      if (newState.isConnected && newState.address && !resolved) {
-        try {
-          console.log('[AppKit] Wallet connected, creating provider...');
-          clearTimeout(timeout);
-          resolved = true;
-          cleanup();
+      if (resolved) return;
 
-          currentAccount = newState.address;
-          const provider = web3Modal.getWalletProvider();
+      if (newState.open) {
+        modalSeenOpen = true;
+      }
 
-          if (!provider) {
-            throw new Error('AppKit provider not available');
-          }
+      if (modalSeenOpen && newState.isConnected && newState.address) {
+        sawFreshConnectionSignal = true;
+      }
 
-          const ethersProvider = new BrowserProvider(provider);
-          const signer = await ethersProvider.getSigner();
-          const address = await signer.getAddress();
-          const network = await ethersProvider.getNetwork();
+      // Primary path: resolve from provider/accounts probe (works across state-shape variants)
+      if (await tryResolveFromProvider()) {
+        return;
+      }
 
-          modalProvider = ethersProvider;
+      // If modal was opened and then closed without any accounts available, treat as cancellation.
+      if (modalSeenOpen && newState.open === false) {
+        if (!closeGraceTimer) {
+          const closeGraceMs = isPageBackgrounded() || isLikelyMobile() ? 25000 : 8000;
+          closeGraceTimer = setTimeout(async () => {
+            if (resolved) return;
+            if (await tryResolveFromProvider()) return;
 
-          console.log('[AppKit] Connected successfully:', {
-            address,
-            chainId: Number(network.chainId)
-          });
+            // On mobile deep-link flows the page can be backgrounded while approval
+            // is still in progress. Do not force-cancel in that state.
+            if (isPageBackgrounded()) {
+              closeGraceTimer = null;
+              return;
+            }
 
-          resolve({
-            provider: ethersProvider,
-            address,
-            chainId: Number(network.chainId)
-          });
-        } catch (err) {
-          console.error('[AppKit] Error after connection:', err);
-          if (!resolved) {
+            // If modal closed and no account emerged after the grace period,
+            // treat as cancellation/failure but with a generic user-facing error.
             resolved = true;
             clearTimeout(timeout);
             cleanup();
-            reject(err);
-          }
+            reject(new Error('WalletConnect connection was cancelled or not completed'));
+          }, closeGraceMs);
         }
-      }
-
-      // If modal was opened and is now closed without connection, treat as cancel
-      if (modalOpened && !newState.open && !newState.isConnected && !resolved) {
-        console.warn('[AppKit] Modal closed without connection');
-        resolved = true;
-        clearTimeout(timeout);
-        cleanup();
-        reject(new Error('User closed WalletConnect modal without connecting'));
+      } else if (closeGraceTimer) {
+        clearTimeout(closeGraceTimer);
+        closeGraceTimer = null;
       }
     };
 
     // Subscribe to state changes first
     unsubscribe = web3Modal.subscribeState(handleStateChange);
 
+    // Capture any pre-existing account to avoid treating stale state as a fresh approval.
+    (async () => {
+      if (!initialProvider || typeof initialProvider.request !== 'function') return;
+      try {
+        const accounts = await initialProvider.request({ method: 'eth_accounts', params: [] });
+        if (Array.isArray(accounts) && accounts[0]) {
+          initialAddress = accounts[0];
+        }
+      } catch (e) {
+        initialAddress = null;
+      }
+    })();
+
     // Initial call to open the modal
     console.log('[AppKit] Opening modal...');
     web3Modal.open({ view: 'Connect' });
-    modalOpened = true;
+
+    // Secondary safety net: provider probe polling, independent of modal state payload shape.
+    (async () => {
+      for (let i = 0; i < 240 && !resolved; i += 1) {
+        // 240 * 500ms = 120s max
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((r) => setTimeout(r, 500));
+        // eslint-disable-next-line no-await-in-loop
+        if (await tryResolveFromProvider()) break;
+      }
+    })();
   });
 }
 
@@ -183,38 +299,37 @@ export async function connectWithWalletConnectSimple() {
       if (state.isConnected && state.address) {
         try {
           unsubscribe();
-          
-          currentAccount = state.address;
-          const provider = web3Modal.getWalletProvider();
-          
+
+          let provider = web3Modal.getWalletProvider();
           if (!provider) {
-            throw new Error('AppKit provider not available');
+            for (let i = 0; i < 8 && !provider; i += 1) {
+              await new Promise((r) => setTimeout(r, 250));
+              provider = web3Modal.getWalletProvider();
+            }
+          }
+          if (!provider) {
+            throw new Error('Wallet provider unavailable after connection');
           }
 
-          const ethersProvider = new BrowserProvider(provider);
-          const signer = await ethersProvider.getSigner();
-          const address = await signer.getAddress();
-          const network = await ethersProvider.getNetwork();
-
-          modalProvider = ethersProvider;
+          currentAccount = state.address;
+          const address = state.address;
+          const chainId = parseChainId(state.chainId) || 1;
+          modalProvider = provider;
 
           console.log('[AppKit] Connected successfully:', {
             address,
-            chainId: Number(network.chainId)
+            chainId
           });
 
           resolve({
-            provider: ethersProvider,
+            provider,
             address,
-            chainId: Number(network.chainId)
+            chainId
           });
         } catch (err) {
           unsubscribe();
           reject(err);
         }
-      } else if (!state.open && !state.isConnected) {
-        unsubscribe();
-        reject(new Error('User closed WalletConnect modal without connecting'));
       }
     });
 

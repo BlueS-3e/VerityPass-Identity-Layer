@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { assertEnv } from './env-assert';
 import { checkBackend } from './boot-checks';
@@ -6,15 +6,10 @@ import apiClient from './utils/apiClient';
 import { API_BASE } from './config';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./index.css";
-import Launchpad from "./Launchpad";
 import Home from "./Home";
 // Admin UI moved to a separate app (`webapp-admin`). The public dApp hides
 // admin controls entirely to keep the UI simple for end users.
-import Attestation from "./Attestation";
-import Guide from "./Guide";
 import NavBar from "./components/NavBar";
-import ConnectPlaid from './ConnectPlaid';
-import AaveDemo from './pages/AaveDemo';
 import AaveDemoTrigger from './components/AaveDemoTrigger';
 import ModalProvider from './components/ModalProvider';
 import { ToastProvider } from "./components/Toast";
@@ -22,6 +17,22 @@ import NotFound from './components/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorPage from './components/ErrorPage';
 // WalletProvider removed from root to avoid mounting wallet context for a browsing-only app.
+
+const ConnectPlaid = lazy(() => import('./ConnectPlaid'));
+const Launchpad = lazy(() => import('./Launchpad'));
+const Attestation = lazy(() => import('./Attestation'));
+const Guide = lazy(() => import('./Guide'));
+const AaveDemo = lazy(() => import('./pages/AaveDemo'));
+
+function RouteSkeleton() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-sm text-gray-300 backdrop-blur-sm">
+        Loading workspace...
+      </div>
+    </div>
+  );
+}
 
 // Assert required build-time envs (will throw in production builds)
 try { assertEnv(); } catch (e) {
@@ -142,21 +153,23 @@ async function bootstrap() {
                 )}
                 {/* Main app routes */}
                 <main className="pt-4">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/connect" element={<ConnectPlaid />} />
-                  <Route path="/launch" element={<Launchpad />} />
-                  {/* Admin functionality intentionally removed from the public app */}
-                  {/* Route compatibility: keep '/attest' redirecting to canonical '/attestation' */}
-                  <Route path="/attest" element={<Navigate to="/attestation" replace />} />
-                  <Route path="/attestation" element={<Attestation />} />
-                  <Route path="/guide" element={<Guide />} />
-                  <Route path="/aave-demo" element={<AaveDemo />} />
-                  {/* Unauthorized/admin routes removed from public app */}
-                  <Route path="/error" element={<ErrorPage title="Server error" message="We had trouble reaching the server — try again later." ctaLabel="Go to Homepage" ctaTo="/" />} />
-                  {/* Catch-all: show 404 for unknown routes */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                  <Suspense fallback={<RouteSkeleton />}>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/connect" element={<ConnectPlaid />} />
+                      <Route path="/launch" element={<Launchpad />} />
+                      {/* Admin functionality intentionally removed from the public app */}
+                      {/* Route compatibility: keep '/attest' redirecting to canonical '/attestation' */}
+                      <Route path="/attest" element={<Navigate to="/attestation" replace />} />
+                      <Route path="/attestation" element={<Attestation />} />
+                      <Route path="/guide" element={<Guide />} />
+                      <Route path="/aave-demo" element={<AaveDemo />} />
+                      {/* Unauthorized/admin routes removed from public app */}
+                      <Route path="/error" element={<ErrorPage title="Server error" message="We had trouble reaching the server — try again later." ctaLabel="Go to Homepage" ctaTo="/" />} />
+                      {/* Catch-all: show 404 for unknown routes */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
                 </main>
               </ModalProvider>
             </ToastProvider>
