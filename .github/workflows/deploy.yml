@@ -184,7 +184,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
     steps:
       - name: Notify Slack on success
-        if: success() && secrets.SLACK_WEBHOOK_URL != ''  # ✅ Added condition
+        if: success()
         uses: slackapi/slack-github-action@v1.24.0
         with:
           webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
