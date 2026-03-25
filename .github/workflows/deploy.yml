@@ -16,10 +16,10 @@ jobs:
       run:
         working-directory: contracts
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.7
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: '22'  # LTS version (not deprecated Node.js 20)
           cache: 'npm'
@@ -62,10 +62,10 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.7
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -104,10 +104,10 @@ jobs:
       run:
         working-directory: webapp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.7
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: '22'  # LTS version (not deprecated Node.js 20)
           cache: 'npm'
@@ -137,10 +137,10 @@ jobs:
       run:
         working-directory: webapp-admin
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.7
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: '22'  # LTS version (not deprecated Node.js 20)
           cache: 'npm'
@@ -162,7 +162,7 @@ jobs:
       security-events: write  # ✅ Added
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.7
       
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
