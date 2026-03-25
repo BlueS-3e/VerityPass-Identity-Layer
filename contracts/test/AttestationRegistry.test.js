@@ -95,8 +95,8 @@ describe("AttestationRegistry", function () {
   const digest = ethers.TypedDataEncoder.hash(domain, types, value);
   const signature = await issuer.signMessage(ethers.getBytes(digest));
 
-    // publish using the typed submission
-    await expect(att.publishAttestationTyped(subject.address, schema, cid, expires, signature))
+    // publish using the typed submission - must call from the issuer to pass msg.sender check
+    await expect(att.connect(issuer).publishAttestationTyped(subject.address, schema, cid, expires, signature))
       .to.emit(att, "AttestationPublished");
 
     const a = await att.getAttestation(1);

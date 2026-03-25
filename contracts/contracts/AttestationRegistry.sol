@@ -39,18 +39,14 @@ contract AttestationRegistry {
     /// @dev The issuer signs the typed data for the Attestation struct (with dataCID hashed as bytes32)
     /// @dev Only the actual issuer (msg.sender) can publish attestations to prevent signature hijacking
     function publishAttestationTyped(address subject, bytes32 schemaHash, string calldata dataCID, uint256 expiresAt, bytes calldata signature) external returns (uint256) {
-        // inline struct hash to reduce stack usage
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator(), keccak256(abi.encode(
-            ATTESTATION_TYPEHASH,
-            subject,
-            schemaHash,
-            keccak256(bytes(dataCID)),
-            expiresAt
-        ))));
-        // Use only EIP-712 recovery (strict mode) for security
-        address issuer = recoverSigner(digest, signature);
+        // Build the prefixed digest to match signMessage behavior
+        bytes32 prefixedDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", 
+            keccak256(abi.encodePacked("\x19\x01", domainSeparator(), keccak256(abi.encode(
+                ATTESTATION_TYPEHASH, subject, schemaHash, keccak256(bytes(dataCID)), expiresAt
+            ))))
+        ));
+        address issuer = recoverSigner(prefixedDigest, signature);
         require(issuer != address(0), "Invalid signature");
-        // CRITICAL FIX: Verify sender is the issuer (prevents signature hijacking)
         require(msg.sender == issuer, "Sender not authorized as issuer");
 
         uint256 id = nextAttestationId++;

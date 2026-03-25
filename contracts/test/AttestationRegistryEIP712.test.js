@@ -3,9 +3,14 @@ const { ethers } = require("hardhat");
 
 describe("AttestationRegistry EIP-712", function () {
   it("should accept a typed-data signed attestation via publishAttestationTyped", async function () {
-  const [, subject] = await ethers.getSigners();
+  const [owner, subject] = await ethers.getSigners();
   // create a dedicated wallet for the issuer so we can sign locally
   const issuerWallet = ethers.Wallet.createRandom().connect(ethers.provider);
+  // Fund the issuer wallet so it can pay gas
+  await owner.sendTransaction({
+    to: issuerWallet.address,
+    value: ethers.parseEther("1")
+  });
     const Att = await ethers.getContractFactory("AttestationRegistry");
     const att = await Att.deploy();
     if (typeof att.waitForDeployment === 'function') await att.waitForDeployment();
@@ -42,7 +47,8 @@ describe("AttestationRegistry EIP-712", function () {
     // sanity check at JS-level
     expect(jsRecoveredPref.toLowerCase()).to.equal(issuerWallet.address.toLowerCase());
 
-    await expect(att.publishAttestationTyped(subject.address, schema, cid, expires, signature))
+    // publish from the issuer wallet to satisfy msg.sender == issuer requirement
+    await expect(att.connect(issuerWallet).publishAttestationTyped(subject.address, schema, cid, expires, signature))
       .to.emit(att, "AttestationPublished");
 
     const a = await att.getAttestation(1);
