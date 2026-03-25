@@ -154,19 +154,33 @@ jobs:
     needs: [test-contracts, test-api, test-webapp, test-webapp-admin]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Notify deployment to Slack
-        uses: slackapi/slack-github-action@v1
+      - name: Notify Slack on success
+        uses: slackapi/slack-github-action@v1.24.0
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
-              "text": "🚀 RealMint dApp Production Deploy",
+              "text": "🚀 RealMint Production Deploy",
               "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ All Tests Passed"
+                  }
+                },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "✅ All tests passed\n\n📦 Ready to deploy to Vercel & Render\n\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+                    "text": "Ready to deploy to Vercel & Render"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
                   }
                 }
               ]
