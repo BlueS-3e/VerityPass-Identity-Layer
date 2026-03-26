@@ -1,6 +1,6 @@
-# VerityPass - Verified Identity for DeFi
+# VerityPass - Your Verified Identity for Global DeFi
 
-Welcome to **VerityPass**, a decentralized application that enables secure identity attestation and on-chain verification for emerging market participants. Get verified, get access, get VerityPass. This dApp bridges traditional KYC/AML workflows with blockchain-based sovereignty, empowering users to maintain control of their identity data while accessing DeFi opportunities worldwide.
+Welcome to **VerityPass**, the decentralized identity verification application from the RealMint Platform. Get your identity verified on-chain and unlock access to DeFi services worldwide. VerityPass bridges traditional KYC/AML workflows with blockchain-based sovereignty, empowering users to maintain control of their identity data while participating in DeFi protocols with confidence.
 
 ## 🎯 What is VerityPass?
 
@@ -210,4 +210,4 @@ We welcome contributions! Please see [CONTRIBUTING.md](../CONTRIBUTING.md) for g
 ---
 
 **Built with ❤️ by the RealMint Labs team**  
-*Bringing sovereign identity to emerging markets*
+*VerityPass - Your Verified Identity in DeFi*

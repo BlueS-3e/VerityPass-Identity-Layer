@@ -11,7 +11,7 @@ export default function Footer(){
         <div>
           <div className="text-white font-semibold flex items-center gap-2">
             <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-4 h-4" />
-            <span>RealMint</span>
+            <span>VerityPass</span>
           </div>
           <div className="mt-2 text-xs">BNB-focused lending and attestation platform for modern credit workflows.</div>
         </div>
@@ -22,7 +22,7 @@ export default function Footer(){
           )}
           <Link to="/guide" className="hover:text-white">Playbook</Link>
         </div>
-        <div className="text-xs text-gray-500">© {new Date().getFullYear()} RealMint — BNB Credit Ops</div>
+        <div className="text-xs text-gray-500">© {new Date().getFullYear()} VerityPass • Verified Identity for DeFi</div>
       </div>
     </footer>
   );

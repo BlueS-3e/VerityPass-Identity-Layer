@@ -37,21 +37,21 @@ export default function Home() {
             <div className="space-y-6">
               <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm">
                 <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-5 h-5" />
-                <span className="text-sm text-white font-medium">BNB Chain Native Credit Infrastructure</span>
+                <span className="text-sm text-white font-medium">Verified Identity for Global DeFi</span>
               </div>
               
               <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
                 <span className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 bg-clip-text text-transparent">
-                  RealMint
+                  VerityPass
                 </span>
                 <br />
-                <span className="text-white">Build Credit,</span>
+                <span className="text-white">Get Verified,</span>
                 <br />
-                <span className="text-gray-300">Unlock Liquidity</span>
+                <span className="text-gray-300">Access DeFi</span>
               </h1>
 
               <p className="text-xl text-gray-300 leading-relaxed max-w-2xl">
-                RealMint combines identity attestations, bank-linked signals, and transparent
+                VerityPass combines identity attestations, bank-linked signals, and transparent
                 risk controls to power practical onchain lending on BNB Chain.
               </p>
             </div>

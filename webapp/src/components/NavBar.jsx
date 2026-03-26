@@ -246,7 +246,7 @@ export default function NavBar() {
                 <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-xl font-bold text-white">RealMint</div>
+                <div className="text-xl font-bold text-white">VerityPass</div>
                 <div className="text-xs text-gray-400 -mt-1">BNB Credit Infrastructure</div>
               </div>
             </Link>
@@ -321,7 +321,7 @@ export default function NavBar() {
                   <img src="/bnb-chain-logo.svg" alt="BNB Chain" className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-white font-bold text-lg leading-tight">RealMint</div>
+                  <div className="text-white font-bold text-lg leading-tight">VerityPass</div>
                   <div className="text-slate-400 text-sm truncate">BNB Lending Interface</div>
                 </div>
               </div>
@@ -362,7 +362,7 @@ export default function NavBar() {
             {/* Additional Info Section */}
             <div className="absolute bottom-0 left-0 right-0 p-5 border-t border-white/10 bg-slate-950/70">
               <div className="text-xs text-slate-400 text-center">
-                RealMint v1.0 • Secure credit primitives on BNB
+                VerityPass v1.0 • Verified Identity for DeFi
               </div>
             </div>
           </nav>

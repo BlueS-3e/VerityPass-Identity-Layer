@@ -1,6 +1,6 @@
-# RealMint Platform
+# RealMint Platform: VerityPass Identity Layer
 
-> Bringing self-sovereign identity to emerging markets through blockchain-powered attestation and verification
+> Bringing self-sovereign identity to DeFi through VerityPass blockchain-powered attestation and verification
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/BlueS-3e/realmint-platform)](https://github.com/BlueS-3e/realmint-platform/issues)
@@ -9,7 +9,7 @@
 
 ## 🎯 Overview
 
-**RealMint** is a decentralized platform enabling secure, self-sovereign identity management for emerging market participants. Users can register identity attestations on-chain, access DeFi services with verified credentials, and maintain full control of their data without intermediaries.
+**RealMint Platform** combines smart contracts, APIs, and **VerityPass** - a verified identity dApp for emerging markets. Users can register identity proofs on-chain via VerityPass, access DeFi services with verified credentials, and maintain full control of their data without intermediaries.
 
 The platform combines:
 - **Smart Contracts** (Solidity) for immutable attestation registry and launchpad logic

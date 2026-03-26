@@ -54,7 +54,7 @@ export default function Guide() {
           </div>
           
           <h1 className="text-5xl lg:text-6xl font-bold text-white mb-4">
-            RealMint
+            VerityPass
             <span className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent"> Ops Guide</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
@@ -248,7 +248,7 @@ export default function Guide() {
             <div className="p-6 rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-white/10 backdrop-blur-sm">
               <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
                 <span>⭐</span>
-                Why RealMint?
+                Why VerityPass?
               </h3>
               <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex items-center gap-2">

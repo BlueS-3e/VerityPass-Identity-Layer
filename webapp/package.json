@@ -1,6 +1,7 @@
 {
-  "name": "realmint-launchpad",
+  "name": "veritypass",
   "version": "1.0.0",
+  "description": "VerityPass - Verified Identity for DeFi powered by RealMint Platform",
   "type": "module",
   "scripts": {
     "dev": "sh ./scripts/dev.sh",
