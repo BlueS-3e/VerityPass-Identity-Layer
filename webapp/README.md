@@ -1,10 +1,10 @@
-# RealMint Launchpad - Decentralized dApp
+# VerityPass - Verified Identity for DeFi
 
-Welcome to **RealMint Launchpad**, a decentralized application built on blockchain that enables secure identity attestation and on-chain verification for emerging market participants. This dApp bridges traditional KYC/AML workflows with blockchain-based sovereignty, empowering users to maintain control of their identity data.
+Welcome to **VerityPass**, a decentralized application that enables secure identity attestation and on-chain verification for emerging market participants. Get verified, get access, get VerityPass. This dApp bridges traditional KYC/AML workflows with blockchain-based sovereignty, empowering users to maintain control of their identity data while accessing DeFi opportunities worldwide.
 
-## 🎯 What is RealMint Launchpad?
+## 🎯 What is VerityPass?
 
-RealMint Launchpad is a web3 application that allows users to:
+VerityPass is a web3 identity verification application that allows users to:
 
 - **Register Attestations**: Submit identity attestations (approved by verified issuers)
 - **Verify Identity**: Access on-chain verification of your identity and credentials
@@ -43,24 +43,24 @@ The app will open at `http://localhost:5173` (or the URL printed by Vite).
 - Select your wallet provider (MetaMask, WalletConnect, etc.)
 - Approve the connection request
 
-### 2. Navigate to Attestation Flow
-- Go to the **`/attest`** route or click "Attest" in the sidebar
+### 2. Navigate to Verification Flow
+- Go to the **`/attest`** route or click "Verify" in the sidebar
 - This page lets you:
-  - Submit a new attestation record
+  - Submit a new identity verification record
   - Sign with EIP-712 typed signatures (recommended for security)
-  - Verify the signature on-chain
+  - Publish your verified identity on-chain
 
-### 3. Verify Your Identity
-- View your published attestations
-- Check on-chain verification status
-- Use your verified identity in other DeFi applications
+### 3. Access DeFi with Your Verified Identity
+- View your published verifications
+- Check your on-chain reputation status
+- Use your VerityPass to participate in DeFi protocols with confidence
 
 ## ✨ Key Features
 
 ### Security-First Design
 - **EIP-712 Typed Signatures**: Cryptographically secure, human-readable signing (not raw hex)
 - **Smart Contract Audits**: Core contracts audited for reentrancy, overflow/underflow protection
-- **Verified Issuers**: Only trusted issuers (KYC providers, identity services) can publish attestations
+- **Trusted Verifiers**: Only approved KYC providers and identity services can issue verifications
 
 ### Decentralized Architecture
 - **Self-Sovereign**: Users own their private keys and identity data

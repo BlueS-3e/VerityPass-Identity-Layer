@@ -13,7 +13,7 @@
 
 The platform combines:
 - **Smart Contracts** (Solidity) for immutable attestation registry and launchpad logic
-- **React Webapp** (Vite) for intuitive identity verification UX
+- **VerityPass Webapp** (React + Vite) for intuitive identity verification UX
 - **Python API** (Flask) for backend services and integrations
 - **Blockchain Network** (BSC Testnet, mainnet Q2 2026)
 
@@ -92,7 +92,7 @@ npm test
 - **RealMintLaunchpad**: `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a`
 - **Chain ID**: 97 (BSC Testnet)
 
-### 2. Frontend dApp (React + Vite)
+### 2. Frontend dApp - VerityPass (React + Vite)
 
 ```bash
 cd webapp
@@ -100,9 +100,9 @@ npm install
 npm run dev
 ```
 
-Opens at `http://localhost:5173` → Navigate to `/attest` for attestation flow
+Opens at `http://localhost:5173` → Navigate to `/attest` for identity verification flow
 
-[Full dApp Setup →](webapp/README.md)
+[Full VerityPass Setup →](webapp/README.md)
 
 ### 3. Backend API (Python/Flask)
 
