@@ -140,25 +140,25 @@ export default function LendingWidget({ provider }) {
   };
 
   return (
-    <div className="bg-white/5 p-4 rounded">
-      <h4 className="text-white mb-2">Lending Widget</h4>
+    <div className="dark:bg-white/5 bg-gray-50 p-4 rounded">
+      <h4 className="dark:text-white text-gray-900 mb-2 font-semibold">Lending Widget</h4>
       <div className="space-y-2">
         {/* Protocol is fixed to Aave for the demo */}
         <div>
-          <label className="text-sm text-gray-300">Collateral Address</label>
-          <input value={collateralAddr} onChange={(e)=>setCollateralAddr(e.target.value)} className="w-full p-2 rounded bg-white/5" />
+          <label className="text-sm dark:text-gray-300 text-gray-700 font-medium">Collateral Address</label>
+          <input value={collateralAddr} onChange={(e)=>setCollateralAddr(e.target.value)} className="w-full p-2 rounded dark:bg-white/5 bg-white border border-gray-200 dark:border-gray-700 dark:text-white text-gray-900 text-sm" />
         </div>
         <div>
-          <label className="text-sm text-gray-300">Collateral Amount</label>
-          <input value={collateralAmount} onChange={(e)=>setCollateralAmount(e.target.value)} placeholder="e.g. 100.0" className="w-full p-2 rounded bg-white/5" />
+          <label className="text-sm dark:text-gray-300 text-gray-700 font-medium">Collateral Amount</label>
+          <input value={collateralAmount} onChange={(e)=>setCollateralAmount(e.target.value)} placeholder="e.g. 100.0" className="w-full p-2 rounded dark:bg-white/5 bg-white border border-gray-200 dark:border-gray-700 dark:text-white text-gray-900 text-sm" />
         </div>
         <div>
-          <label className="text-sm text-gray-300">Borrow Asset Address</label>
-          <input value={borrowAddr} onChange={(e)=>setBorrowAddr(e.target.value)} className="w-full p-2 rounded bg-white/5" />
+          <label className="text-sm dark:text-gray-300 text-gray-700 font-medium">Borrow Asset Address</label>
+          <input value={borrowAddr} onChange={(e)=>setBorrowAddr(e.target.value)} className="w-full p-2 rounded dark:bg-white/5 bg-white border border-gray-200 dark:border-gray-700 dark:text-white text-gray-900 text-sm" />
         </div>
         <div>
-          <label className="text-sm text-gray-300">Borrow Amount</label>
-          <input value={borrowAmount} onChange={(e)=>setBorrowAmount(e.target.value)} placeholder="e.g. 50.0" className="w-full p-2 rounded bg-white/5" />
+          <label className="text-sm dark:text-gray-300 text-gray-700 font-medium">Borrow Amount</label>
+          <input value={borrowAmount} onChange={(e)=>setBorrowAmount(e.target.value)} placeholder="e.g. 50.0" className="w-full p-2 rounded dark:bg-white/5 bg-white border border-gray-200 dark:border-gray-700 dark:text-white text-gray-900 text-sm" />
         </div>
         <div className="flex gap-2 mt-2">
           <button onClick={propose} className="px-3 py-2 bg-indigo-600 text-white rounded">Propose Loan</button>
@@ -171,26 +171,26 @@ export default function LendingWidget({ provider }) {
           </button>
         </div>
         {status && status.plan && (
-          <div className="mt-3 text-sm text-gray-200">
-            <div className="font-medium">Planned Steps:</div>
-            <ol className="list-decimal list-inside">
+          <div className="mt-3 text-sm dark:text-gray-200 text-gray-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
+            <div className="font-medium dark:text-blue-300 text-blue-900 mb-2">Planned Steps:</div>
+            <ol className="list-decimal list-inside space-y-1">
               {status.plan.steps.map((s, idx) => (
-                <li key={idx} className="mt-1">{s.note} — to: <code className="text-xs">{s.to}</code></li>
+                <li key={idx} className="mt-1 text-sm">{s.note} — to: <code className="text-xs dark:bg-gray-800 bg-gray-200 dark:text-gray-300 text-gray-700 px-1 py-0.5 rounded">{s.to}</code></li>
               ))}
             </ol>
           </div>
         )}
 
         {status && typeof status.projectedHealthFactor !== 'undefined' && (
-          <div className="mt-3">
-            <div className="text-sm font-medium">Projected Health Factor</div>
+          <div className="mt-3 bg-purple-50 dark:bg-purple-900/20 p-3 rounded">
+            <div className="text-sm font-medium dark:text-purple-300 text-purple-900 mb-2">Projected Health Factor</div>
             <div className="mt-1 flex items-center gap-2">
               <span
                 className={`px-2 py-1 rounded text-xs font-semibold ${status.healthWarning === 'danger' ? 'bg-red-600 text-white' : status.healthWarning === 'warning' ? 'bg-yellow-500 text-black' : 'bg-green-600 text-white'}`}
               >
                 {isFinite(status.projectedHealthFactor) ? status.projectedHealthFactor.toFixed(2) : '∞'}
               </span>
-              <span className="text-xs text-gray-300">
+              <span className="text-xs dark:text-gray-300 text-gray-700">
                 {status.healthWarning === 'danger' && 'Projected health factor is below 1. Borrow would likely be liquidated — execution disabled.'}
                 {status.healthWarning === 'warning' && 'Projected health factor is low (<1.3). Consider adding more collateral or borrowing less.'}
                 {status.healthWarning === 'ok' && 'Projected health factor looks healthy.'}
@@ -199,10 +199,10 @@ export default function LendingWidget({ provider }) {
           </div>
         )}
         {status && status.executed && (
-          <div className="mt-3 text-sm text-gray-200">Executed: <pre className="text-xs">{JSON.stringify(status.executed, null, 2)}</pre></div>
+          <div className="mt-3 text-sm dark:text-gray-200 text-gray-700 bg-green-50 dark:bg-green-900/20 p-3 rounded">Executed: <pre className="text-xs dark:bg-gray-800 bg-gray-200 dark:text-gray-300 text-gray-700 p-2 rounded mt-2 overflow-x-auto">{JSON.stringify(status.executed, null, 2)}</pre></div>
         )}
         {status && status.error && (
-          <div className="mt-3 text-red-400">Error: {status.error}</div>
+          <div className="mt-3 dark:text-red-400 text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded font-medium">Error: {status.error}</div>
         )}
       </div>
     </div>
