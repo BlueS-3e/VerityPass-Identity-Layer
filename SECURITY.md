@@ -1,6 +1,6 @@
 # SECURITY.md
 
-This document describes recommended security practices for deploying and operating RealMint.
+This document describes recommended security practices for deploying and operating VerityPass.
 
 ## Secrets
 

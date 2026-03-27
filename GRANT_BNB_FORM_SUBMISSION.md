@@ -3,14 +3,14 @@
 ## Form Field Responses
 
 ### Company / Team Name
-**RealMint Platform**
+**VerityPass Platform**
 
 ---
 
 ### Brief Company Description
 **What is your company's product(s)? What problem(s) is it solving?**
 
-RealMint is a decentralized financial identity and attestation platform built on BNB Chain that solves critical barriers to DeFi participation for emerging markets and underbanked populations. We bridge traditional financial data (income, credit history, employment) with blockchain infrastructure, enabling:
+VerityPass is a decentralized financial identity and attestation platform built on BNB Chain that solves critical barriers to DeFi participation for emerging markets and underbanked populations. We bridge traditional financial data (income, credit history, employment) with blockchain infrastructure, enabling:
 
 1. **Fair onboarding**: Individuals without traditional credit access can establish verifiable financial identity
 2. **Risk-appropriate capital access**: Real-time oracle-driven pricing eliminates manual underwriting delays
@@ -24,7 +24,7 @@ RealMint is a decentralized financial identity and attestation platform built on
 ---
 
 ### Link to technical docs or whitepaper
-**https://github.com/BlueS-3e/realmint-platform/blob/main/smart-contract-spec.md**
+**https://github.com/BlueS-3e/veritypass-platform/blob/main/smart-contract-spec.md**
 
 ---
 
@@ -44,7 +44,7 @@ We will develop a production-ready DeFi platform enabling:
    - Support EIP-712 signature verification for secure off-chain attestations
 
 2. **Smart Launchpad** (Months 2-4)
-   - RealMintLaunchpad contract with dynamic fee pricing
+   - VerityPassLaunchpad contract with dynamic fee pricing
    - Oracle integration for real-time token valuations
    - Referral system with tiered rebates for bootstrapping network effects
 
@@ -128,7 +128,7 @@ We will develop a production-ready DeFi platform enabling:
 | **Aave** | On-chain lending aggregation | Limited (Polygon focus) | Collateral-only | Mature, $10B+ TVL |
 | **Compound** | Algorithmic rate model | None | Collateral-only | Established |
 | **Splice Finance** | Income-based lending | None | Traditional credit | Early |
-| **RealMint (Ours)** | Identity + attestation primitives | BSC primary | Attestation-driven | Prototype → Production |
+| **VerityPass (Ours)** | Identity + attestation primitives | BSC primary | Attestation-driven | Prototype → Production |
 
 **Our Advantages**:
 - First to combine financial identities + DeFi on BNB
@@ -175,7 +175,7 @@ We will develop a production-ready DeFi platform enabling:
 ### Fundraising History (Size, Date, Funders)
 **Size, Date, Funders**
 
-No prior fundraising. RealMint is bootstrapped by core team:
+No prior fundraising. VerityPass is bootstrapped by core team:
 - $2,000 personal investment (infrastructure, testnet deployment, security tools)
 - In-kind contributions: developer time (~200 hours unpaid, equivalent $15,000 market rate)
 - This BNB grant ($60,000) will be first institutional funding
@@ -192,19 +192,19 @@ Token launch planned for Q2 2026 (post-audit) for governance and platform incent
 ---
 
 ### Name of legal entity
-**RealMint Labs Inc.** (or jurisdiction-appropriate equivalent)
+**VerityPass Labs Inc.** (or jurisdiction-appropriate equivalent)
 
 *Note: Currently operating as unincorporated collaboration; will formalize entity upon grant approval.*
 
 ---
 
 ### Your TG handle
-**@realmint_lead** (or appropriate Telegram handle)
+**@veritypass_lead** (or appropriate Telegram handle)
 
 ---
 
 ### Your email address
-**team@realmint.io** (or lead's email address)
+**team@veritypass.io** (or lead's email address)
 
 ---
 
@@ -229,7 +229,7 @@ Token launch planned for Q2 2026 (post-audit) for governance and platform incent
 - Regular community updates and governance
 
 **Expected Outcomes** (6-month horizon):
-- 50k+ verified identities on RealMint
+- 50k+ verified identities on VerityPass
 - $100M+ TVL projected (conservative)
 - 10+ developer teams cloning attestation infrastructure
 - Featured in BNB Chain ecosystem highlights
@@ -244,5 +244,5 @@ Token launch planned for Q2 2026 (post-audit) for governance and platform incent
 - [ ] Verify technical documentation link is working
 - [ ] Record demo video (3-5 min testnet walkthrough)
 - [ ] Submit through https://www.bnbchain.org/en/developers/developer-programs/builder-grant
-- [ ] Tweet announcement: @RealMint @BNBChain #BuildOnBNB
+- [ ] Tweet announcement: @VerityPass @BNBChain #BuildOnBNB
 - [ ] Email: developers@bnbchain.org with application link

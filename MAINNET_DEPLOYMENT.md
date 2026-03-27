@@ -1,8 +1,8 @@
-# RealMint Mainnet Deployment Guide
+# VerityPass Mainnet Deployment Guide
 
 ## Current Status
-✅ dApp live on Vercel: https://realmint-platform.vercel.app
-✅ Backend live on Render: https://realmint-api.onrender.com
+✅ dApp live on Vercel: https://veritypass-platform.vercel.app
+✅ Backend live on Render: https://veritypass-api.onrender.com
 ✅ BNB-compatible contracts and wallet flow ready
 ✅ Ready for mainnet deployment
 
@@ -50,7 +50,7 @@ Save these addresses for the backend configuration:
 - AttestationRegistry
 - IdentityRegistry
 - CreditScoreManager
-- RealMintLaunchpad
+- VerityPassLaunchpad
 
 ---
 
@@ -63,12 +63,12 @@ ENVIRONMENT=production
 ATTESTATION_REGISTRY_ADDRESS=0x...  # Mainnet address
 IDENTITY_REGISTRY_ADDRESS=0x...
 CREDIT_SCORE_MANAGER_ADDRESS=0x...
-REALMINT_LAUNCHPAD_ADDRESS=0x...
+VERITYPASS_LAUNCHPAD_ADDRESS=0x...
 WEB3_PROVIDER_URL=https://eth.llamarpc.com  # or Infura/Alchemy
 ```
 
 ### 2. Update Render Environment Variables
-Go to **Render Dashboard** → `realmint-api` → **Environment**:
+Go to **Render Dashboard** → `veritypass-api` → **Environment**:
 
 ```
 ENVIRONMENT=production
@@ -76,15 +76,15 @@ CHAIN_ID=56  # 56 for BNB Chain, 97 for BNB testnet
 ATTESTATION_REGISTRY_ADDRESS=<mainnet-address>
 IDENTITY_REGISTRY_ADDRESS=<mainnet-address>
 CREDIT_SCORE_MANAGER_ADDRESS=<mainnet-address>
-REALMINT_LAUNCHPAD_ADDRESS=<mainnet-address>
+VERITYPASS_LAUNCHPAD_ADDRESS=<mainnet-address>
 WEB3_PROVIDER_URL=https://bsc-dataseed.binance.org
-ALLOWED_ORIGINS=https://realmint-platform.vercel.app,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
+ALLOWED_ORIGINS=https://veritypass-platform.vercel.app,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
 ```
 
 ### 3. Redeploy Backend
 ```bash
 # Render will auto-redeploy when env vars change, or manually:
-# Go to Render → realmint-api → Manual Deploy
+# Go to Render → veritypass-api → Manual Deploy
 ```
 
 ---
@@ -93,7 +93,7 @@ ALLOWED_ORIGINS=https://realmint-platform.vercel.app,http://localhost:3000,http:
 
 ### 1. Update `webapp/.env.production`
 ```bash
-VITE_API_BASE=https://realmint-api.onrender.com
+VITE_API_BASE=https://veritypass-api.onrender.com
 VITE_WALLETCONNECT_PROJECT_ID=<your-project-id>
 VITE_DEFAULT_CHAIN_ID=56  # 56 for BNB Chain mainnet, 97 for testnet
 ```
@@ -119,7 +119,7 @@ const NETWORK_CONFIG = {
 **Vercel Dashboard** → Project Settings → **Environment Variables**:
 
 ```
-VITE_API_BASE=https://realmint-api.onrender.com
+VITE_API_BASE=https://veritypass-api.onrender.com
 VITE_WALLETCONNECT_PROJECT_ID=<your-project-id>
 VITE_DEFAULT_CHAIN_ID=56
 ```
@@ -149,10 +149,10 @@ https://bscscan.com/address/<contract-address>
 ### 2. Test Frontend
 ```bash
 # Visit production dApp
-https://realmint-platform.vercel.app
+https://veritypass-platform.vercel.app
 
 # Test in DevTools Console:
-console.log(window.__RUNTIME_API_BASE)  # Should show https://realmint-api.onrender.com
+console.log(window.__RUNTIME_API_BASE)  # Should show https://veritypass-api.onrender.com
 
 # Test wallet connection (use mainnet wallet)
 # Test key features:
@@ -165,16 +165,16 @@ console.log(window.__RUNTIME_API_BASE)  # Should show https://realmint-api.onren
 ### 3. Test Backend API
 ```bash
 # Check health endpoint
-curl https://realmint-api.onrender.com/api/version
+curl https://veritypass-api.onrender.com/api/version
 
 # Check frontend config
-curl https://realmint-api.onrender.com/api/frontend-config
+curl https://veritypass-api.onrender.com/api/frontend-config
 
 # Verify correct chain ID and contract addresses
 ```
 
 ### 4. Monitor Production
-- Check Render logs: `Render Dashboard` → `realmint-api` → **Logs**
+- Check Render logs: `Render Dashboard` → `veritypass-api` → **Logs**
 - Check Vercel logs: `Vercel Dashboard` → Project → **Deployments**
 - Monitor contract interactions on blockchain explorers
 - Check for user reports of issues

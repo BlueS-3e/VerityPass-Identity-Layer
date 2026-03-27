@@ -46,12 +46,12 @@ async function main() {
     }
   }
 
-  // Deploy RealMintLaunchpad
-  console.log('Deploying RealMintLaunchpad with priceFeed:', priceFeed || '0x0');
-  const Launchpad = await hre.ethers.getContractFactory('RealMintLaunchpad');
+  // Deploy VerityPassLaunchpad
+  console.log('Deploying VerityPassLaunchpad with priceFeed:', priceFeed || '0x0');
+  const Launchpad = await hre.ethers.getContractFactory('VerityPassLaunchpad');
   const launchpad = await Launchpad.deploy(priceFeed || hre.ethers.ZeroAddress);
   await launchpad.waitForDeployment();
-  console.log('RealMintLaunchpad deployed at', launchpad.target);
+  console.log('VerityPassLaunchpad deployed at', launchpad.target);
 
   // Deploy AttestationRegistry
   console.log('Deploying AttestationRegistry...');
@@ -60,7 +60,7 @@ async function main() {
   await registry.waitForDeployment();
   console.log('AttestationRegistry deployed at', registry.target);
 
-  deployments.RealMintLaunchpad = launchpad.target;
+  deployments.VerityPassLaunchpad = launchpad.target;
   deployments.AttestationRegistry = registry.target;
   deployments.priceFeed = priceFeed || null;
 

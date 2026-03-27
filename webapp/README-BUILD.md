@@ -31,8 +31,8 @@ This repository includes `webapp/Dockerfile.build` which produces a clean produc
 # from repo root
 npm --prefix webapp run build:docker
 # or manually
-docker build -f webapp/Dockerfile.build -t realmint-webapp-build webapp
-docker create --name tmp-build realmint-webapp-build
+docker build -f webapp/Dockerfile.build -t veritypass-webapp-build webapp
+docker create --name tmp-build veritypass-webapp-build
 docker cp tmp-build:/app/dist ./webapp/dist
 docker rm -f tmp-build
 ```

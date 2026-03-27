@@ -5,7 +5,7 @@ set -euo pipefail
 # Usage: ./scripts/build_webapp_in_docker.sh
 
 APP_DIR=$(cd "$(dirname "$0")/.." && pwd)
-IMAGE_NAME=realmint-web-build
+IMAGE_NAME=veritypass-web-build
 
 echo "Building webapp inside Docker image $IMAGE_NAME..."
 docker build --network=host -f "$APP_DIR/webapp/Dockerfile.build" -t "$IMAGE_NAME" "$APP_DIR/webapp"
@@ -26,7 +26,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
 WEBAPP_DIR="$ROOT/webapp"
-IMAGE_TAG="realmint-web-build:latest"
+IMAGE_TAG="veritypass-web-build:latest"
 
 echo "Building webapp in Docker..."
 docker build -f "$WEBAPP_DIR/Dockerfile.build" -t $IMAGE_TAG "$WEBAPP_DIR"

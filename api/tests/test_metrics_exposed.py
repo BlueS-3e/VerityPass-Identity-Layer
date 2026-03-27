@@ -48,7 +48,7 @@ def test_metrics_expose_after_pin(monkeypatch):
     m = client.get('/metrics')
     assert m.status_code == 200
     body = m.get_data(as_text=True)
-    assert 'realmint_attestation_pin_success_total' in body
-    assert 'realmint_attestation_pin_failure_total' in body
-    assert 'realmint_attestation_validation_failure_total' in body
-    assert 'realmint_attestation_pin_duration_seconds' in body
+    assert 'veritypass_attestation_pin_success_total' in body
+    assert 'veritypass_attestation_pin_failure_total' in body
+    assert 'veritypass_attestation_validation_failure_total' in body
+    assert 'veritypass_attestation_pin_duration_seconds' in body

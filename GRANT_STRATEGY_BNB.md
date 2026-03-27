@@ -1,4 +1,4 @@
-# BNB Chain Grant Strategy - RealMint
+# BNB Chain Grant Strategy - VerityPass
 
 ## Mission
 Secure $60K from **BNB Chain Builders Fund** to fund 6-month roadmap for identity-based lending infrastructure on BSC.
@@ -13,7 +13,7 @@ Secure $60K from **BNB Chain Builders Fund** to fund 6-month roadmap for identit
 **Week 1-2 (Mar 25 - Apr 8)**
 - [x] Deploy to BSC Testnet (chain 97) - **DONE**
   - AttestationRegistry: `0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0`
-  - RealMintLaunchpad: `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a`
+  - VerityPassLaunchpad: `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a`
 - [x] Create BNB-specific grant materials - **DONE**
 - [ ] Run testnet dApp for 1 week; collect error logs
 - [ ] Create 3-5 minute demo video (wallet connect → attestation creation → publish)
@@ -72,7 +72,7 @@ Secure $60K from **BNB Chain Builders Fund** to fund 6-month roadmap for identit
 
 **Mainnet Deployment**
 - [ ] Deploy AttestationRegistry to chain 56
-- [ ] Deploy RealMintLaunchpad to chain 56
+- [ ] Deploy VerityPassLaunchpad to chain 56
 - [ ] Verify on BSCScan
 - [ ] Update webapp config.js with mainnet addresses
 - [ ] Alert community: mainnet live 🚀
@@ -99,12 +99,12 @@ Subject: Open-source identity infrastructure for BNB Chain
 
 Hi [Name],
 
-RealMint is an open-source identity + attestation layer enabling under-collateralized 
+VerityPass is an open-source identity + attestation layer enabling under-collateralized 
 lending on BNB Chain. We align with your 2025 H2 priorities (Yield Discovery, DeFi 2.0).
 
 We've just deployed to BNB Testnet (Chain 97):
 - AttestationRegistry: 0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0
-- RealMintLaunchpad: 0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a
+- VerityPassLaunchpad: 0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a
 
 We're applying to the Builders Fund and would welcome your feedback on:
 1. Identity primitives for BNB DeFi
@@ -218,7 +218,7 @@ Thanks,
 ## Final Messaging (For Application Cover Letter)
 
 ```
-RealMint is building identity-based lending infrastructure as a public good on BNB Chain.
+VerityPass is building identity-based lending infrastructure as a public good on BNB Chain.
 
 We've shipped testnet, proven our tech stack, and gotten early validator interest.
 Now we're seeking $60K to fund mainnet deployment, security audit, and 6-month roadmap.

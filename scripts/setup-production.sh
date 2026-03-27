@@ -7,8 +7,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-echo "🚀 RealMint Production Deployment Setup"
-echo "======================================="
+echo "🚀 VerityPass Production Deployment Setup"
+echo "========================================"
 echo ""
 
 # Color codes
@@ -82,7 +82,7 @@ LAUNCHPAD_ADDRESS=$MAINNET_ADDRESS
 PRICE_FEED_ADDRESS=0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
 
 # Database & Cache
-DATABASE_URL=postgresql://user:pass@host:5432/realmint_prod
+DATABASE_URL=postgresql://user:pass@host:5432/veritypass_prod
 REDIS_URL=redis://user:pass@host:6379
 
 # Session

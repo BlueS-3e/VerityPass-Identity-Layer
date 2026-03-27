@@ -1,15 +1,15 @@
-# RealMint Platform: VerityPass Identity Layer
+# VerityPass Platform: Decentralized Identity for DeFi
 
 > Bringing self-sovereign identity to DeFi through VerityPass blockchain-powered attestation and verification
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/BlueS-3e/realmint-platform)](https://github.com/BlueS-3e/realmint-platform/issues)
+[![GitHub issues](https://img.shields.io/github/issues/BlueS-3e/veritypass-platform)](https://github.com/BlueS-3e/veritypass-platform/issues)
 [![Node.js 22](https://img.shields.io/badge/Node.js-22%20LTS-green)](https://nodejs.org/)
 [![Solidity 0.8.20](https://img.shields.io/badge/Solidity-0.8.20-blue)](https://docs.soliditylang.org/)
 
 ## 🎯 Overview
 
-**RealMint Platform** combines smart contracts, APIs, and **VerityPass** - a verified identity dApp for emerging markets. Users can register identity proofs on-chain via VerityPass, access DeFi services with verified credentials, and maintain full control of their data without intermediaries.
+**VerityPass Platform** combines smart contracts, APIs, and **VerityPass** - a verified identity dApp for emerging markets. Users can register identity proofs on-chain via VerityPass, access DeFi services with verified credentials, and maintain full control of their data without intermediaries.
 
 The platform combines:
 - **Smart Contracts** (Solidity) for immutable attestation registry and launchpad logic
@@ -40,10 +40,10 @@ The platform combines:
 ## 📦 What's Included
 
 ```
-realmint-platform/
+veritypass-platform/
 ├── contracts/              # Smart contracts (Solidity 0.8.20)
 │   ├── AttestationRegistry.sol      # Identity attestation storage
-│   ├── RealMintLaunchpad.sol        # Dynamic fee launchpad
+│   ├── VerityPassLaunchpad.sol        # Dynamic fee launchpad
 │   └── test/                        # 11 passing contract tests
 ├── api/                    # Backend services (Python/Flask)
 │   ├── app.py             # Main Flask application
@@ -89,7 +89,7 @@ npm test
 
 **Current Testnet Deployment:**
 - **AttestationRegistry**: `0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0`
-- **RealMintLaunchpad**: `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a`
+- **VerityPassLaunchpad**: `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a`
 - **Chain ID**: 97 (BSC Testnet)
 
 ### 2. Frontend dApp - VerityPass (React + Vite)
@@ -212,8 +212,8 @@ We welcome contributors! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 **Dev Setup:**
 ```bash
-git clone https://github.com/BlueS-3e/realmint-platform.git
-cd realmint-platform
+git clone https://github.com/BlueS-3e/veritypass-platform.git
+cd veritypass-platform
 # See respective folders (contracts/, api/, webapp/) for setup
 ```
 
@@ -224,15 +224,15 @@ cd realmint-platform
 - Full test coverage validation
 - Production deployment checklist
 
-For security concerns, email: **team@realmint.io**
+For security concerns, email: **team@veritypass.io**
 
 See [SECURITY.md](SECURITY.md) for detailed threat model and security considerations.
 
 ## 📞 Contact & Community
 
-- **Email**: team@realmint.io
-- **GitHub**: [BlueS-3e/realmint-platform](https://github.com/BlueS-3e/realmint-platform)
-- **Twitter**: [@realmint_io](https://twitter.com/realmint_io)
+- **Email**: team@veritypass.io
+- **GitHub**: [BlueS-3e/veritypass-platform](https://github.com/BlueS-3e/veritypass-platform)
+- **Twitter**: [@veritypass_io](https://twitter.com/veritypass_io)
 
 ## 📄 License
 
@@ -249,7 +249,7 @@ This project is licensed under the **MIT License** — see [LICENSE](LICENSE) fi
 
 <div align="center">
 
-**Built with ❤️ by the RealMint Labs team**
+**Built with ❤️ by the VerityPass Labs team**
 
 *Bringing self-sovereign identity to emerging markets through blockchain innovation*
 

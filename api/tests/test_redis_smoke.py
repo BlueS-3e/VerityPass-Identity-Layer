@@ -12,7 +12,7 @@ def test_redis_ping_and_set_get():
     except Exception as e:
         pytest.skip(f"Redis not available: {e}")
     # set/get
-    key = 'realmint_smoke_test_key'
+    key = 'veritypass_smoke_test_key'
     r.set(key, 'ok')
     assert r.get(key).decode('utf-8') == 'ok'
     r.delete(key)

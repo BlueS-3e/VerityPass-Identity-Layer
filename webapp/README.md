@@ -1,6 +1,6 @@
 # VerityPass - Your Verified Identity for Global DeFi
 
-Welcome to **VerityPass**, the decentralized identity verification application from the RealMint Platform. Get your identity verified on-chain and unlock access to DeFi services worldwide. VerityPass bridges traditional KYC/AML workflows with blockchain-based sovereignty, empowering users to maintain control of their identity data while participating in DeFi protocols with confidence.
+Welcome to **VerityPass**, the decentralized identity verification application. Get your identity verified on-chain and unlock access to DeFi services worldwide. VerityPass bridges traditional KYC/AML workflows with blockchain-based sovereignty, empowering users to maintain control of their identity data while participating in DeFi protocols with confidence.
 
 ## 🎯 What is VerityPass?
 
@@ -24,8 +24,8 @@ The platform is designed for **emerging market participants** who need decentral
 
 ```bash
 # Clone the repository
-git clone https://github.com/BlueS-3e/realmint-platform.git
-cd realmint-platform/webapp
+git clone https://github.com/BlueS-3e/veritypass-platform.git
+cd veritypass-platform/webapp
 
 # Install dependencies
 npm install
@@ -117,7 +117,7 @@ Create a `.env.local` file (or `.env`) with:
 ```env
 VITE_NETWORK_ID=97
 VITE_ATTESTATION_REGISTRY=0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0
-VITE_REALMINT_LAUNCHPAD=0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a
+VITE_VERITYPASS_LAUNCHPAD=0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a
 VITE_RPC_URL=https://data-seed-prebsc-1-a.binance.org:8545
 ```
 
@@ -140,10 +140,10 @@ npm run build
 
 ```bash
 # Build image
-docker build -f Dockerfile.build -t realmint-webapp:latest .
+docker build -f Dockerfile.build -t veritypass-webapp:latest .
 
 # Run container
-docker run -p 3000:80 realmint-webapp:latest
+docker run -p 3000:80 veritypass-webapp:latest
 ```
 
 ## 🔒 Security Best Practices
@@ -177,9 +177,9 @@ docker run -p 3000:80 realmint-webapp:latest
 
 ## 📧 Support & Community
 
-- **Report Bugs**: [GitHub Issues](https://github.com/BlueS-3e/realmint-platform/issues)
-- **Security Concerns**: team@realmint.io
-- **Join Discord**: [RealMint Community](#) (link coming soon)
+- **Report Bugs**: [GitHub Issues](https://github.com/BlueS-3e/veritypass-platform/issues)
+- **Security Concerns**: team@veritypass.io
+- **Join Discord**: [VerityPass Community](#) (link coming soon)
 
 ## 📄 License
 
@@ -203,11 +203,11 @@ We welcome contributions! Please see [CONTRIBUTING.md](../CONTRIBUTING.md) for g
 
 ## 📞 Contact
 
-- **Email**: team@realmint.io
-- **GitHub**: https://github.com/BlueS-3e/realmint-platform
-- **Twitter**: [@realmint_io](https://twitter.com/realmint_io)
+- **Email**: team@veritypass.io
+- **GitHub**: https://github.com/BlueS-3e/veritypass-platform
+- **Twitter**: [@veritypass_io](https://twitter.com/veritypass_io)
 
 ---
 
-**Built with ❤️ by the RealMint Labs team**  
+**Built with ❤️ by the VerityPass Labs team**  
 *VerityPass - Your Verified Identity in DeFi*

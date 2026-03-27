@@ -8,7 +8,7 @@ Required/important envs:
 - PUBLIC_API_BASE or ENABLE_PROXY_FIX: ensure frontend receives correct public API base
 - DISABLE_PASSWORD_LOGIN and OIDC_* envs: when disabling password login, configure OIDC
 
-Run behind nginx + Gunicorn. Example systemd template is available at `deploy/realmint-api.service.template`.
+Run behind nginx + Gunicorn. Example systemd template is available at `deploy/veritypass-api.service.template`.
 
 Security checklist (quick):
 - Set `SECRET_KEY` to a secure value
@@ -30,11 +30,11 @@ Local development vs production
 
 Systemd / service deployment example
 -----------------------------------
-When using systemd, prefer an environment file stored with restricted permissions and referenced from the unit file. Example `EnvironmentFile` usage (in `deploy/realmint-api.service.template`):
+When using systemd, prefer an environment file stored with restricted permissions and referenced from the unit file. Example `EnvironmentFile` usage (in `deploy/veritypass-api.service.template`):
 
-EnvironmentFile=/etc/realmint/realmint-api.env
+EnvironmentFile=/etc/veritypass/veritypass-api.env
 
-Where `/etc/realmint/realmint-api.env` contains lines like:
+Where `/etc/veritypass/veritypass-api.env` contains lines like:
 
 SECRET_KEY=changeme
 REDIS_URL=redis://:password@redis.example:6379/0
@@ -46,17 +46,17 @@ Helper scripts
 --------------
 The repository includes a helper template and a permission-check script to assist operators:
 
-- `deploy/realmint-api.env.template` — example environment file with keys and placeholders.
-- `deploy/check-env-perms.sh` — quick script to validate that your `/etc/realmint/realmint-api.env` file is present, owned by `root`, and has `0600` permissions. Run it during deploy to assert safe defaults.
+- `deploy/veritypass-api.env.template` — example environment file with keys and placeholders.
+- `deploy/check-env-perms.sh` — quick script to validate that your `/etc/veritypass/veritypass-api.env` file is present, owned by `root`, and has `0600` permissions. Run it during deploy to assert safe defaults.
 
 Example usage (on the host):
 
 ```bash
-sudo cp deploy/realmint-api.env.template /etc/realmint/realmint-api.env
-# Edit /etc/realmint/realmint-api.env to fill real values, then:
-sudo chown root:root /etc/realmint/realmint-api.env
-sudo chmod 600 /etc/realmint/realmint-api.env
-sudo deploy/check-env-perms.sh /etc/realmint/realmint-api.env
+sudo cp deploy/veritypass-api.env.template /etc/veritypass/veritypass-api.env
+# Edit /etc/veritypass/veritypass-api.env to fill real values, then:
+sudo chown root:root /etc/veritypass/veritypass-api.env
+sudo chmod 600 /etc/veritypass/veritypass-api.env
+sudo deploy/check-env-perms.sh /etc/veritypass/veritypass-api.env
 ```
 
 Docker & Swarm
@@ -75,4 +75,4 @@ Troubleshooting pointers:
 - If frontend shows "Backend unreachable", verify `/api/health` and `/api/frontend-config` expose correct values.
 - If rate-limiter falls back to memory, ensure `REDIS_URL` is reachable.
 
-For full examples and notes see this repo's `RELEASE_CHECKLIST.md` and `deploy/realmint-api.service.template`.
+For full examples and notes see this repo's `RELEASE_CHECKLIST.md` and `deploy/veritypass-api.service.template`.

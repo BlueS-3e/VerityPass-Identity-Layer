@@ -1,4 +1,4 @@
-Production checklist for RealMint Launchpad
+Production checklist for VerityPass Launchpad
 
 Backend (API)
 - Set environment variables:
@@ -16,7 +16,7 @@ Backend (API)
 
 Frontend
 - Build with `npm run build` and serve static assets from a CDN or a secure static hosting.
-- Set `VITE_API_BASE` at build time to the API origin (e.g., https://api.realmint.example).
+- Set `VITE_API_BASE` at build time to the API origin (e.g., https://api.veritypass.example).
 - Set `VITE_ENABLE_LAUNCHPAD` to `true` or `false` depending on whether launchpad should be enabled.
 - Enforce Content Security Policy at the CDN/reverse proxy layer and review `CUSTOM_CSP_HEADER` if set in backend.
 

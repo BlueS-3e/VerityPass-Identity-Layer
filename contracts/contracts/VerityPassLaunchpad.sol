@@ -11,7 +11,7 @@ interface AggregatorV3Interface {
     function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80);
 }
 
-contract RealMintLaunchpad is Ownable, ReentrancyGuard {
+contract VerityPassLaunchpad is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // Flat platform fee expressed in USD cents (e.g. 100 == $1.00)

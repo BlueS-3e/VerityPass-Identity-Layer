@@ -1,10 +1,10 @@
-// Test script for RealMintLaunchpad on Sepolia testnet
+// Test script for VerityPassLaunchpad on Sepolia testnet
 const { ethers } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
-  console.log("\n=== Testing RealMintLaunchpad on Sepolia ===\n");
+  console.log("\n=== Testing VerityPassLaunchpad on Sepolia ===\n");
 
   const [deployer] = await ethers.getSigners();
   console.log("Testing with account:", deployer.address);
@@ -15,12 +15,12 @@ async function main() {
   const deployment = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
   
   console.log("Deployed contracts:");
-  console.log("  RealMintLaunchpad:", deployment.RealMintLaunchpad);
+  console.log("  VerityPassLaunchpad:", deployment.VerityPassLaunchpad);
   console.log("  Price Feed:", deployment.priceFeed, "\n");
 
   // Get contract instance
-  const RealMintLaunchpad = await ethers.getContractFactory("RealMintLaunchpad");
-  const launchpad = RealMintLaunchpad.attach(deployment.RealMintLaunchpad);
+  const VerityPassLaunchpad = await ethers.getContractFactory("VerityPassLaunchpad");
+  const launchpad = VerityPassLaunchpad.attach(deployment.VerityPassLaunchpad);
 
   // Test 1: Check contract owner and configuration
   console.log("--- Test 1: Contract Configuration ---");

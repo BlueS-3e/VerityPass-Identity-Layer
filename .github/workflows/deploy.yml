@@ -43,7 +43,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: realmint_test  # ✅ Added
+          POSTGRES_DB: veritypass_test  # ✅ Added
           POSTGRES_USER: postgres      # ✅ Added
         options: >-
           --health-cmd pg_isready
@@ -83,7 +83,7 @@ jobs:
       
       - name: Setup database
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/realmint_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/veritypass_test
         run: |
           sleep 5
           if [ -f migrate_projects_db.py ]; then
@@ -92,7 +92,7 @@ jobs:
       
       - name: Run pytest
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/realmint_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/veritypass_test
           REDIS_URL: redis://localhost:6379
           FLASK_ENV: testing
           SECRET_KEY: test-secret-key-do-not-use
@@ -189,7 +189,7 @@ jobs:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
-              "text": "✅ RealMint Production Tests Passed",
+              "text": "✅ VerityPass Production Tests Passed",
               "blocks": [
                 {
                   "type": "header",

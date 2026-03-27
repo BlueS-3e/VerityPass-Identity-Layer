@@ -1,15 +1,15 @@
-# RealMint Platform Whitepaper
+# VerityPass Platform Whitepaper
 
 **Version**: 1.0  
 **Date**: March 2026  
 **Network**: BNB Chain (BSC)  
-**Repository**: https://github.com/BlueS-3e/realmint-platform
+**Repository**: https://github.com/BlueS-3e/veritypass-platform
 
 ---
 
 ## Executive Summary
 
-RealMint is a decentralized financial identity and attestation protocol built on BNB Chain that enables transparent, verifiable access to DeFi for emerging markets and underbanked populations. By combining off-chain financial data (income, employment, credit history) with on-chain attestation primitives, RealMint creates a sustainable bridge between traditional finance and permissionless DeFi.
+VerityPass is a decentralized financial identity and attestation protocol built on BNB Chain that enables transparent, verifiable access to DeFi for emerging markets and underbanked populations. By combining off-chain financial data (income, employment, credit history) with on-chain attestation primitives, VerityPass creates a sustainable bridge between traditional finance and permissionless DeFi.
 
 **Core Innovation**: Transform financial attestations from risk layers into first-class DeFi infrastructure, enabling:
 - Fair lending mechanisms based on verifiable identity (not collateral alone)
@@ -29,7 +29,7 @@ RealMint is a decentralized financial identity and attestation protocol built on
 
 Existing DeFi protocols (Aave, Compound, Curve) have democratized capital access but remain constrained:
 
-| Dimension | Current DeFi | Traditional Finance | RealMint Solution |
+| Dimension | Current DeFi | Traditional Finance | VerityPass Solution |
 |-----------|-------------|-------------------|-------------------|
 | **Access Requirement** | $500+ collateral minimum | Credit score + employment | Verifiable identity only |
 | **Pricing Model** | Fixed interest rates or algorithmic (ignores borrower quality) | Risk-adjusted rates | Attestation-driven dynamic pricing |
@@ -50,7 +50,7 @@ Existing DeFi protocols (Aave, Compound, Curve) have democratized capital access
 - **Credit scoring APIs** (Slice): Closed-source, traditional credit bias, expensive
 - **Social lending** (Maple): Highly manual, gamed reputation systems
 
-**RealMint's Approach**: Open, verifiable identity attestations → risk-appropriate pricing → sustainable lending
+**VerityPass's Approach**: Open, verifiable identity attestations → risk-appropriate pricing → sustainable lending
 
 ### 1.3 Market Validation
 
@@ -66,7 +66,7 @@ Existing DeFi protocols (Aave, Compound, Curve) have democratized capital access
 
 ```
 ┌─────────────────────────────────────────────────┐
-│         RealMint Protocol Stack (BNB)            │
+│         VerityPass Protocol Stack (BNB)            │
 ├─────────────────────────────────────────────────┤
 │                                                  │
 │  ┌──────────────────────────────────────────┐   │
@@ -84,7 +84,7 @@ Existing DeFi protocols (Aave, Compound, Curve) have democratized capital access
 │  └──────────────────────────────────────────┘   │
 │                      ↓                            │
 │  ┌──────────────────────────────────────────┐   │
-│  │  RealMint Launchpad (Smart Contract)     │   │
+│  │  VerityPass Launchpad (Smart Contract)     │   │
 │  │  - Dynamic fee calculation (Chainlink)   │   │
 │  │  - Protocol fee collection & distribution│   │
 │  │  - Referral rebate system                │   │
@@ -137,7 +137,7 @@ Fee = (USD amount) × (price / (10^decimals)) → Collects from user
 - Batch operations support for multi-issuer scenarios
 - Efficient struct packing: 32 bytes per attestation header
 
-#### **RealMintLaunchpad.sol**
+#### **VerityPassLaunchpad.sol**
 - Dynamic fee pricing via Chainlink oracles
 - Percentage-based and flat-fee models
 - Referral rebate system with tiered incentives
@@ -164,7 +164,7 @@ function claimRebate(address token) → uint256
 
 ## 3. Token Economics (Future)
 
-### 3.1 RealMint Governance Token (RMINT)
+### 3.1 VerityPass Governance Token (VPASS)
 
 **Total Supply**: 100M tokens  
 **Distribution**:
@@ -204,7 +204,7 @@ Platform Fees (1% average)
 | Contract | Network | Address | Purpose |
 |----------|---------|---------|---------|
 | AttestationRegistry | BSC Testnet | `0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0` | Identity attestations |
-| RealMintLaunchpad | BSC Testnet | `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a` | Capital allocation |
+| VerityPassLaunchpad | BSC Testnet | `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a` | Capital allocation |
 | IdentityRegistry | BSC Testnet | Pending mainnet | Extended identity |
 
 **Mainnet Deployment** (Q2 2026):
@@ -238,7 +238,7 @@ Platform Fees (1% average)
 
 **Deployment Gas**:
 - AttestationRegistry: ~1.2M gas
-- RealMintLaunchpad: ~2.1M gas
+- VerityPassLaunchpad: ~2.1M gas
 - Total L1-equivalent: ~1,200 BNB at 200 Gwei
 
 **Per-Operation Gas** (BSC Testnet measured):
@@ -312,13 +312,13 @@ bytes32 dataCID = keccak256(bytes(ipfsHash))
 - Documentation for developers
 
 ### Phase 2: Launchpad (Months 2-4)
-- [ ] RealMintLaunchpad smart contract optimization
+- [ ] VerityPassLaunchpad smart contract optimization
 - [ ] Chainlink oracle integration on mainnet
 - [ ] Web3 dApp UI (React + ethers.js)
 - [ ] Referral system launch
 
 **Deliverables**:
-- Production dApp at app.realmint.io
+- Production dApp at app.veritypass.io
 - $1M TVL milestone
 - Integration documentation
 
@@ -366,20 +366,20 @@ bytes32 dataCID = keccak256(bytes(ipfsHash))
 - Southeast Asia: $200B financial services (2% crypto adoption)
 - Latin America: $100B informal lending (high rates: 15-30%)
 
-**RealMint's TAM**: $500M of emerging market fintech within 5 years
+**VerityPass's TAM**: $500M of emerging market fintech within 5 years
 - Conservative: 3% market share by 2030
 - Aggressive: 10%+ with institutional partnerships
 
 ### 7.2 Competitive Positioning
 
-| Competitor | Type | Strength | Weakness | RealMint Edge |
+| Competitor | Type | Strength | Weakness | VerityPass Edge |
 |---|---|---|---|---|
 | Aave | On-chain lending | $10B TVL, established | Collateral-heavy, no identity layer | Attestation-native |
 | Splice Finance | Income lending | Traditional credit data | Non-blockchain, limited to US | On-chain, global |
 | Gitcoin Passport | Identity | Widely used, Ethereum-centric | No capital/yield | Yield-focused identity |
 | Compound | Algorithmic pricing | Proven model | No emerging market focus | Emerging market native |
 
-**RealMint's Differentiation**:
+**VerityPass's Differentiation**:
 1. First on-chain attestation protocol that doubles as lending mechanism
 2. Emerging market focus (not afterthought)
 3. Lower gas costs via BNB Chain (95% cheaper than Ethereum)
@@ -436,7 +436,7 @@ bytes32 dataCID = keccak256(bytes(ipfsHash))
 
 ## 9. Conclusion
 
-RealMint addresses a fundamental gap in DeFi: how to fairly price capital for people without collateral or established on-chain history. By positioning financial attestations as a primitive rather than a risk layer, we enable sustainable DeFi that serves 2+ billion underbanked individuals.
+VerityPass addresses a fundamental gap in DeFi: how to fairly price capital for people without collateral or established on-chain history. By positioning financial attestations as a primitive rather than a risk layer, we enable sustainable DeFi that serves 2+ billion underbanked individuals.
 
 **Key Achievements**:
 - ✅ Contracts deployed and audited on testnet
@@ -550,5 +550,5 @@ function usdCentsToTokenUnits(address tokenAddr, uint256 usdCents)
 
 ---
 
-**© 2026 RealMint Labs. All rights reserved.**  
-**For more information**: team@realmint.io | GitHub: https://github.com/BlueS-3e/realmint-platform
+**© 2026 VerityPass Labs. All rights reserved.**  
+**For more information**: team@veritypass.io | GitHub: https://github.com/BlueS-3e/veritypass-platform

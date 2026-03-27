@@ -1,4 +1,4 @@
-// Hardhat script to transfer ownership of the RealMintLaunchpad contract
+// Hardhat script to transfer ownership of the VerityPassLaunchpad contract
 // Usage:
 //   npx hardhat run --network <network> contracts/scripts/transfer-owner.js --newOwner <ADDRESS> --contract <CONTRACT_ADDR>
 
@@ -13,7 +13,7 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   console.log('Transferring ownership using deployer:', deployer.address);
 
-  const contract = await hre.ethers.getContractAt('RealMintLaunchpad', contractAddr, deployer);
+  const contract = await hre.ethers.getContractAt('VerityPassLaunchpad', contractAddr, deployer);
   const tx = await contract.transferOwnership(newOwner);
   console.log('Sent transferOwnership tx:', tx.hash);
   const receipt = await tx.wait();

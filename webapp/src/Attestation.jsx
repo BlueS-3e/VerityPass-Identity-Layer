@@ -136,7 +136,7 @@ export default function Attestation() {
     
     if (sessionWallet && !selectedWallet) {
       console.debug('[Session] Auto-restoring wallet from ConnectPlaid:', sessionWallet.name);
-      sessionStorage.setItem('realmint:auto_connect', 'true');
+      sessionStorage.setItem('veritypass:auto_connect', 'true');
       setSelectedWallet(sessionWallet);
       extendWalletSession();
     }
@@ -437,11 +437,11 @@ export default function Attestation() {
   useEffect(() => {
     if (!selectedWallet) return;
     
-    const shouldAutoConnect = sessionStorage.getItem('realmint:auto_connect');
+    const shouldAutoConnect = sessionStorage.getItem('veritypass:auto_connect');
     if (!shouldAutoConnect) return;
     
     // Clear flag so we don't auto-connect again
-    sessionStorage.removeItem('realmint:auto_connect');
+    sessionStorage.removeItem('veritypass:auto_connect');
     
     console.debug('[Session] Auto-connecting wallet from session...');
     connectWallet({ silent: true });
@@ -1232,7 +1232,7 @@ export default function Attestation() {
                   <span className="text-xl">📚</span>
                   <div>
                     <div className="text-white font-medium">View Guide</div>
-                    <div className="text-gray-400 text-sm">Learn how to use RealMint</div>
+                    <div className="text-gray-400 text-sm">Learn how to use VerityPass</div>
                   </div>
                 </a>
               </div>

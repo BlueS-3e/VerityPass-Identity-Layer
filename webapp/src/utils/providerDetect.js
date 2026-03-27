@@ -479,7 +479,7 @@ export async function selectBestProvider(userPreference = null) {
 }
 
 // Persistence helpers: remember user's chosen wallet (only store small serializable bits)
-const PREFERRED_KEY = 'realmint:preferred_wallet';
+const PREFERRED_KEY = 'veritypass:preferred_wallet';
 
 export function persistPreferredProvider(entry) {
   try {

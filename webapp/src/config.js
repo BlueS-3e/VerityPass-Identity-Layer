@@ -66,5 +66,5 @@ export function API_BASE() {
   // On localhost, default to localhost:5000
   if (buildTimeBase) return buildTimeBase;
   const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  return isDev ? 'http://localhost:5000' : 'https://realmint-api.onrender.com';
+  return isDev ? 'http://localhost:5000' : 'https://veritypass-api.onrender.com';
 }

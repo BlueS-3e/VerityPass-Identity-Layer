@@ -2,9 +2,9 @@
 // Persists transaction state in sessionStorage to survive page refreshes
 // Allows resuming in-progress signing/publishing operations
 
-const TX_STATE_KEY = 'realmint:tx_state';
-const SIGNING_STATE_KEY = 'realmint:signing_state';
-const PENDING_TX_KEY = 'realmint:pending_tx';
+const TX_STATE_KEY = 'veritypass:tx_state';
+const SIGNING_STATE_KEY = 'veritypass:signing_state';
+const PENDING_TX_KEY = 'veritypass:pending_tx';
 
 export const TX_STATE = {
   IDLE: 'idle',

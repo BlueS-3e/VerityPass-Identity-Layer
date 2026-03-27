@@ -2,9 +2,9 @@
 // Enhanced with better security, TypeScript support, and extended functionality
 // Preserves wallet connection state across page navigations with session persistence
 
-const WALLET_SESSION_KEY = 'realmint:wallet_session';
+const WALLET_SESSION_KEY = 'veritypass:wallet_session';
 const SESSION_EXTENSION_INTERVAL = 5 * 60 * 1000; // Extend session every 5 minutes during active use
-const WALLET_PREFERENCE_KEY = 'realmint:wallet_preference';
+const WALLET_PREFERENCE_KEY = 'veritypass:wallet_preference';
 
 // Session data structure
 /**

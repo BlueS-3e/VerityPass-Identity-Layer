@@ -1,6 +1,6 @@
 webapp-admin
 
-Dedicated operations console for RealMint. This lightweight Vite app provides
+Dedicated operations console for VerityPass. This lightweight Vite app provides
 admin-only controls for BNB-focused production workflows: role management,
 audit trails, project moderation, and contract owner verification.
 

@@ -45,10 +45,10 @@ export async function initWeb3Modal(projectId, options = {}) {
       { chainId: 11155111, name: 'Sepolia', currency: 'ETH', explorerUrl: 'https://sepolia.etherscan.io', rpcUrl: 'https://sepolia.infura.io/v3/' }
     ],
     metadata = {
-      name: 'RealMint',
+      name: 'VerityPass',
       description: 'On-chain identity and credit attestations',
-      url: typeof window !== 'undefined' ? window.location.origin : 'https://realmint.app',
-      icons: ['https://realmint.app/favicon.ico']
+      url: typeof window !== 'undefined' ? window.location.origin : 'https://veritypass.app',
+      icons: ['https://veritypass.app/favicon.ico']
     }
   } = options;
 

@@ -3,7 +3,7 @@
 
 set -e
 
-echo "🚀 RealMint dApp Production Deployment Checklist"
+echo "🚀 VerityPass dApp Production Deployment Checklist"
 echo "=================================================="
 echo ""
 

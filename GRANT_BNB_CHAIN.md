@@ -1,4 +1,4 @@
-# RealMint BNB Chain Grant Positioning
+# VerityPass BNB Chain Grant Positioning
 
 ## Purpose
 
@@ -6,7 +6,7 @@ This document explains why `webapp-admin` remains a critical part of the BNB-fir
 
 ## BNB-First Thesis
 
-RealMint is positioning as BNB Chain-native credit infrastructure:
+VerityPass is positioning as BNB Chain-native credit infrastructure:
 - Identity-backed attestations
 - Risk-aware credit scoring
 - Under-collateralized lending operations

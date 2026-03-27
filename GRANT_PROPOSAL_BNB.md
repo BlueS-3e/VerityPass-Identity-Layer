@@ -1,7 +1,7 @@
-# RealMint: BNB Chain Identity & Under-Collateralized Lending
+# VerityPass: BNB Chain Identity & Under-Collateralized Lending
 
 ## Summary
-RealMint provides a privacy-preserving identity and attestation layer that enables under-collateralized lending on **BNB Chain**. It combines sovereign identity, issuer attestations, and credit score oracles with a production-ready dApp stack (Solidity contracts, Flask API, React webapps). The MVP is deployed to **BNB Chain Testnet (chain 97)** and prepared for **BNB Chain Mainnet (chain 56)** production hosting (Vercel + Render).
+VerityPass provides a privacy-preserving identity and attestation layer that enables under-collateralized lending on **BNB Chain**. It combines sovereign identity, issuer attestations, and credit score oracles with a production-ready dApp stack (Solidity contracts, Flask API, React webapps). The MVP is deployed to **BNB Chain Testnet (chain 97)** and prepared for **BNB Chain Mainnet (chain 56)** production hosting (Vercel + Render).
 
 ## Problem
 - 1.7B unbanked people can't access credit due to lack of collateral or centralized credit history
@@ -12,7 +12,7 @@ RealMint provides a privacy-preserving identity and attestation layer that enabl
 ## Solution
 - **On-chain identity registry** with issuer-verified attestations
 - **Privacy-first credit scoring oracle** integrating data sources (e.g., Plaid-backed financial signals)
-- **RealMint Launchpad contract** enabling under-collateralized lending (25-50% collateral ratios) based on attestations
+- **VerityPass Launchpad contract** enabling under-collateralized lending (25-50% collateral ratios) based on attestations
 - **BNB Chain first** design to maximize finality speed and minimize transaction costs for end users
 - Roadmap to **ZK proofs** for privacy-preserving credential verification without exposing PII
 
@@ -20,11 +20,11 @@ RealMint provides a privacy-preserving identity and attestation layer that enabl
 - **Fast & Low-Cost:** 1-second finality, $0.01 transaction costs enable mass adoption
 - **Ecosystem Ready:** 500K+ daily active users with strong fintech integration
 - **Strategic Alignment:** BNB Builders Fund prioritizes financial inclusion, DeFi 2.0, and identity infrastructure
-- **Production Proven:** RealMint's dApp stack is battle-tested; BNB Chain is the ideal scaling layer
+- **Production Proven:** VerityPass's dApp stack is battle-tested; BNB Chain is the ideal scaling layer
 - **Global Accessibility:** BSC's global liquidity and exchange partnerships support emerging markets
 
 ## Architecture Overview
-- **Smart Contracts (Solidity 0.8.20):** IdentityRegistry, AttestationRegistry, CreditScoreManager, RealMintLaunchpad
+- **Smart Contracts (Solidity 0.8.20):** IdentityRegistry, AttestationRegistry, CreditScoreManager, VerityPassLaunchpad
 - **Backend (Flask API):** RBAC, Plaid integration, session & rate limiting, Web3 RPC aggregation for BNB Chain
 - **Frontend (React + Vite):** Wallet connection, attestation UI, credit score visualization, lending flows
 - **Infrastructure:** Vercel (webapp), Render (API, PostgreSQL, Redis), BSC Testnet & Mainnet RPC nodes, GitHub Actions CI/CD
@@ -36,7 +36,7 @@ RealMint provides a privacy-preserving identity and attestation layer that enabl
 - **Reference implementation** for identity-based lending infrastructure on BSC
 
 ## Deployment Status
-- ✅ **RealMint Launchpad:** `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a` (Testnet)
+- ✅ **VerityPass Launchpad:** `0xF5Cb13Cf46174B81bf9860E502d698Fe76B5F12a` (Testnet)
 - ✅ **AttestationRegistry:** `0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0` (Testnet)
 - ✅ **Wallet integration:** Modern EIP-6963 detection + Web3Modal
 - ✅ **Frontend:** Production build passing; ready for testnet UI testing
@@ -83,7 +83,7 @@ RealMint provides a privacy-preserving identity and attestation layer that enabl
 - **Details:** GitHub profiles, prior contributions (see GRANT_TEAM.md)
 
 ## Open Source & Licensing
-- **Repository:** `realmint-platform` (public on GitHub)
+- **Repository:** `veritypass-platform` (public on GitHub)
 - **License:** MIT (permissive, enables ecosystem integration)
 - **Governance:** Community-driven; grant reports published quarterly
 
@@ -118,5 +118,5 @@ We request **$60,000 USD equivalent in BNB** from the BNB Chain Builders Fund to
 ## Next Steps for Reviewers
 1. Review testnet demo: [AttestationRegistry on BSCScan](https://testnet.bscscan.com/address/0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0)
 2. Test dApp on BNB Chain Testnet faucet-funded wallet
-3. Review open-source code on GitHub: [realmint-platform](https://github.com/rhiper/realmint-platform)
+3. Review open-source code on GitHub: [veritypass-platform](https://github.com/BlueS-3e/veritypass-platform)
 4. Schedule engineering call to discuss roadmap & integration opportunities

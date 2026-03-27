@@ -1,7 +1,7 @@
 # Build-stage Dockerfile for building the webapp in a clean Node environment
 # Usage (local):
-# docker build -f webapp/Dockerfile.build -t realmint-web-build webapp
-# docker create --name tmp realmint-web-build
+# docker build -f webapp/Dockerfile.build -t veritypass-web-build webapp
+# docker create --name tmp veritypass-web-build
 # docker cp tmp:/app/dist ./webapp/dist
 # docker rm tmp
 

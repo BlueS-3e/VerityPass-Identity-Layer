@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("RealMintLaunchpad - hybrid fee + referral flow", function () {
+describe("VerityPassLaunchpad - hybrid fee + referral flow", function () {
   let Token, token, owner, alice, bob, charlie;
   let Launchpad, launchpad;
   let MockV3;
@@ -12,7 +12,7 @@ describe("RealMintLaunchpad - hybrid fee + referral flow", function () {
     token = await Token.deploy("TestToken", "TST", 18, ethers.parseEther("100000"));
     await token.waitForDeployment();
 
-    Launchpad = await ethers.getContractFactory("RealMintLaunchpad");
+    Launchpad = await ethers.getContractFactory("VerityPassLaunchpad");
     const dummyFeed = ethers.ZeroAddress;
     launchpad = await Launchpad.deploy(dummyFeed);
     await launchpad.waitForDeployment();

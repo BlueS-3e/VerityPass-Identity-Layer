@@ -1,6 +1,6 @@
-# Contributing to RealMint
+# Contributing to VerityPass
 
-Welcome to RealMint! We're excited that you're interested in contributing to decentralized identity and under-collateralized lending infrastructure.
+Welcome to VerityPass! We're excited that you're interested in contributing to decentralized identity and under-collateralized lending infrastructure.
 
 ## Table of Contents
 
@@ -28,11 +28,11 @@ Welcome to RealMint! We're excited that you're interested in contributing to dec
 
 ```bash
 # Fork the repository on GitHub
-git clone https://github.com/YOUR_USERNAME/realmint-platform.git
-cd realmint-platform
+git clone https://github.com/YOUR_USERNAME/veritypass-platform.git
+cd veritypass-platform
 
 # Add upstream remote
-git remote add upstream https://github.com/BlueS-3e/realmint-platform.git
+git remote add upstream https://github.com/BlueS-3e/veritypass-platform.git
 ```
 
 ---
@@ -93,7 +93,7 @@ python migrate_projects_db.py
 # .env (create in api/)
 FLASK_ENV=development
 FLASK_DEBUG=1
-DATABASE_URL=sqlite:///instance/realmint.db
+DATABASE_URL=sqlite:///instance/veritypass.db
 REDIS_URL=redis://localhost:6379/0
 PLAID_CLIENT_ID=your_plaid_client_id
 PLAID_SECRET=your_plaid_secret
@@ -147,7 +147,7 @@ npm run build
 ### Before You Start
 
 1. **Check existing issues:** Is someone already working on this?
-   - GitHub Issues: https://github.com/BlueS-3e/realmint-platform/issues
+   - GitHub Issues: https://github.com/BlueS-3e/veritypass-platform/issues
 
 2. **Discussion for major features:**
    - Open an issue first to discuss approach
@@ -284,7 +284,7 @@ cd contracts
 npm test
 
 # Run specific test file
-npm test test/RealMintLaunchpad.test.js
+npm test test/VerityPassLaunchpad.test.js
 
 # Run with coverage
 npm run test:coverage
@@ -372,7 +372,7 @@ npm run test:coverage
 ⚠️ **DO NOT open public issues for security vulnerabilities!**
 
 Instead:
-1. Email: `security@realmint.org` (TBD - use GitHub private report for now)
+1. Email: `security@veritypass.org` (TBD - use GitHub private report for now)
 2. Include: vulnerability description, steps to reproduce, potential impact
 3. Expected response: Within 48 hours
 
@@ -528,7 +528,7 @@ Any mockups, examples, or resources
 ### Get Help
 - **Discord:** [TBD - Community chat]
 - **GitHub Discussions:** [TBD]
-- **Twitter:** [@RealMintDeFi](https://twitter.com)
+- **Twitter:** [@VerityPassDeFi](https://twitter.com)
 
 ### Contributor Recognition
 
@@ -550,7 +550,7 @@ By contributing, you agree that your contributions will be licensed under the MI
 - Check [FAQ](FUNDING.md#faqs)
 - Open an issue for guidance
 
-**Thank you for contributing to RealMint!** 🚀
+**Thank you for contributing to VerityPass!** 🚀
 
 ---
 

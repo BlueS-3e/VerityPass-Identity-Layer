@@ -26,10 +26,10 @@ export async function initWeb3Modal(projectId, options = {}) {
       { chainId: 137, name: 'Polygon', currency: 'MATIC', explorerUrl: 'https://polygonscan.com', rpcUrl: 'https://polygon-rpc.com' }
     ],
     metadata = {
-      name: 'RealMint Admin',
+      name: 'VerityPass Admin',
       description: 'Admin wallet login',
-      url: typeof window !== 'undefined' ? window.location.origin : 'https://realmint.app',
-      icons: ['https://realmint.app/favicon.ico']
+      url: typeof window !== 'undefined' ? window.location.origin : 'https://veritypass.app',
+      icons: ['https://veritypass.app/favicon.ico']
     }
   } = options;
 

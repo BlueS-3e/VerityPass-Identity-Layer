@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("RealMintLaunchpad - oracle staleness protection", function () {
+describe("VerityPassLaunchpad - oracle staleness protection", function () {
   let Token, token, owner, alice, bob;
   let Launchpad, launchpad;
   let MockV3;
@@ -12,7 +12,7 @@ describe("RealMintLaunchpad - oracle staleness protection", function () {
     token = await Token.deploy("TestToken", "TST", 18, ethers.parseEther("10000"));
     await token.waitForDeployment();
 
-    Launchpad = await ethers.getContractFactory("RealMintLaunchpad");
+    Launchpad = await ethers.getContractFactory("VerityPassLaunchpad");
     launchpad = await Launchpad.deploy(ethers.ZeroAddress);
     await launchpad.waitForDeployment();
 

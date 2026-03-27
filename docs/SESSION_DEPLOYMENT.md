@@ -20,8 +20,8 @@ Recommended session & cookie settings (env):
 
 CORS / front-end origins:
 
-- ALLOWED_ORIGINS — comma-separated list of origins allowed to call the API (e.g. `https://app.realmint.example`).
-  - Example: `ALLOWED_ORIGINS=https://app.realmint.example`
+- ALLOWED_ORIGINS — comma-separated list of origins allowed to call the API (e.g. `https://app.veritypass.example`).
+  - Example: `ALLOWED_ORIGINS=https://app.veritypass.example`
   - DO NOT leave this unset in production; if unset the server defaults to localhost dev origins.
 
 Optional environment toggles:
@@ -44,5 +44,5 @@ Environment="FLASK_ENV=production"
 Environment="SECRET_KEY=<redacted>"
 Environment="ADMIN_PASSWORD=<redacted>"
 Environment="SESSION_COOKIE_SECURE=true"
-Environment="ALLOWED_ORIGINS=https://app.realmint.example"
+Environment="ALLOWED_ORIGINS=https://app.veritypass.example"
 

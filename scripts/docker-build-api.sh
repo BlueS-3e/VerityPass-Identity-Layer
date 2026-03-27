@@ -4,10 +4,10 @@
 set -e
 
 REGISTRY="${DOCKER_REGISTRY:-docker.io}"
-REPO="${DOCKER_REPO:-yourusername/realmint-api}"
+REPO="${DOCKER_REPO:-yourusername/veritypass-api}"
 TAG="${1:-latest}"
 
-echo "🐳 Building Docker image for RealMint API"
+echo "🐳 Building Docker image for VerityPass API"
 echo "=========================================="
 echo ""
 echo "Registry: $REGISTRY"

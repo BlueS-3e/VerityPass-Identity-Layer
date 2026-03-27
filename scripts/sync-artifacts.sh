@@ -11,10 +11,10 @@ mkdir -p "$WEBAPP_BUILD_DIR"
 
 echo "Syncing contract artifacts from $CONTRACTS_DIR/artifacts to $WEBAPP_BUILD_DIR"
 
-# Example: look for RealMintLaunchpad artifact under artifacts/contracts/<Contract>.sol/<Contract>.json
-find "$CONTRACTS_DIR/artifacts" -type f -name "RealMintLaunchpad.json" -print0 | while IFS= read -r -d '' f; do
-  echo "Copying $f -> $WEBAPP_BUILD_DIR/RealMintLaunchpad.json"
-  cp "$f" "$WEBAPP_BUILD_DIR/RealMintLaunchpad.json"
+# Example: look for VerityPassLaunchpad artifact under artifacts/contracts/<Contract>.sol/<Contract>.json
+find "$CONTRACTS_DIR/artifacts" -type f -name "VerityPassLaunchpad.json" -print0 | while IFS= read -r -d '' f; do
+  echo "Copying $f -> $WEBAPP_BUILD_DIR/VerityPassLaunchpad.json"
+  cp "$f" "$WEBAPP_BUILD_DIR/VerityPassLaunchpad.json"
 done
 
 echo "Sync complete."

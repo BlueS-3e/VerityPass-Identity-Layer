@@ -23,7 +23,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://realmint-api.onrender.com https://*.walletconnect.org https://*.walletconnect.com wss://*.walletconnect.org wss://*.walletconnect.com; frame-src 'self' https:;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://veritypass-api.onrender.com https://*.walletconnect.org https://*.walletconnect.com wss://*.walletconnect.org wss://*.walletconnect.com; frame-src 'self' https:;"
         },
         {
           "key": "X-Content-Type-Options",
@@ -47,7 +47,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://realmint-api.onrender.com/api/:path*"
+      "destination": "https://veritypass-api.onrender.com/api/:path*"
     },
     {
       "source": "/:path*",

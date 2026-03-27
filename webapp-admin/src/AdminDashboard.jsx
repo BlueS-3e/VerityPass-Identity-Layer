@@ -769,7 +769,7 @@ export default function AdminDashboard() {
             {/* Admin Header Bar */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
               <div className="flex items-center gap-4">
-                <div className="text-xl font-bold text-white">RealMint BNB Ops</div>
+                <div className="text-xl font-bold text-white">VerityPass BNB Ops</div>
                 <div className="hidden lg:block text-sm text-gray-400">• Governance and risk controls</div>
               </div>
               <div className="flex items-center gap-3">

@@ -1,4 +1,4 @@
-# RealMint Production Readiness Review
+# VerityPass Production Readiness Review
 **Date:** March 24, 2026  
 **Status:** Multiple critical issues identified - NOT PRODUCTION READY
 
@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-The RealMint platform consists of a React/Vite frontend and Flask backend with blockchain integration. While the core architecture is sound with good error handling, **8 critical issues must be fixed before production deployment**. The system currently has empty smart contract addresses, a misconfigured API endpoint path, and incomplete third-party integrations.
+The VerityPass platform consists of a React/Vite frontend and Flask backend with blockchain integration. While the core architecture is sound with good error handling, **8 critical issues must be fixed before production deployment**. The system currently has empty smart contract addresses, a misconfigured API endpoint path, and incomplete third-party integrations.
 
 ---
 
@@ -274,7 +274,7 @@ SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
 #### C. ALLOWED_ORIGINS (CORS)
 ```bash
 # Set explicitly (not dev defaults):
-ALLOWED_ORIGINS=https://realmint-platform.vercel.app,https://app.example.com
+ALLOWED_ORIGINS=https://veritypass-platform.vercel.app,https://app.example.com
 ```
 - **Current:** Defaults to `http://localhost:5173, http://localhost:5174, http://localhost:3000`
 - **Warning:** Dev defaults printed to logs
@@ -283,7 +283,7 @@ ALLOWED_ORIGINS=https://realmint-platform.vercel.app,https://app.example.com
 #### D. PUBLIC_API_BASE or ENABLE_PROXY_FIX (URL Reconstruction)
 ```bash
 # Option 1: Explicit API base
-PUBLIC_API_BASE=https://api.realmint.io
+PUBLIC_API_BASE=https://api.veritypass.io
 
 # Option 2: Enable proxy fix (for nginx/load-balancer)
 ENABLE_PROXY_FIX=true
@@ -339,7 +339,7 @@ VITE_WALLETCONNECT_PROJECT_ID=abc123def456
 #### D. VITE_API_BASE & VITE_DEFAULT_CHAIN_ID (Frontend Build)
 ```bash
 # Frontend environment variables
-VITE_API_BASE=https://api.realmint.io           # Backend URL
+VITE_API_BASE=https://api.veritypass.io           # Backend URL
 VITE_DEFAULT_CHAIN_ID=56                        # 56=BNB mainnet, 97=testnet
 VITE_WALLETCONNECT_PROJECT_ID=<project-id>
 ```
@@ -379,7 +379,7 @@ MAX_CONTENT_LENGTH=10485760  # 10MB file upload limit
 
 #### D. Admin UI URL
 ```bash
-ADMIN_UI_URL=https://admin.realmint.io
+ADMIN_UI_URL=https://admin.veritypass.io
 ```
 
 ---

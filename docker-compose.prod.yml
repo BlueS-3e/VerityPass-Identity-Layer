@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
-    image: realmint-api:latest
+    image: veritypass-api:latest
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: webapp/Dockerfile
-    image: realmint-web:latest
+    image: veritypass-web:latest
     restart: unless-stopped
     depends_on:
       - api

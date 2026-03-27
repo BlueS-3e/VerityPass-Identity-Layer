@@ -18,8 +18,8 @@ You need a **free WalletConnect Project ID** to use WalletConnect v2.
 2. Click **"Sign In"** (create account if needed - it's free)
 3. Click **"Create New Project"**
 4. Enter project details:
-   - **Name**: RealMint Platform (or your dApp name)
-   - **Homepage URL**: https://realmint-platform.vercel.app (your deployed URL)
+   - **Name**: VerityPass Platform (or your dApp name)
+   - **Homepage URL**: https://veritypass-platform.vercel.app (your deployed URL)
 5. Copy the **Project ID** (format: `8410ea8a863dec66369c41ba392b3044`)
 
 ## Step 2: Configure Environment Variables
@@ -117,7 +117,7 @@ If upgrading from v1:
 - WalletConnect Cloud: https://cloud.walletconnect.com
 - Reown AppKit Docs: https://docs.reown.com/appkit
 - Web3Modal Migration Guide: https://docs.reown.com/appkit/upgrade
-- Issue Tracker: https://github.com/BlueS-3e/realmint-platform/issues
+- Issue Tracker: https://github.com/BlueS-3e/veritypass-platform/issues
 
 ## Support
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Simple script to check recommended ownership and permissions for the EnvironmentFile used by systemd.
-# Usage: sudo deploy/check-env-perms.sh /etc/realmint/realmint-api.env
+# Usage: sudo deploy/check-env-perms.sh /etc/veritypass/veritypass-api.env
 
 set -euo pipefail
 
-FILE=${1:-/etc/realmint/realmint-api.env}
+FILE=${1:-/etc/veritypass/veritypass-api.env}
 
 if [ ! -e "$FILE" ]; then
   echo "ERROR: file not found: $FILE" >&2

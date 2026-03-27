@@ -1,4 +1,4 @@
-// Full integration test for RealMintLaunchpad on Sepolia
+// Full integration test for VerityPassLaunchpad on Sepolia
 const { ethers } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
@@ -16,10 +16,10 @@ async function main() {
   const deploymentPath = path.join(__dirname, "../deployments/sepolia.json");
   const deployment = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
   
-  const RealMintLaunchpad = await ethers.getContractFactory("RealMintLaunchpad");
-  const launchpad = RealMintLaunchpad.attach(deployment.RealMintLaunchpad);
+  const RealMintLaunchpad = await ethers.getContractFactory("VerityPassLaunchpad");
+  const launchpad = RealMintLaunchpad.attach(deployment.VerityPassLaunchpad);
 
-  console.log("RealMintLaunchpad:", deployment.RealMintLaunchpad, "\n");
+  console.log("VerityPassLaunchpad:", deployment.VerityPassLaunchpad, "\n");
 
   // Step 1: Deploy a mock ERC20 token for testing
   console.log("--- Step 1: Deploy Mock ERC20 Token ---");
@@ -91,7 +91,7 @@ async function main() {
   const investAmount = ethers.parseUnits("100", 6); // 100 USDC
   
   // Approve token spending
-  const tx5 = await token.approve(deployment.RealMintLaunchpad, investAmount);
+  const tx5 = await token.approve(deployment.VerityPassLaunchpad, investAmount);
   await tx5.wait();
   console.log("  ✓ Token approved");
   

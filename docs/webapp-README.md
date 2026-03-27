@@ -1,6 +1,6 @@
-# RealMint Launchpad (frontend)
+# VerityPass Launchpad (frontend)
 
-This folder contains the React + Vite frontend for the RealMint Launchpad / Sovereign Identity project.
+This folder contains the React + Vite frontend for the VerityPass Launchpad / Sovereign Identity project.
 
 Quick start
 

@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("RealMintLaunchpad - USD fee flow", function () {
+describe("VerityPassLaunchpad - USD fee flow", function () {
   let Token, token, owner, alice, bob;
   let Launchpad, launchpad;
   let MockV3;
@@ -12,7 +12,7 @@ describe("RealMintLaunchpad - USD fee flow", function () {
     token = await Token.deploy("TestToken", "TST", 18, ethers.parseEther("10000"));
     await token.waitForDeployment();
 
-    Launchpad = await ethers.getContractFactory("RealMintLaunchpad");
+    Launchpad = await ethers.getContractFactory("VerityPassLaunchpad");
     // deploy with a dummy price feed for ETH
     const dummyFeed = ethers.ZeroAddress;
     launchpad = await Launchpad.deploy(dummyFeed);

@@ -11,8 +11,8 @@ import apiClient from './apiClient';
 import { API_BASE } from "../config.js";
 import { listInjectedProviders, getNetworkConfig } from './providerDetect';
 
-// RealMintLaunchpad contract ABI (minimal interface for key methods)
-const RealMintLaunchpadABI = {
+// VerityPass contract ABI (minimal interface for key methods)
+const VerityPassLaunchpadABI = {
   abi: [
     {
       "inputs": [
@@ -167,7 +167,7 @@ export function getContract(address = CONTRACT_ADDRESS, signerOrProvider = null)
   try {
   // normalize/check address; getAddress will throw for invalid addresses
   const normalized = getAddress(address);
-  return new ContractClass(normalized, RealMintLaunchpadABI.abi, so);
+  return new ContractClass(normalized, VerityPassLaunchpadABI.abi, so);
   } catch (err) {
     // Throw a clearer error so callers can handle the case (and avoid deep provider name resolution errors)
     throw new Error(`Invalid contract address provided to getContract: ${String(address)}`);

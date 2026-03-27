@@ -1,6 +1,6 @@
 # Architecture and Tech Decisions — Sovereign Identity & Under-Collateralized Lending (MVP)
 
-This document captures the recommended architecture, component responsibilities, key design decisions, privacy options and an initial milestone roadmap for converting the existing RealMint Launchpad starter into the Sovereign Identity + Under-Collateralized Lending dApp described in the PRD.
+This document captures the recommended architecture, component responsibilities, key design decisions, privacy options and an initial milestone roadmap for converting the existing VerityPass Launchpad starter into the Sovereign Identity + Under-Collateralized Lending dApp described in the PRD.
 
 ---
 

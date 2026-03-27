@@ -538,19 +538,19 @@ class RoleAudit(db.Model):
 # registration when the module is imported multiple times during tests)
 from prometheus_client import CollectorRegistry
 _METRICS_REGISTRY = CollectorRegistry()
-_REQUESTS = Counter('realmint_requests_total', 'Total HTTP requests', ['method', 'endpoint'], registry=_METRICS_REGISTRY)
+_REQUESTS = Counter('veritypass_requests_total', 'Total HTTP requests', ['method', 'endpoint'], registry=_METRICS_REGISTRY)
 # Attestation pinning metrics
-_ATTEST_PIN_SUCCESS = Counter('realmint_attestation_pin_success_total', 'Successful attestation pins', registry=_METRICS_REGISTRY)
-_ATTEST_PIN_FAILURE = Counter('realmint_attestation_pin_failure_total', 'Failed attestation pins', registry=_METRICS_REGISTRY)
+_ATTEST_PIN_SUCCESS = Counter('veritypass_attestation_pin_success_total', 'Successful attestation pins', registry=_METRICS_REGISTRY)
+_ATTEST_PIN_FAILURE = Counter('veritypass_attestation_pin_failure_total', 'Failed attestation pins', registry=_METRICS_REGISTRY)
 # Validation failures (bad payload or signature)
-_ATTEST_VALIDATION_FAILURE = Counter('realmint_attestation_validation_failure_total', 'Attestation validation failures', registry=_METRICS_REGISTRY)
+_ATTEST_VALIDATION_FAILURE = Counter('veritypass_attestation_validation_failure_total', 'Attestation validation failures', registry=_METRICS_REGISTRY)
 # Pin latency
-_ATTEST_PIN_LATENCY = Histogram('realmint_attestation_pin_duration_seconds', 'Attestation pin duration seconds', registry=_METRICS_REGISTRY)
+_ATTEST_PIN_LATENCY = Histogram('veritypass_attestation_pin_duration_seconds', 'Attestation pin duration seconds', registry=_METRICS_REGISTRY)
 # Owner no-signature acceptance counter (when ALLOW_OWNER_ACTIONS_NO_SIG is used)
-_OWNER_NO_SIG_ACCEPTED = Counter('realmint_owner_actions_no_sig_total', 'Owner actions accepted without signature', ['endpoint'], registry=_METRICS_REGISTRY)
+_OWNER_NO_SIG_ACCEPTED = Counter('veritypass_owner_actions_no_sig_total', 'Owner actions accepted without signature', ['endpoint'], registry=_METRICS_REGISTRY)
 
 # Role change metric: action in {add,remove}
-_ROLE_CHANGE_COUNTER = Counter('realmint_role_changes_total', 'Role assignment changes', ['action', 'principal_type'], registry=_METRICS_REGISTRY)
+_ROLE_CHANGE_COUNTER = Counter('veritypass_role_changes_total', 'Role assignment changes', ['action', 'principal_type'], registry=_METRICS_REGISTRY)
 
 # Initialize Sentry if DSN provided (optional in dev/tests)
 SENTRY_DSN = os.getenv('SENTRY_DSN')
@@ -1345,7 +1345,7 @@ def plaid_create_link_token():
         client = PlaidClient(client_id=client_id, secret=secret, environment=env)
         response = client.LinkToken.create({
             'user': {'client_user_id': owner or 'anon'},
-            'client_name': 'RealMint Connect',
+            'client_name': 'VerityPass Connect',
             'products': ['auth', 'transactions'],
             'country_codes': ['US'],
             'language': 'en'
@@ -2711,7 +2711,7 @@ def admin_delete_project(proj_id):
 
 @app.route('/')
 def home():
-    return "RealMint Launchpad API is running."
+    return "VerityPass Launchpad API is running."
 
 
 @app.route('/api/health', methods=['GET'])

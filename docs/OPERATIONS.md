@@ -1,6 +1,6 @@
 # Operations: Ownership, Multisig & Monitoring
 
-This document describes recommended operational steps to harden the RealMint platform's admin/fee recipient and how to verify ownership on-chain.
+This document describes recommended operational steps to harden the VerityPass platform's admin/fee recipient and how to verify ownership on-chain.
 
 1) Create a multisig (Gnosis Safe)
    - Create a Safe with your operator signers and a 2-of-3 (or higher) threshold.
@@ -51,11 +51,11 @@ This document describes recommended operational steps to harden the RealMint pla
     - Dockerized service (recommended for reliability):
        - Build image locally:
 
-          docker build -f scripts/Dockerfile.watch -t realmint-watch-owner:local .
+          docker build -f scripts/Dockerfile.watch -t veritypass-watch-owner:local .
 
        - Run locally:
 
-          docker run --rm -e RPC_URL=https://... -e CONTRACT_ADDR=<CONTRACT_ADDR> -e WEBHOOK_URL=https://hooks.example.com realmint-watch-owner:local
+          docker run --rm -e RPC_URL=https://... -e CONTRACT_ADDR=<CONTRACT_ADDR> -e WEBHOOK_URL=https://hooks.example.com veritypass-watch-owner:local
 
        - Example `systemd` unit (provided at `scripts/watch-owner.service`) runs a docker image. Replace image name and environment variables before enabling.
 
