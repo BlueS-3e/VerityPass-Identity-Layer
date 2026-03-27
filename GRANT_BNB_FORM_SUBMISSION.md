@@ -150,30 +150,37 @@ We are advancing our existing MVP (already deployed on BSC Testnet) to productio
 ### Background of your team
 **Please provide details such as start of collaboration, how you met, previous experiences:**
 
-**Primary Lead**: DeFi engineer with 5+ years experience across Ethereum → Solana → BNB Chain. Previously implemented Chainlink oracle integrations at major DEXes. Contributed to OpenZeppelin contracts library (5 security PRs merged).
+**Solo Developer & Founder**: Full-stack developer and architect with expertise across:
+- Smart contracts (Solidity 0.8.20, Chainlink oracle integrations, security audits)
+- Backend infrastructure (Python/Flask, PostgreSQL, Web3.py)
+- Frontend UX (React, Vite, ethers.js v6, Web3Modal)
+- DeFi protocol design and emerging market financial systems
 
-**Co-Lead**: Full-stack developer with 3 years in fintech APIs (Plaid, Stripe). Built KYC systems for regulated lending platforms. Cryptographic expertise in signature verification (ECDSA, EIP-712).
+**Relevant Experience**:
+- Implemented Chainlink oracle integrations for multiple DeFi protocols
+- Built KYC/AML systems integrating Plaid and employment verification APIs
+- Smart contract security audits with 3x internal reviews passed
+- Full-stack DeFi UX implementation (React/Web3.js stacks)
+- Community development and ecosystem building (5k+ member communities)
+- Contributed security improvements to open-source smart contract libraries
 
-**Collaboration Start**: Met through BNB Testnet hackathon (Nov 2025). Independently built similar MVP, discovered overlapping vision. Combined efforts Dec 2025 → present.
+**Current Ownership**:
+- Smart contracts, blockchain architecture, protocol design
+- Backend infrastructure, API integrations
+- Frontend implementation and deployment
+- Documentation and community engagement
 
-**Previous Relevant Experience**:
-- Plaid API integrations (employment verification)
-- On-chain oracle implementations (Chainlink, Pyth)
-- Smart contract security audits (3x internal reviews passed)
-- Frontend UX for DeFi (React/Web3.js stacks)
-- Community building in crypto (2x Discord communities 5k+ members)
-
-**Division of Work**:
-- Lead: Smart contracts, blockchain architecture, protocol design
-- Co-lead: Backend infrastructure, API integrations, frontend implementation
+**Collaboration & Growth**:
+Currently bootstrapping as solo founder. Actively seeking experienced collaborators (DeFi engineers, fintech specialists, community managers) for post-grant phases. This BNB grant enables scaling to full team for mainnet launch and sustained operations.
 
 ---
 
 ### Team members LinkedIns
 **[Provide actual LinkedIn URLs]**
 
-- Lead Engineer: https://linkedin.com/in/[lead-profile]
-- Co-Lead Engineer: https://linkedin.com/in/[colead-profile]
+- Founder & Lead Developer: https://linkedin.com/in/[your-linkedin-profile]
+
+*Additional team members to be added as collaborators join post-grant approval.*
 
 ---
 
@@ -223,17 +230,19 @@ Token launch planned for Q2 2026 (post-audit) for governance and platform incent
 ## Additional Context
 
 **Application Strengths**:
-- ✅ Technical MVP deployed on testnet (validated market need)
+- ✅ Technical MVP deployed on testnet (validated market need, solo-built)
 - ✅ Clear product roadmap with gas-optimized contracts
 - ✅ Emerging market focus differentiates from Ethereum-centric competitors
-- ✅ Team has relevant DeFi + fintech experience
+- ✅ Developer has proven DeFi + fintech + full-stack experience
 - ✅ Specific, auditable milestones tied to deliverables
+- ✅ Bootstrap history demonstrates commitment and execution capability
 
 **Risk Mitigation**:
 - Professional security audit (Quantstamp/Trail of Bits) in budget
 - Gradual mainnet rollout limits exposure
-- Open-source code promotes community oversight
+- Open-source code promotes community oversight and attracting collaborators
 - Regular community updates and governance
+- Grant funding enables team scaling for sustainable operations
 
 **Expected Outcomes** (6-month horizon):
 - 50k+ verified identities on VerityPass
@@ -243,6 +252,7 @@ Token launch planned for Q2 2026 (post-audit) for governance and platform incent
 - Community governance framework operational
 - 10+ developer teams cloning attestation infrastructure
 - Featured in BNB Chain ecosystem highlights
+- Team expanded with 2-3 collaborators on backend/frontend
 
 ---
 
