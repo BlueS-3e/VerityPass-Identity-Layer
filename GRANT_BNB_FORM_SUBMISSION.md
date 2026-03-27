@@ -218,7 +218,7 @@ Token launch planned for Q2 2026 (post-audit) for governance and platform incent
 ---
 
 ### Your email address
-**team@veritypass.io** (or lead's email address)
+**qwabenahazard@gmail.com**
 
 ---
 
