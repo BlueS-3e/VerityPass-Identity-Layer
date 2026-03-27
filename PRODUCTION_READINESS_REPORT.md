@@ -274,7 +274,7 @@ SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
 #### C. ALLOWED_ORIGINS (CORS)
 ```bash
 # Set explicitly (not dev defaults):
-ALLOWED_ORIGINS=https://veritypass-platform.vercel.app,https://app.example.com
+ALLOWED_ORIGINS=https://veritypass.app,https://app.example.com
 ```
 - **Current:** Defaults to `http://localhost:5173, http://localhost:5174, http://localhost:3000`
 - **Warning:** Dev defaults printed to logs

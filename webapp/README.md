@@ -24,8 +24,8 @@ The platform is designed for **emerging market participants** who need decentral
 
 ```bash
 # Clone the repository
-git clone https://github.com/BlueS-3e/veritypass-platform.git
-cd veritypass-platform/webapp
+git clone https://github.com/BlueS-3e/VerityPass-Identity-Layer.git
+cd VerityPass-Identity-Layer/webapp
 
 # Install dependencies
 npm install
@@ -177,7 +177,7 @@ docker run -p 3000:80 veritypass-webapp:latest
 
 ## 📧 Support & Community
 
-- **Report Bugs**: [GitHub Issues](https://github.com/BlueS-3e/veritypass-platform/issues)
+- **Report Bugs**: [GitHub Issues](https://github.com/BlueS-3e/VerityPass-Identity-Layer/issues)
 - **Security Concerns**: team@veritypass.io
 - **Join Discord**: [VerityPass Community](#) (link coming soon)
 
@@ -204,7 +204,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](../CONTRIBUTING.md) for g
 ## 📞 Contact
 
 - **Email**: team@veritypass.io
-- **GitHub**: https://github.com/BlueS-3e/veritypass-platform
+- **GitHub**: https://github.com/BlueS-3e/VerityPass-Identity-Layer
 - **Twitter**: [@veritypass_io](https://twitter.com/veritypass_io)
 
 ---

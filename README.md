@@ -3,7 +3,7 @@
 > Bringing self-sovereign identity to DeFi through VerityPass blockchain-powered attestation and verification
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/BlueS-3e/veritypass-platform)](https://github.com/BlueS-3e/veritypass-platform/issues)
+[![GitHub issues](https://img.shields.io/github/issues/BlueS-3e/VerityPass-Identity-Layer)](https://github.com/BlueS-3e/VerityPass-Identity-Layer/issues)
 [![Node.js 22](https://img.shields.io/badge/Node.js-22%20LTS-green)](https://nodejs.org/)
 [![Solidity 0.8.20](https://img.shields.io/badge/Solidity-0.8.20-blue)](https://docs.soliditylang.org/)
 
@@ -40,7 +40,7 @@ The platform combines:
 ## 📦 What's Included
 
 ```
-veritypass-platform/
+VerityPass-Identity-Layer/
 ├── contracts/              # Smart contracts (Solidity 0.8.20)
 │   ├── AttestationRegistry.sol      # Identity attestation storage
 │   ├── VerityPassLaunchpad.sol        # Dynamic fee launchpad
@@ -212,8 +212,8 @@ We welcome contributors! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 **Dev Setup:**
 ```bash
-git clone https://github.com/BlueS-3e/veritypass-platform.git
-cd veritypass-platform
+git clone https://github.com/BlueS-3e/VerityPass-Identity-Layer.git
+cd VerityPass-Identity-Layer
 # See respective folders (contracts/, api/, webapp/) for setup
 ```
 
@@ -231,7 +231,7 @@ See [SECURITY.md](SECURITY.md) for detailed threat model and security considerat
 ## 📞 Contact & Community
 
 - **Email**: team@veritypass.io
-- **GitHub**: [BlueS-3e/veritypass-platform](https://github.com/BlueS-3e/veritypass-platform)
+- **GitHub**: [BlueS-3e/VerityPass-Identity-Layer](https://github.com/BlueS-3e/VerityPass-Identity-Layer)
 - **Twitter**: [@veritypass_io](https://twitter.com/veritypass_io)
 
 ## 📄 License

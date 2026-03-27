@@ -3,7 +3,7 @@
 **Version**: 1.0  
 **Date**: March 2026  
 **Network**: BNB Chain (BSC)  
-**Repository**: https://github.com/BlueS-3e/veritypass-platform
+**Repository**: https://github.com/BlueS-3e/VerityPass-Identity-Layer
 
 ---
 
@@ -551,4 +551,4 @@ function usdCentsToTokenUnits(address tokenAddr, uint256 usdCents)
 ---
 
 **© 2026 VerityPass Labs. All rights reserved.**  
-**For more information**: team@veritypass.io | GitHub: https://github.com/BlueS-3e/veritypass-platform
+For more information: team@veritypass.io | GitHub: https://github.com/BlueS-3e/VerityPass-Identity-Layer

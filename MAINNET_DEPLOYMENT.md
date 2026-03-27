@@ -1,7 +1,7 @@
 # VerityPass Mainnet Deployment Guide
 
 ## Current Status
-✅ dApp live on Vercel: https://veritypass-platform.vercel.app
+✅ dApp live on Vercel: https://veritypass.app
 ✅ Backend live on Render: https://veritypass-api.onrender.com
 ✅ BNB-compatible contracts and wallet flow ready
 ✅ Ready for mainnet deployment
@@ -78,7 +78,7 @@ IDENTITY_REGISTRY_ADDRESS=<mainnet-address>
 CREDIT_SCORE_MANAGER_ADDRESS=<mainnet-address>
 VERITYPASS_LAUNCHPAD_ADDRESS=<mainnet-address>
 WEB3_PROVIDER_URL=https://bsc-dataseed.binance.org
-ALLOWED_ORIGINS=https://veritypass-platform.vercel.app,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
+ALLOWED_ORIGINS=https://veritypass.app,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
 ```
 
 ### 3. Redeploy Backend
@@ -149,7 +149,7 @@ https://bscscan.com/address/<contract-address>
 ### 2. Test Frontend
 ```bash
 # Visit production dApp
-https://veritypass-platform.vercel.app
+https://veritypass.app
 
 # Test in DevTools Console:
 console.log(window.__RUNTIME_API_BASE)  # Should show https://veritypass-api.onrender.com

@@ -28,11 +28,11 @@ Welcome to VerityPass! We're excited that you're interested in contributing to d
 
 ```bash
 # Fork the repository on GitHub
-git clone https://github.com/YOUR_USERNAME/veritypass-platform.git
-cd veritypass-platform
+git clone https://github.com/YOUR_USERNAME/VerityPass-Identity-Layer.git
+cd VerityPass-Identity-Layer
 
 # Add upstream remote
-git remote add upstream https://github.com/BlueS-3e/veritypass-platform.git
+git remote add upstream https://github.com/BlueS-3e/VerityPass-Identity-Layer.git
 ```
 
 ---
@@ -147,7 +147,7 @@ npm run build
 ### Before You Start
 
 1. **Check existing issues:** Is someone already working on this?
-   - GitHub Issues: https://github.com/BlueS-3e/veritypass-platform/issues
+   - GitHub Issues: https://github.com/BlueS-3e/VerityPass-Identity-Layer/issues
 
 2. **Discussion for major features:**
    - Open an issue first to discuss approach

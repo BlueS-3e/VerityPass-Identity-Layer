@@ -83,7 +83,7 @@ VerityPass provides a privacy-preserving identity and attestation layer that ena
 - **Details:** GitHub profiles, prior contributions (see GRANT_TEAM.md)
 
 ## Open Source & Licensing
-- **Repository:** `veritypass-platform` (public on GitHub)
+- **Repository:** `VerityPass-Identity-Layer` (public on GitHub)
 - **License:** MIT (permissive, enables ecosystem integration)
 - **Governance:** Community-driven; grant reports published quarterly
 
@@ -118,5 +118,5 @@ We request **$60,000 USD equivalent in BNB** from the BNB Chain Builders Fund to
 ## Next Steps for Reviewers
 1. Review testnet demo: [AttestationRegistry on BSCScan](https://testnet.bscscan.com/address/0x2B5a1c4749b95b48F5Faf53cEd0130b21725e4a0)
 2. Test dApp on BNB Chain Testnet faucet-funded wallet
-3. Review open-source code on GitHub: [veritypass-platform](https://github.com/BlueS-3e/veritypass-platform)
+3. Review open-source code on GitHub: [VerityPass-Identity-Layer](https://github.com/BlueS-3e/VerityPass-Identity-Layer)
 4. Schedule engineering call to discuss roadmap & integration opportunities
