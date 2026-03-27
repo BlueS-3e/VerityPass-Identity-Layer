@@ -24,7 +24,12 @@ VerityPass is a decentralized financial identity and attestation platform built 
 ---
 
 ### Link to technical docs or whitepaper
-**https://github.com/BlueS-3e/veritypass-platform/blob/main/smart-contract-spec.md**
+
+**Primary References:**
+- **Whitepaper (Technical):** https://github.com/BlueS-3e/VerityPass-Identity-Layer/blob/feature/publish-all/WHITEPAPER.md
+- **Smart Contract Specification:** https://github.com/BlueS-3e/VerityPass-Identity-Layer/blob/feature/publish-all/smart-contract-spec.md
+- **Architecture & Design:** https://github.com/BlueS-3e/VerityPass-Identity-Layer/blob/feature/publish-all/architecture.md
+- **Full Repository:** https://github.com/BlueS-3e/VerityPass-Identity-Layer
 
 ---
 
@@ -36,7 +41,7 @@ VerityPass is a decentralized financial identity and attestation platform built 
 ### Grant Project Summary
 **What project/product do you intend to build with the grant funding?**
 
-We will develop a production-ready DeFi platform enabling:
+We are advancing our existing MVP (already deployed on BSC Testnet) to production-ready mainnet status. The platform will enable:
 
 1. **Attestation Infrastructure** (Months 1-2)
    - Deploy AttestationRegistry smart contracts to BNB mainnet
@@ -175,12 +180,14 @@ We will develop a production-ready DeFi platform enabling:
 ### Fundraising History (Size, Date, Funders)
 **Size, Date, Funders**
 
-No prior fundraising. VerityPass is bootstrapped by core team:
+No prior institutional fundraising. VerityPass is bootstrapped by core team:
 - $2,000 personal investment (infrastructure, testnet deployment, security tools)
-- In-kind contributions: developer time (~200 hours unpaid, equivalent $15,000 market rate)
-- This BNB grant ($60,000) will be first institutional funding
+- In-kind contributions: developer time (~200+ hours unpaid, equivalent $15,000+ market rate)
+- **Repository commits:** 39ba199 (full rebrand), e6d0d9f (doc regeneration)
+- **Current status:** MVP deployed on BSC Testnet with core contracts validated
+- This BNB grant ($60,000) will be first institutional funding for mainnet deployment
 
-**Future Plans**: Post-launch fundraising from BNB Ventures, Binance Labs (pending launch success)
+**Future Plans**: Post-launch fundraising from BNB Ventures, Binance Labs (pending mainnet success)
 
 ---
 
@@ -231,6 +238,9 @@ Token launch planned for Q2 2026 (post-audit) for governance and platform incent
 **Expected Outcomes** (6-month horizon):
 - 50k+ verified identities on VerityPass
 - $100M+ TVL projected (conservative)
+- Production dApp live at veritypass.app
+- Smart contracts audited and mainnet-ready
+- Community governance framework operational
 - 10+ developer teams cloning attestation infrastructure
 - Featured in BNB Chain ecosystem highlights
 
